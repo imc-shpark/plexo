@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<>
+
+<link>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>PLEXO - Online annotation tool for medical images</title>
+
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="font-awesome/css/font-awesome.css" rel="stylesheet">
+    <link href="css/plugins/ionRangeSlider/ion.rangeSlider.css" rel="stylesheet">
+    <link href="css/plugins/ionRangeSlider/ion.rangeSlider.skinFlat.css" rel="stylesheet">
+    <link href="css/animate.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+
+    <script language="javascript">
+
+        var view, slice;
+
+        var init_slice = 1;
+        var end_slice = 400;
+        var step_slice = 1;
+
+
+
+        function progressbar_callback(dataset){
+            var percentage = (dataset.num_loaded / dataset.num_items) * 100;
+
+            $('#dataset-progress-bar-id').css('width', percentage + '%').attr('aria-valuenow', percentage);
+
+
+            if (percentage == 100){
+                $('#dataset-progressbar-container-id').fadeOut(1000,
+                    function(){
+                        setup_slider();
+                        view.showSliceByIndex(init_slice);
+                    });
+            }
+        };
+
+        function setup_slider(){
+            $('#dataset-slider-id').ionRangeSlider({
+                hasGrid: false,
+
+                min: init_slice,
+                max: end_slice,
+                onChange: function(data) {
+                    index = data['fromNumber'];
+                    view.showSliceByIndex(index);
+                }
+            });
+        };
+
+
+
+        function initApp(){
+            view = new plxView('plexo-canvas-id');
+            dataset = new plxDataset('data/ds_us_1',init_slice,end_slice,step_slice);
+            view.load(dataset, progressbar_callback);
+        };
+
+
+
+
+    </script>
+
+</head>
+
+<body  onload="initApp()">
+
+<div id="wrapper">
+
+    <nav class="navbar-default navbar-static-side" role="navigation">
+        <div class="sidebar-collapse">
+            <ul class="nav metismenu" id="side-menu">
+                <li class="nav-header">
+                    <div class="profile-element">
+                            <a href="#">
+                            <span> <span class="block"> <strong class="font-bold">Username</strong>
+                             </span> <span class="text-xs block">Title </span> </span> </a>
+                    </div>
+                    <div class="logo-element">
+                        <img src="plexo_min.png"/>
+                    </div>
+                </li>
+                <li>
+                    <a href="#"><i class="fa fa-cloud-download fa-lg"></i><span class="nav-label">Datasets</span></a>
+                </li>
+                <li>
+                    <a href="#"><i class="fa fa-th-list fa-lg"></i><span class="nav-label">Workspace</span> </a>
+                </li>
+            </ul>
+
+        </div>
+    </nav>
+
+    <div id="page-wrapper" class="gray-bg">
+        <div class="row border-bottom">
+            <nav class="navbar navbar-static-top white-bg" role="navigation" style="margin-bottom: 0">
+                <div class="navbar-header">
+                    <a class="navbar-minimalize minimalize-styl-2 btn btn-primary " href="#"><i class="fa fa-bars"></i> </a>
+                    <form role="search" class="navbar-form-custom" method="post" action="#">
+                        <div class="form-group">
+                            <input type="text" placeholder="Search for something..." class="form-control" name="top-search" id="top-search">
+                        </div>
+                    </form>
+                </div>
+                <ul class="nav navbar-top-links navbar-right">
+                    <li>
+                        <a href="#">
+                            <i class="fa fa-sign-out"></i> Log out
+                        </a>
+                    </li>
+                </ul>
+
+            </nav>
+        </div>
+
+        <div class="wrapper wrapper-content">
+            <div id="sortable-view" class="row">
+
+                <div class="col-md-8 col-lg-7 ui-sortable">
+                    <div class="ibox">
+                        <div class="ibox-title"><h5>Spine Phantom 1 <small> Find all the spinous, articular and transverse processes</small></h5>
+                            <div class="ibox-tools">
+                                <a class="fullscreen-link">
+                                    <i class="fa fa-expand"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="ibox-content">
+                            <div id ="dataset-progressbar-container-id" class="progress progress-striped active">
+                                <div id="dataset-progressbar-id" class="progress-bar progress-bar-info" role="progressbar"
+                                     aria-valuenow="0" aria-value-min="0" aria-value-max="100" style="width:100%">
+                                    Loading...
+                                </div>
+                            </div>
+                            <div>
+                                <canvas id="plexo-canvas-id"></canvas>
+                            </div>
+                            <div>
+                                <input style="display:none" type="text" id="dataset-slider-id" name="dataset-slider" value="" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4 col-lg-5 ui-sortable">
+                    <div class="ibox">
+                        <div class="ibox-title">Tools</div>
+                        <div class="ibox-content">Lorem ipsum</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer">
+            <div class="pull-right">
+                10GB of <strong>250GB</strong> Free.
+            </div>
+            <div>
+                <strong>Copyright</strong> Diego Cantor &copy; 2015-2016
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Mainly scripts -->
+<script src="js/jquery-2.1.1.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/plugins/metisMenu/jquery.metisMenu.js"></script>
+<script src="js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
+<!-- Custom and plugin javascript -->
+<script src="js/inspinia.js"></script>
+<script src="js/plugins/pace/pace.min.js"></script>
+<script src="js/plugins/jquery-ui/jquery-ui.min.js"></script>
+<script src="js/plugins/ionRangeSlider/ion.rangeSlider.min.js"></script>
+<script src="js/code/plexo.js"></script>
+
+<script>$(document).ready(function(){WinMove();});</script>
+</body>
+</html>
