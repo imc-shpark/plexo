@@ -12,35 +12,30 @@
     <link href="css/animate.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
 
+    <script src="js/plugins/hammer/hammer.min.js"></script>
+    <script src="js/code/plexo.js"></script>
     <script language="javascript">
 
-        var view, slice;
+        var view, slice, BRUSH;
 
-        var init_slice = 1;
-        var end_slice = 400;
+        var init_slice = 210;
+        var end_slice = 220;
         var step_slice = 1;
 
+        BRUSH = new plx.Brush(5,1,'round');
 
-        var brush_type = "circle";
-        var brush_size = 1;
-        var brush_opacity = 1;
+        plx.setGlobalBrush(BRUSH);
 
-        function progressbar_callback(dataset){
+        function load_dataset_callback(dataset){
             var percentage = (dataset.num_loaded / dataset.num_items) * 100;
-
             $('#dataset-progress-bar-id').css('width', percentage + '%').attr('aria-valuenow', percentage);
-
-
             if (percentage == 100){
                 $('#dataset-progressbar-container-id').fadeOut(1000,
                     function(){
-
-                        //view.showSliceByIndex(init_slice);
                         index = view.showMiddleSlice();
                         setup_slider(index);
-
-
                     });
+                view.interactor.connectView();
             }
         };
 
@@ -53,6 +48,7 @@
                 onChange: function(data) {
                     index = data['fromNumber'];
                     view.showSliceByIndex(index);
+                    view.showCurrentAnnotationSlice();
                 }
             });
         };
@@ -62,9 +58,9 @@
                 hasGrid: true,
                 min: 1,
                 max: 10,
-                from: brush_size,
+                from: BRUSH.size,
                 onChange: function(data) {
-                    brush_size = data['fromNumber'];
+                    BRUSH.size = data['fromNumber'];
                     draw_brush_preview();
                 }
             });
@@ -77,24 +73,23 @@
                 min: 0.5,
                 max: 1,
                 step:0.1,
-                from: brush_opacity,
+                from: BRUSH.opacity,
                 onChange: function(data) {
-                    brush_opacity = data['fromNumber'];
+                    BRUSH.opacity = data['fromNumber'];
                     draw_brush_preview();
                 }
             });
 
         };
 
-
         function setup_brush_type_buttons(){
             $('#brush-shape-circle').click(function(){
-                brush_type='circle';
+                BRUSH.type='round';
                 draw_brush_preview();
             });
 
             $('#brush-shape-square').click(function(){
-                brush_type='square';
+                BRUSH.type='square';
                 draw_brush_preview();
             })
 
@@ -107,14 +102,14 @@
 
             var centerX = canvas.width / 2;
             var centerY = canvas.height / 2;
-            var radius = brush_size;
+            var radius = BRUSH.size;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             draw_checkboard_brush_canvas(6,6);
 
-            ctx.fillStyle = "rgba(0,0,0," + brush_opacity + ")";
+            ctx.fillStyle = "rgba(0,0,0," + BRUSH.opacity + ")";
 
-            if (brush_type == 'circle') {
+            if (BRUSH.type == 'round') {
                 ctx.beginPath();
                 ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
                 ctx.fill();
@@ -126,12 +121,7 @@
                 y1 = centerY-p;
                 ctx.fillRect(x1,y1,p*2,p*2);
             }
-
-            //ctx.lineWidth = 1;
-            //ctx.strokeStyle = '#00000';
-            //ctx.stroke();
-        }
-
+        };
 
         function draw_checkboard_brush_canvas(nRow, nCol) {
             var can = document.getElementById('brush-canvas-id');
@@ -148,27 +138,36 @@
             pctx.fillRect(p.width/2,p.height/2,p.width/2,p.height/2);
 
 
-            // Now we draw that pattern to a custom shape:
-
            var pattern = ctx.createPattern(p, "repeat");
 
             ctx.fillStyle = pattern;
             ctx.fillRect(0,0,can.width,can.height);
         }
 
+        function setup_zoom_button(){
+            $('#btn-zoom-id').click(function(){
 
 
+
+                view.showCurrentSlice();
+                view.showCurrentAnnotationSlice();
+            });
+        }
+
+        //var iphone = navigator.userAgent.match(/iPhone/i)?true:false;
         function initApp(){
 
+
+
+            setup_zoom_button();
             setup_brush_sliders();
             setup_brush_type_buttons();
             draw_checkboard_brush_canvas(6,6);
-            draw_brush_preview(brush_size);
+            draw_brush_preview();
 
-
-            view = new plxView('plexo-canvas-id');
-            dataset = new plxDataset('data/ds_us_1',init_slice,end_slice,step_slice);
-            view.load(dataset, progressbar_callback);
+            view = new plx.View('plexo-canvas-id');
+            dataset = new plx.Dataset('data/ds_us_1',init_slice,end_slice,step_slice);
+            view.load(dataset, load_dataset_callback);
         };
 
 
@@ -238,6 +237,7 @@
                                 </div>
                             </div>
                             <div><canvas id="plexo-canvas-id"></canvas></div>
+                            <img id="image-id" width="100px" height="100px" style="background-color: #333"></img>
                             <div><input style="display:none" type="text" id="dataset-slider-id" name="dataset-slider" value="" /></div>
                         </div>
                     </div>
@@ -258,7 +258,7 @@
 
                                             <a class="btn btn-white" href="#tab-brush-options" data-toggle="tab"><i class="fa fa-paint-brush"></i></a>
                                             <a class="btn btn-white" href="#tab-eraser-options" data-toggle="tab"><i class="fa fa-eraser"></i></a>
-                                            <a class="btn btn-white" href="#tab-zoom-options" data-toggle="tab"><i class="fa fa-search"></i></a>
+                                            <a id='btn-zoom-id' class="btn btn-white" href="#tab-zoom-options" data-toggle="tab"><i class="fa fa-search"></i></a>
                                             <span class="inline"></span>
                                             <a class="btn btn-white"><i class="fa fa-undo"></i></a>
                                             <a class="btn btn-white"><i class="fa fa-save"></i></a>
@@ -293,7 +293,7 @@
                                                 </div>
                                                 <div class="row">
                                                     <div class="col-lg-1">
-                                                        <p>Opaicity:</p>
+                                                        <p>Opacity:</p>
                                                     </div>
                                                     <div class="col-lg-4">
                                                         <div><input style="display:none" type="text" id="brush-opacity-slider-id" name="dataset-slider" value=""/></div>
@@ -330,10 +330,13 @@
 
         <div class="footer">
             <div class="pull-right">
-                .
+
             </div>
             <div>
                 <strong>Copyright</strong> Diego Cantor &copy; 2015-2016
+            </div>
+            <div>
+
             </div>
         </div>
     </div>
@@ -349,7 +352,7 @@
 <script src="js/plugins/pace/pace.min.js"></script>
 <script src="js/plugins/jquery-ui/jquery-ui.min.js"></script>
 <script src="js/plugins/ionRangeSlider/ion.rangeSlider.min.js"></script>
-<script src="js/code/plexo.js"></script>
+<script src=""
 
 </body>
 </html>
