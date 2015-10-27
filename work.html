@@ -2,6 +2,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+
+<meta http-equiv="cache-control" content="max-age=0" />
+<meta http-equiv="cache-control" content="no-cache" />
+<meta http-equiv="expires" content="0" />
+<meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT" />
+<meta http-equiv="pragma" content="no-cache" />
+
+
+
 <title>PLEXO - Labelling of medical imagery for research</title>
 
 <link href="css/bootstrap.min.css" rel="stylesheet">
@@ -9,6 +18,7 @@
 <link href="css/plugins/ionRangeSlider/ion.rangeSlider.css" rel="stylesheet">
 <link href="css/plugins/ionRangeSlider/ion.rangeSlider.skinFlat.css" rel="stylesheet">
 <link href="css/plugins/awesome-bootstrap-checkbox/awesome-bootstrap-checkbox.css" rel="stylesheet">
+<link href="css/plugins/simplecolorpicker/jquery.simplecolorpicker.css" rel="stylesheet">
 <link href="css/animate.css" rel="stylesheet">
 <link href="css/style.css" rel="stylesheet">
 
@@ -19,7 +29,7 @@
     var view, slice, BRUSH;
 
     var init_slice = 210;
-    var end_slice = 220;
+    var end_slice = 215;
     var step_slice = 1;
 
     BRUSH = new plx.Brush(5, 0.5, 'round');
@@ -75,7 +85,7 @@
             step: 0.1,
             from: BRUSH.opacity,
             onChange: function (data) {
-                BRUSH.opacity = data['fromNumber'];
+                BRUSH.setOpacity(data['fromNumber']);
                 draw_brush_preview();
             }
         });
@@ -109,7 +119,7 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         draw_checkboard_brush_canvas(6, 6);
 
-        ctx.fillStyle = "rgba(0,0,0," + BRUSH.opacity + ")";
+        ctx.fillStyle = BRUSH.color;
 
         if (BRUSH.type == 'round') {
             ctx.beginPath();
@@ -149,6 +159,7 @@
 
     function setup_zoom_button() {
         $('#btn-zoom-id').click(function () {
+            view.toggleFullscreen();
             view.showCurrentSlice();
             view.showCurrentAnnotationSlice();
         });
@@ -160,8 +171,17 @@
         $('#btn-undo-id').click(function () {
             view.undo();
         });
+    };
+
+    function setup_brush_color_picker(){
+        $('#brush-color-id').simplecolorpicker({picker:true}).on('change', function(){
+             var value = $('#brush-color-id').val();
+            BRUSH.setColor(value);
+            draw_brush_preview()
+        });
+
+
     }
-    ;
 
     //var iphone = navigator.userAgent.match(/iPhone/i)?true:false;
     function initApp() {
@@ -171,6 +191,8 @@
         setup_undo_button();
         setup_brush_sliders();
         setup_brush_type_buttons();
+        setup_brush_color_picker();
+
         draw_checkboard_brush_canvas(6, 6);
         draw_brush_preview();
 
@@ -238,7 +260,7 @@
 
         <div class="wrapper wrapper-content">
             <div class="row">
-                <div class="col-md-8 col-lg-7">
+                <div class="col-md-8 col-lg-6">
                     <div class="ibox">
                         <div class="ibox-title">
                             <h5>Spine Phantom 1
@@ -254,7 +276,7 @@
                                 </div>
                             </div>
                             <div>
-                                <canvas id="plexo-canvas-id"></canvas>
+                                <canvas id="plexo-canvas-id" ></canvas>
                             </div>
                             <div><input style="display:none" type="text" id="dataset-slider-id" name="dataset-slider"
                                         value=""/></div>
@@ -262,7 +284,7 @@
                     </div>
                 </div>
 
-                <div class="col-md-4 col-lg-5">
+                <div class="col-md-4 col-lg-6">
                     <div class="tabs-container">
                         <ul class="nav nav-tabs">
                             <li class="active"><a href="#tab-tools" data-toggle="tab"><i
@@ -290,31 +312,63 @@
 
                                         <div class="tab-content">
                                             <div id="tab-brush-options" class="tab-pane active">
-                                                <div class="row"><br/></div>
-                                                <h5>Brush Options</h5>
-
-                                                <div class="row">
-                                                    <div class="col-xs-1 col-lg-1">
-                                                        <p>Size:</p>
-                                                    </div>
-                                                    <div class="col-xs-5 col-lg-5">
-                                                        <div><input style="display:none" type="text"
-                                                                    id="brush-size-slider-id" name="dataset-slider"
-                                                                    value=""/></div>
-                                                    </div>
-                                                    <div class="col-xs-1 col-lg-1">
-                                                        <p>Opacity:</p>
-                                                    </div>
-                                                    <div class="col-xs-5 col-lg-5">
-                                                        <div><input style="display:none" type="text"
-                                                                    id="brush-opacity-slider-id" name="dataset-slider"
-                                                                    value=""/></div>
+                                                <div class="ibox-content">
+                                                    <div class="row"><br/>
+                                                        <h3>Brush</h3>
                                                     </div>
                                                     <div class="row">
-                                                        <div class="col-xs-1 col-lg-1">
-                                                            <p>Shape:</p>
+                                                        <div class="col-xs-12 col-md-12 col-lg-12">
+                                                            <h4>Current Label</h4>
+                                                            <select id="brush-color-id">
+                                                                <option value="#ac725e">#ac725e</option>
+                                                                <option value="#d06b64">#d06b64</option>
+                                                                <option value="#f83a22">#f83a22</option>
+                                                                <option value="#fa573c">#fa573c</option>
+                                                                <option value="#ff7537">#ff7537</option>
+                                                                <option value="#ffad46">#ffad46</option>
+                                                                <option value="#42d692">#42d692</option>
+                                                                <option value="#16a765">#16a765</option>
+                                                                <option value="#7bd148">#7bd148</option>
+                                                                <option value="#b3dc6c">#b3dc6c</option>
+                                                                <option value="#fbe983">#fbe983</option>
+                                                                <option value="#fad165">#fad165</option>
+                                                                <option value="#92e1c0">#92e1c0</option>
+                                                                <option value="#9fe1e7">#9fe1e7</option>
+                                                                <option value="#9fc6e7">#9fc6e7</option>
+                                                                <option value="#4986e7">#4986e7</option>
+                                                                <option value="#9a9cff">#9a9cff</option>
+                                                                <option value="#b99aff">#b99aff</option>
+                                                                <option value="#c2c2c2">#c2c2c2</option>
+                                                                <option value="#cabdbf">#cabdbf</option>
+                                                                <option value="#cca6ac">#cca6ac</option>
+                                                                <option value="#f691b2">#f691b2</option>
+                                                                <option value="#cd74e6">#cd74e6</option>
+                                                                <option value="#a47ae2">#a47ae2</option>
+                                                            </select>
                                                         </div>
-                                                        <div class="col-xs-4 col-lg-2">
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-xs-6 col-md-6 col-lg-6">
+                                                            <h4>Size</h4>
+
+                                                            <div><input style="display:none" type="text"
+                                                                        id="brush-size-slider-id" name="dataset-slider"
+                                                                        value=""/></div>
+                                                        </div>
+
+                                                        <div class="col-xs-6 col-md-6 col-lg-6">
+                                                            <h4>Opacity</h4>
+
+                                                            <div><input style="display:none" type="text"
+                                                                        id="brush-opacity-slider-id"
+                                                                        name="dataset-slider"
+                                                                        value=""/></div>
+                                                        </div>
+
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-xs-6 col-md-6 col-lg-6">
+                                                            <h4>Shape</h4>
                                                             <div class="radio radio-info">
                                                                 <input id="brush-shape-circle" type="radio"
                                                                        checked="true"
@@ -327,65 +381,67 @@
                                                                 <label for="brush-shape-square">square</label>
                                                             </div>
                                                         </div>
-                                                        <div class="col-xs-2 col-lg-4">
+                                                        <div class="col-xs-6 col-md-6 col-lg-6">
+                                                            <h4>Preview</h4>
                                                             <canvas id="brush-canvas-id" width="50px"
                                                                     height="50px"></canvas>
                                                         </div>
-                                                        <div class="col-xs-5 col-lg-5"></div>
+
                                                     </div>
                                                 </div>
-                                                </div>
+                                            </div>
 
-                                                <div id="tab-eraser-options" class="tab-pane">
-                                                    <div class="row">Eraser options</div>
 
-                                                </div>
-                                                <div id="tab-zoom-options" class="tab-pane">
-                                                    <div class="row">Zoom options</div>
+                                            <div id="tab-eraser-options" class="tab-pane">
+                                                <div class="row">Eraser options</div>
 
-                                                </div>
+                                            </div>
+                                            <div id="tab-zoom-options" class="tab-pane">
+                                                <div class="row">Zoom options</div>
+
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div id="tab-labels" class="tab-pane">
-                                    <div class="panel-body">test</div>
-                                </div>
-                                <div id="tab-about" class="tab-pane">
-                                    <div class="panel-body"></div>
-                                </div>
-
                             </div>
+                            <div id="tab-labels" class="tab-pane">
+                                <div class="panel-body">test</div>
+                            </div>
+                            <div id="tab-about" class="tab-pane">
+                                <div class="panel-body"></div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="footer">
-                <div class="pull-right">
+        <div class="footer">
+            <div class="pull-right">
 
-                </div>
-                <div>
-                    <strong>Copyright</strong> Diego Cantor &copy; 2015-2016
-                </div>
-                <div>
+            </div>
+            <div>
+                <strong>Copyright</strong> Diego Cantor &copy; 2015-2016
+            </div>
+            <div>
 
-                </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Mainly scripts -->
-    <script src="js/jquery-2.1.1.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-    <script src="js/plugins/metisMenu/jquery.metisMenu.js"></script>
-    <script src="js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
-    <!-- Custom and plugin javascript -->
-    <script src="js/inspinia.js"></script>
-    <script src="js/plugins/pace/pace.min.js"></script>
-    <script src="js/plugins/jquery-ui/jquery-ui.min.js"></script>
-    <script src="js/plugins/ionRangeSlider/ion.rangeSlider.min.js"></script>
-    <script src=""
+<!-- Mainly scripts -->
+<script src="js/jquery-2.1.1.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/plugins/metisMenu/jquery.metisMenu.js"></script>
+<script src="js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
+<!-- Custom and plugin javascript -->
+<script src="js/inspinia.js"></script>
+<script src="js/plugins/pace/pace.min.js"></script>
+<script src="js/plugins/jquery-ui/jquery-ui.min.js"></script>
+<script src="js/plugins/ionRangeSlider/ion.rangeSlider.min.js"></script>
+<script src="js/plugins/simplecolorpicker/jquery.simplecolorpicker.js"></script>
 
 </body>
 </html>

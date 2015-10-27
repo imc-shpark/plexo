@@ -8145,6 +8145,23 @@ body.md-skin {
 .ibox-title{
   min-height: 58px;
 }
+
+.row-eq-height {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display:         flex;
+}
+
+.vcenter {
+  vertical-align: middle;
+}
+
+
+#page-wrapper{
+  background-color: #ddd;
+}
+
 /*html {
   height  : 100%;
   overflow: hidden;

@@ -13,16 +13,25 @@ plx.Brush = function(size, opacity, type){
     this.opacity= opacity;
     this.type = type;
     this.comp = 'lighten';
+    this.color = "rgba(0,0,0,"+opacity+')';
+    this.r = 0;
+    this.g = 0;
+    this.b = 0;
+
 };
 
 plx.Brush.prototype.setColor = function(hex){
     hex = hex.replace('#','');
-    r = parseInt(hex.substring(0,2), 16);
-    g = parseInt(hex.substring(2,4), 16);
-    b = parseInt(hex.substring(4,6), 16);
+    this.r = parseInt(hex.substring(0,2), 16);
+    this.g = parseInt(hex.substring(2,4), 16);
+    this.b = parseInt(hex.substring(4,6), 16);
+    this.color = 'rgba('+this.r+','+this.g+','+this.b+','+this.opacity+')';
+};
 
-    result = 'rgba('+r+','+g+','+b+','+this.opacity+')';
-    return result;
+
+plx.Brush.prototype.setOpacity = function(opacity){
+    this.opacity = opacity;
+    this.color = 'rgba('+this.r+','+this.g+','+this.b+','+this.opacity+')';
 };
 
 plx.setGlobalBrush = function (brush){
@@ -176,8 +185,8 @@ plx.AnnotationSlice.prototype.startAnnotation = function(x,y,view){
 
     this.ctx                = this.offcanvas.getContext("2d");
     var ctx                 = this.ctx;
-    ctx.strokeStyle         = plx.brush.setColor("#00A5F6");
-    ctx.fillStyle           = plx.brush.setColor("#00A5F6");
+    ctx.strokeStyle         = plx.brush.color;
+    ctx.fillStyle           = plx.brush.color;
     ctx.lineJoin            = brush.type;
     ctx.lineCap             = brush.type;
     ctx.lineWidth           = brush.size;
@@ -474,7 +483,7 @@ plx.View.prototype.undo = function(){
 
 plx.View.prototype.toggleFullscreen = function(){
 
-    /*var canvas = this.canvas;
+    var canvas = this.canvas;
     var memento = undefined;
 
     var ratio = window.devicePixelRatio || 1;
@@ -483,9 +492,9 @@ plx.View.prototype.toggleFullscreen = function(){
 
     if (!this.fullscreen){
 
-        canvas.mozRequestFullScreen();
+        //canvas.mozRequestFullScreen();
         //go fullscreen
-        /*memento = {};
+        memento = {};
         memento['width'] = canvas.width;
         memento['height'] = canvas.height;
         memento['style-position'] = canvas.style.position;
@@ -501,13 +510,12 @@ plx.View.prototype.toggleFullscreen = function(){
         canvas.style.top = 0;
         canvas.style.zIndex = 1000;
         this.fullscreen = true;
-        this.memento = memento;*/
-    /*    this.fullscreen = true;
+        this.memento = memento;
+        this.fullscreen = true;
 
-    }*/
-    /*else{
-        //go back from fullscreen
-        /*memento = this.memento;
+    }
+    else{        //go back from fullscreen
+        memento = this.memento;
         if (memento != undefined){
             canvas.width = memento['width'] ;
             canvas.height = memento['height'];
@@ -517,13 +525,13 @@ plx.View.prototype.toggleFullscreen = function(){
             canvas.style.zIndex = memento['style-z-index'];
 
         }
-        this.fullscreen = false;*/
-        /*document.mozCancelFullScreen();
         this.fullscreen = false;
-    }*/
+       // document.mozCancelFullScreen();
+        this.fullscreen = false;
+    }
 
-    /*this.showCurrentSlice();
-    this.showCurrentAnnotationSlice();*/
+    this.showCurrentSlice();
+    this.showCurrentAnnotationSlice();
 };
 
 
@@ -555,7 +563,7 @@ plx.ViewInteractor.prototype.connectView = function(){
         this.mc.add(new Hammer.Swipe({ event: 'swipe', pointers: 2 }));
 
         this.mc.on('press', function(ev){
-            //view.toggleFullscreen();
+            view.toggleFullscreen();
         });
 
         this.mc.on('swiperight', function(ev){
