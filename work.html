@@ -1,179 +1,187 @@
 <!DOCTYPE html>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>PLEXO - Labelling of medical imagery for research</title>
+<title>PLEXO - Labelling of medical imagery for research</title>
 
-    <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link href="font-awesome/css/font-awesome.css" rel="stylesheet">
-    <link href="css/plugins/ionRangeSlider/ion.rangeSlider.css" rel="stylesheet">
-    <link href="css/plugins/ionRangeSlider/ion.rangeSlider.skinFlat.css" rel="stylesheet">
-    <link href="css/plugins/awesome-bootstrap-checkbox/awesome-bootstrap-checkbox.css" rel="stylesheet">
-    <link href="css/animate.css" rel="stylesheet">
-    <link href="css/style.css" rel="stylesheet">
+<link href="css/bootstrap.min.css" rel="stylesheet">
+<link href="font-awesome/css/font-awesome.css" rel="stylesheet">
+<link href="css/plugins/ionRangeSlider/ion.rangeSlider.css" rel="stylesheet">
+<link href="css/plugins/ionRangeSlider/ion.rangeSlider.skinFlat.css" rel="stylesheet">
+<link href="css/plugins/awesome-bootstrap-checkbox/awesome-bootstrap-checkbox.css" rel="stylesheet">
+<link href="css/animate.css" rel="stylesheet">
+<link href="css/style.css" rel="stylesheet">
 
-    <script src="js/plugins/hammer/hammer.min.js"></script>
-    <script src="js/code/plexo.js"></script>
-    <script language="javascript">
+<script src="js/plugins/hammer/hammer.min.js"></script>
+<script src="js/code/plexo.js"></script>
+<script language="javascript">
 
-        var view, slice, BRUSH;
+    var view, slice, BRUSH;
 
-        var init_slice = 210;
-        var end_slice = 220;
-        var step_slice = 1;
+    var init_slice = 210;
+    var end_slice = 220;
+    var step_slice = 1;
 
-        BRUSH = new plx.Brush(5,1,'round');
+    BRUSH = new plx.Brush(5, 0.5, 'round');
 
-        plx.setGlobalBrush(BRUSH);
+    plx.setGlobalBrush(BRUSH);
 
-        function load_dataset_callback(dataset){
-            var percentage = (dataset.num_loaded / dataset.num_items) * 100;
-            $('#dataset-progress-bar-id').css('width', percentage + '%').attr('aria-valuenow', percentage);
-            if (percentage == 100){
-                $('#dataset-progressbar-container-id').fadeOut(1000,
-                    function(){
+    function load_dataset_callback(dataset) {
+        var percentage = (dataset.num_loaded / dataset.num_items) * 100;
+        $('#dataset-progress-bar-id').css('width', percentage + '%').attr('aria-valuenow', percentage);
+        if (percentage == 100) {
+            $('#dataset-progressbar-container-id').fadeOut(1000,
+                    function () {
                         index = view.showMiddleSlice();
                         setup_slider(index);
                     });
-                view.interactor.connectView();
-            }
-        };
-
-        function setup_slider(idx){
-            $('#dataset-slider-id').ionRangeSlider({
-                hasGrid: false,
-                min: init_slice,
-                max: end_slice,
-                from:idx,
-                onChange: function(data) {
-                    index = data['fromNumber'];
-                    view.showSliceByIndex(index);
-                    view.showCurrentAnnotationSlice();
-                }
-            });
-        };
-
-        function setup_brush_sliders(){
-            $('#brush-size-slider-id').ionRangeSlider({
-                hasGrid: true,
-                min: 1,
-                max: 10,
-                from: BRUSH.size,
-                onChange: function(data) {
-                    BRUSH.size = data['fromNumber'];
-                    draw_brush_preview();
-                }
-            });
-
-
-
-
-            $('#brush-opacity-slider-id').ionRangeSlider({
-                hasGrid: true,
-                min: 0.5,
-                max: 1,
-                step:0.1,
-                from: BRUSH.opacity,
-                onChange: function(data) {
-                    BRUSH.opacity = data['fromNumber'];
-                    draw_brush_preview();
-                }
-            });
-
-        };
-
-        function setup_brush_type_buttons(){
-            $('#brush-shape-circle').click(function(){
-                BRUSH.type='round';
-                draw_brush_preview();
-            });
-
-            $('#brush-shape-square').click(function(){
-                BRUSH.type='square';
-                draw_brush_preview();
-            })
-
-        };
-
-        function draw_brush_preview(){
-
-            var canvas = document.getElementById('brush-canvas-id');
-            var ctx = canvas.getContext("2d");
-
-            var centerX = canvas.width / 2;
-            var centerY = canvas.height / 2;
-            var radius = BRUSH.size;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            draw_checkboard_brush_canvas(6,6);
-
-            ctx.fillStyle = "rgba(0,0,0," + BRUSH.opacity + ")";
-
-            if (BRUSH.type == 'round') {
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-                ctx.fill();
-            }
-            else{
-                var x1, y1, p;
-                p = radius;
-                x1 = centerX-p;
-                y1 = centerY-p;
-                ctx.fillRect(x1,y1,p*2,p*2);
-            }
-        };
-
-        function draw_checkboard_brush_canvas(nRow, nCol) {
-            var can = document.getElementById('brush-canvas-id');
-            var ctx = can.getContext("2d");
-
-            // set up a pattern, something really elaborate!
-            var p = document.createElement('canvas');
-            p.width = 2*can.width/nRow;
-            p.height = 2*can.height/nCol;
-
-            var pctx = p.getContext('2d');
-            pctx.fillStyle = "rgb(200, 200, 200)";
-            pctx.fillRect(0,0,p.width/2,p.height/2);
-            pctx.fillRect(p.width/2,p.height/2,p.width/2,p.height/2);
-
-
-           var pattern = ctx.createPattern(p, "repeat");
-
-            ctx.fillStyle = pattern;
-            ctx.fillRect(0,0,can.width,can.height);
+            view.interactor.connectView();
         }
+    }
+    ;
 
-        function setup_zoom_button(){
-            $('#btn-zoom-id').click(function(){
-
-
-
-                view.showCurrentSlice();
+    function setup_slider(idx) {
+        $('#dataset-slider-id').ionRangeSlider({
+            hasGrid: false,
+            min: init_slice,
+            max: end_slice,
+            from: idx,
+            onChange: function (data) {
+                index = data['fromNumber'];
+                view.showSliceByIndex(index);
                 view.showCurrentAnnotationSlice();
-            });
-        }
+            }
+        });
+    }
+    ;
 
-        //var iphone = navigator.userAgent.match(/iPhone/i)?true:false;
-        function initApp(){
+    function setup_brush_sliders() {
+        $('#brush-size-slider-id').ionRangeSlider({
+            hasGrid: true,
+            min: 1,
+            max: 10,
+            from: BRUSH.size,
+            onChange: function (data) {
+                BRUSH.size = data['fromNumber'];
+                draw_brush_preview();
+            }
+        });
 
 
+        $('#brush-opacity-slider-id').ionRangeSlider({
+            hasGrid: true,
+            min: 0.5,
+            max: 1,
+            step: 0.1,
+            from: BRUSH.opacity,
+            onChange: function (data) {
+                BRUSH.opacity = data['fromNumber'];
+                draw_brush_preview();
+            }
+        });
 
-            setup_zoom_button();
-            setup_brush_sliders();
-            setup_brush_type_buttons();
-            draw_checkboard_brush_canvas(6,6);
+    }
+    ;
+
+    function setup_brush_type_buttons() {
+        $('#brush-shape-circle').click(function () {
+            BRUSH.type = 'round';
             draw_brush_preview();
+        });
 
-            view = new plx.View('plexo-canvas-id');
-            dataset = new plx.Dataset('data/ds_us_1',init_slice,end_slice,step_slice);
-            view.load(dataset, load_dataset_callback);
-        };
+        $('#brush-shape-square').click(function () {
+            BRUSH.type = 'square';
+            draw_brush_preview();
+        })
+
+    }
+    ;
+
+    function draw_brush_preview() {
+
+        var canvas = document.getElementById('brush-canvas-id');
+        var ctx = canvas.getContext("2d");
+
+        var centerX = canvas.width / 2;
+        var centerY = canvas.height / 2;
+        var radius = BRUSH.size;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        draw_checkboard_brush_canvas(6, 6);
+
+        ctx.fillStyle = "rgba(0,0,0," + BRUSH.opacity + ")";
+
+        if (BRUSH.type == 'round') {
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+            ctx.fill();
+        }
+        else {
+            var x1, y1, p;
+            p = radius;
+            x1 = centerX - p;
+            y1 = centerY - p;
+            ctx.fillRect(x1, y1, p * 2, p * 2);
+        }
+    }
+    ;
+
+    function draw_checkboard_brush_canvas(nRow, nCol) {
+        var can = document.getElementById('brush-canvas-id');
+        var ctx = can.getContext("2d");
+
+        // set up a pattern, something really elaborate!
+        var p = document.createElement('canvas');
+        p.width = 2 * can.width / nRow;
+        p.height = 2 * can.height / nCol;
+
+        var pctx = p.getContext('2d');
+        pctx.fillStyle = "rgb(200, 200, 200)";
+        pctx.fillRect(0, 0, p.width / 2, p.height / 2);
+        pctx.fillRect(p.width / 2, p.height / 2, p.width / 2, p.height / 2);
 
 
+        var pattern = ctx.createPattern(p, "repeat");
+
+        ctx.fillStyle = pattern;
+        ctx.fillRect(0, 0, can.width, can.height);
+    }
+
+    function setup_zoom_button() {
+        $('#btn-zoom-id').click(function () {
+            view.showCurrentSlice();
+            view.showCurrentAnnotationSlice();
+        });
+    }
+    ;
 
 
-    </script>
+    function setup_undo_button() {
+        $('#btn-undo-id').click(function () {
+            view.undo();
+        });
+    }
+    ;
+
+    //var iphone = navigator.userAgent.match(/iPhone/i)?true:false;
+    function initApp() {
+
+
+        setup_zoom_button();
+        setup_undo_button();
+        setup_brush_sliders();
+        setup_brush_type_buttons();
+        draw_checkboard_brush_canvas(6, 6);
+        draw_brush_preview();
+
+        view = new plx.View('plexo-canvas-id');
+        dataset = new plx.Dataset('data/ds_us_1', init_slice, end_slice, step_slice);
+        view.load(dataset, load_dataset_callback);
+    }
+    ;
+
+
+</script>
 
 </head>
 
@@ -184,7 +192,8 @@
         <div class="row border-bottom white-bg">
             <nav class="navbar navbar-static-top" role="navigation">
                 <div class="navbar-header">
-                    <button aria-controls="navbar" aria-expanded="false" data-target="#navbar" data-toggle="collapse" class="navbar-toggle collapsed" type="button">
+                    <button aria-controls="navbar" aria-expanded="false" data-target="#navbar" data-toggle="collapse"
+                            class="navbar-toggle collapsed" type="button">
                         <i class="fa fa-reorder"></i>
                     </button>
                     <a href="#" class="navbar-brand"><img src="plexo.png"/></a>
@@ -195,29 +204,32 @@
                             <a href="#"><i class="fa fa-database fa-lg"></i><span class="nav-label">Datasets</span></a>
                         </li>
                         <li>
-                            <a href="#"><i class="fa fa-cloud-upload fa-lg"></i><span class="nav-label">Send us your data</span> </a>
+                            <a href="#"><i class="fa fa-cloud-upload fa-lg"></i><span class="nav-label">Send us your data</span>
+                            </a>
                         </li>
 
                         <li>
-                            <a href="#"><i class="fa fa-bullhorn fa-lg"></i><span class="nav-label">Announcements</span> </a>
+                            <a href="#"><i class="fa fa-bullhorn fa-lg"></i><span class="nav-label">Announcements</span>
+                            </a>
                         </li>
 
                         <li>
                             <a href="#"><i class="fa fa-gear fa-lg"></i><span class="nav-label">Tour</span> </a>
                         </li>
                         <li>
-                            <a href="#"><i class="fa fa-facebook fa-lg"></i><span class="nav-label">Follow us</span> </a>
+                            <a href="#"><i class="fa fa-facebook fa-lg"></i><span class="nav-label">Follow us</span>
+                            </a>
                         </li>
                         <li>
                             <a href="#"><i class="fa fa-info fa-lg"></i><span class="nav-label">About us</span> </a>
                         </li>
                     </ul>
                     <ul class="nav navbar-top-links navbar-right">
-                    <li>
-                        <a href="login.html">
-                            <i class="fa fa-sign-out"></i> Log out
-                        </a>
-                    </li>
+                        <li>
+                            <a href="login.html">
+                                <i class="fa fa-sign-out"></i> Log out
+                            </a>
+                        </li>
                     </ul>
 
                 </div>
@@ -228,17 +240,24 @@
             <div class="row">
                 <div class="col-md-8 col-lg-7">
                     <div class="ibox">
-                        <div class="ibox-title"><h5>Spine Phantom 1 <small> Find all the spinous, articular and transverse processes</small></h5> </div>
+                        <div class="ibox-title">
+                            <h5>Spine Phantom 1
+                                <small> Find all the spinous, articular and transverse processes</small>
+                            </h5>
+                        </div>
                         <div class="ibox-content">
-                            <div id ="dataset-progressbar-container-id" class="progress progress-striped active">
-                                <div id="dataset-progressbar-id" class="progress-bar progress-bar-info" role="progressbar"
+                            <div id="dataset-progressbar-container-id" class="progress progress-striped active">
+                                <div id="dataset-progressbar-id" class="progress-bar progress-bar-info"
+                                     role="progressbar"
                                      aria-valuenow="0" aria-value-min="0" aria-value-max="100" style="width:100%">
                                     Loading...
                                 </div>
                             </div>
-                            <div><canvas id="plexo-canvas-id"></canvas></div>
-                            <img id="image-id" width="100px" height="100px" style="background-color: #333"></img>
-                            <div><input style="display:none" type="text" id="dataset-slider-id" name="dataset-slider" value="" /></div>
+                            <div>
+                                <canvas id="plexo-canvas-id"></canvas>
+                            </div>
+                            <div><input style="display:none" type="text" id="dataset-slider-id" name="dataset-slider"
+                                        value=""/></div>
                         </div>
                     </div>
                 </div>
@@ -246,9 +265,12 @@
                 <div class="col-md-4 col-lg-5">
                     <div class="tabs-container">
                         <ul class="nav nav-tabs">
-                            <li class="active"><a href="#tab-tools" data-toggle="tab"><i class="fa fa-pencil-square-o"></i>Tools</a></li>
-                            <li class=""><a href="#tab-labels" data-toggle="tab"><i class="fa fa-list-ol"></i>Labels</a></li>
-                            <li class=""><a href="#tab-about" data-toggle="tab"><i class="fa fa-info-circle"></i>About this model</a></li>
+                            <li class="active"><a href="#tab-tools" data-toggle="tab"><i
+                                    class="fa fa-pencil-square-o"></i>Tools</a></li>
+                            <li class=""><a href="#tab-labels" data-toggle="tab"><i class="fa fa-list-ol"></i>Labels</a>
+                            </li>
+                            <li class=""><a href="#tab-about" data-toggle="tab"><i class="fa fa-info-circle"></i>About
+                                this model</a></li>
 
                         </ul>
                         <div class="tab-content">
@@ -256,103 +278,114 @@
                                 <div class="panel-body">
                                     <div class="tabs-container">
 
-                                            <a class="btn btn-white" href="#tab-brush-options" data-toggle="tab"><i class="fa fa-paint-brush"></i></a>
-                                            <a class="btn btn-white" href="#tab-eraser-options" data-toggle="tab"><i class="fa fa-eraser"></i></a>
-                                            <a id='btn-zoom-id' class="btn btn-white" href="#tab-zoom-options" data-toggle="tab"><i class="fa fa-search"></i></a>
-                                            <span class="inline"></span>
-                                            <a class="btn btn-white"><i class="fa fa-undo"></i></a>
-                                            <a class="btn btn-white"><i class="fa fa-save"></i></a>
+                                        <a class="btn btn-white" href="#tab-brush-options" data-toggle="tab"><i
+                                                class="fa fa-paint-brush"></i></a>
+                                        <a class="btn btn-white" href="#tab-eraser-options" data-toggle="tab"><i
+                                                class="fa fa-eraser"></i></a>
+                                        <a id='btn-zoom-id' class="btn btn-white" href="#tab-zoom-options"
+                                           data-toggle="tab"><i class="fa fa-search"></i></a>
+                                        <span class="inline"></span>
+                                        <a id='btn-undo-id' class="btn btn-white"><i class="fa fa-undo"></i></a>
+                                        <a class="btn btn-white"><i class="fa fa-save"></i></a>
 
                                         <div class="tab-content">
                                             <div id="tab-brush-options" class="tab-pane active">
                                                 <div class="row"><br/></div>
                                                 <h5>Brush Options</h5>
+
                                                 <div class="row">
-                                                    <div class="col-lg-1">
+                                                    <div class="col-xs-1 col-lg-1">
                                                         <p>Size:</p>
                                                     </div>
-                                                    <div class="col-lg-4">
-                                                        <div><input style="display:none" type="text" id="brush-size-slider-id" name="dataset-slider" value=""/></div>
+                                                    <div class="col-xs-5 col-lg-5">
+                                                        <div><input style="display:none" type="text"
+                                                                    id="brush-size-slider-id" name="dataset-slider"
+                                                                    value=""/></div>
                                                     </div>
-                                                    <div class="col-lg-1">
-                                                        <p>Shape:</p>
-                                                    </div>
-                                                    <div class="col-lg-2">
-                                                        <div class="radio radio-info">
-                                                            <input id="brush-shape-circle" type="radio" checked="true" value="brush-circle" name="brush-shape"></input>
-                                                            <label for="brush-shape-circle">circle</label>
-                                                        </div>
-                                                        <div class="radio radio-info">
-                                                            <input id="brush-shape-square" type="radio"  value="brush-square" name="brush-shape"></input>
-                                                            <label for="brush-shape-square">square</label>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-lg-4">
-                                                        <canvas id="brush-canvas-id" width="50px" height="50px"></canvas>
-                                                    </div>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-lg-1">
+                                                    <div class="col-xs-1 col-lg-1">
                                                         <p>Opacity:</p>
                                                     </div>
-                                                    <div class="col-lg-4">
-                                                        <div><input style="display:none" type="text" id="brush-opacity-slider-id" name="dataset-slider" value=""/></div>
+                                                    <div class="col-xs-5 col-lg-5">
+                                                        <div><input style="display:none" type="text"
+                                                                    id="brush-opacity-slider-id" name="dataset-slider"
+                                                                    value=""/></div>
                                                     </div>
-                                                    <div class="col-lg-9"></div>
+                                                    <div class="row">
+                                                        <div class="col-xs-1 col-lg-1">
+                                                            <p>Shape:</p>
+                                                        </div>
+                                                        <div class="col-xs-4 col-lg-2">
+                                                            <div class="radio radio-info">
+                                                                <input id="brush-shape-circle" type="radio"
+                                                                       checked="true"
+                                                                       value="brush-circle" name="brush-shape"></input>
+                                                                <label for="brush-shape-circle">circle</label>
+                                                            </div>
+                                                            <div class="radio radio-info">
+                                                                <input id="brush-shape-square" type="radio"
+                                                                       value="brush-square" name="brush-shape"></input>
+                                                                <label for="brush-shape-square">square</label>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-xs-2 col-lg-4">
+                                                            <canvas id="brush-canvas-id" width="50px"
+                                                                    height="50px"></canvas>
+                                                        </div>
+                                                        <div class="col-xs-5 col-lg-5"></div>
+                                                    </div>
+                                                </div>
                                                 </div>
 
-                                            </div>
+                                                <div id="tab-eraser-options" class="tab-pane">
+                                                    <div class="row">Eraser options</div>
 
-                                            <div id="tab-eraser-options" class="tab-pane">
-                                                <div class="row">Eraser options</div>
+                                                </div>
+                                                <div id="tab-zoom-options" class="tab-pane">
+                                                    <div class="row">Zoom options</div>
 
-                                            </div>
-                                            <div id="tab-zoom-options" class="tab-pane">
-                                                <div class="row">Zoom options</div>
-
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div id="tab-labels" class="tab-pane">
-                                <div class="panel-body">test</div>
-                            </div>
-                            <div id="tab-about" class="tab-pane">
-                                <div class="panel-body"></div>
-                            </div>
+                                <div id="tab-labels" class="tab-pane">
+                                    <div class="panel-body">test</div>
+                                </div>
+                                <div id="tab-about" class="tab-pane">
+                                    <div class="panel-body"></div>
+                                </div>
 
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="footer">
-            <div class="pull-right">
+            <div class="footer">
+                <div class="pull-right">
 
-            </div>
-            <div>
-                <strong>Copyright</strong> Diego Cantor &copy; 2015-2016
-            </div>
-            <div>
+                </div>
+                <div>
+                    <strong>Copyright</strong> Diego Cantor &copy; 2015-2016
+                </div>
+                <div>
 
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Mainly scripts -->
-<script src="js/jquery-2.1.1.js"></script>
-<script src="js/bootstrap.min.js"></script>
-<script src="js/plugins/metisMenu/jquery.metisMenu.js"></script>
-<script src="js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
-<!-- Custom and plugin javascript -->
-<script src="js/inspinia.js"></script>
-<script src="js/plugins/pace/pace.min.js"></script>
-<script src="js/plugins/jquery-ui/jquery-ui.min.js"></script>
-<script src="js/plugins/ionRangeSlider/ion.rangeSlider.min.js"></script>
-<script src=""
+    <!-- Mainly scripts -->
+    <script src="js/jquery-2.1.1.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/plugins/metisMenu/jquery.metisMenu.js"></script>
+    <script src="js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
+    <!-- Custom and plugin javascript -->
+    <script src="js/inspinia.js"></script>
+    <script src="js/plugins/pace/pace.min.js"></script>
+    <script src="js/plugins/jquery-ui/jquery-ui.min.js"></script>
+    <script src="js/plugins/ionRangeSlider/ion.rangeSlider.min.js"></script>
+    <script src=""
 
 </body>
 </html>

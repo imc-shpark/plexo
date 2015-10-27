@@ -3,10 +3,16 @@
  */
 var plx = plx || {};
 
+
+plx.PI2 = Math.PI * 2;
+plx.brush = undefined;
+
+
 plx.Brush = function(size, opacity, type){
     this.size = size;
     this.opacity= opacity;
     this.type = type;
+    this.comp = 'lighten';
 };
 
 plx.Brush.prototype.setColor = function(hex){
@@ -15,7 +21,7 @@ plx.Brush.prototype.setColor = function(hex){
     g = parseInt(hex.substring(2,4), 16);
     b = parseInt(hex.substring(4,6), 16);
 
-    result = 'rgba('+r+','+g+','+b+','+this.opacity/100+')';
+    result = 'rgba('+r+','+g+','+b+','+this.opacity+')';
     return result;
 };
 
@@ -27,9 +33,11 @@ plx.setGlobalBrush = function (brush){
  * Displays an image on a canvas
  */
 plx.Slice = function(uri, dataset){
+
     this.dataset = dataset;
-    this.uri= uri;
-    this.image = new Image();
+    this.uri    = uri;
+    this.image  = new Image();
+    this.index  = undefined; //given by the dataset
 };
 
 
@@ -66,21 +74,30 @@ plx.Slice.prototype.isCurrent = function(view){
 
 
 plx.Dataset = function(folder,start_item, end_item, step) {
-    this.folder = folder;
-    this.slices = [];   //to do set operations
-    this.slicemap = {}; //to quickly access a slice by index
+    this.folder     = folder;
+    this.slices     = []; //to do set operations
+    this.slicemap   = {}; //to quickly access a slice by index
+    this.keys       = []; //easy access to keys in the slicemap
+
+
 
     if (step == undefined || step <=0) step = 1;
 
     for (var i=start_item; i<=end_item; i=i+step) {
         var filename = folder + '/' + folder.substr(folder.lastIndexOf('/') + 1) + '_' + i + '.png';
         var slice = new plx.Slice(filename, this);
+
+        slice.index = i;
         this.slices.push(slice);
         this.slicemap[i] = slice;
+        this.keys.push(i);
+
     }
+
     this.num_items = this.slices.length;
     this.num_loaded = 0;
-    console.debug('number items: '+this.num_items)
+
+    console.debug('dataset: '+folder+', number items: '+this.num_items)
 };
 
 
@@ -100,9 +117,9 @@ plx.Dataset.prototype.onLoadSlice = function(slice){
     if (this.num_loaded == this.num_items){
         console.debug('all items loaded');
     }
-
     this.progress_callback(this);
 };
+
 
 
 /**
@@ -122,102 +139,154 @@ plx.Labels = function(labels_uri){
  * Represents the annotated slice. There can only be one at a time per slice.
  */
 plx.AnnotationSlice = function(slice_id){
+
     this.slice_id = slice_id;
     this.offcanvas = document.createElement("canvas");
+    this.ctx = this.offcanvas.getContext("2d");
+
     this.data = undefined;
     this.lastX = undefined;
     this.lastY = undefined;
-    this.ctx = this.offcanvas.getContext("2d");
 
-    this.list = [];
+    this.history = new Array();
 };
 
+plx.AnnotationSlice.prototype.saveStep = function(){
+    this.history.push(this.ctx.getImageData(0,0, this.offcanvas.width, this.offcanvas.height));
+};
 
+plx.AnnotationSlice.prototype.undo = function(){
 
-plx.AnnotationSlice.prototype.update = function(label, x,y, start, view) {
+    this.history.pop();
+    this.data = this.history[this.history.length-1];
 
-    this.offcanvas.width = view.canvas.width;
-    this.offcanvas.height = view.canvas.height;
-    var ctx = this.ctx;
-    var brush = plx.brush;
-
-    if (this.data) {
-        var image = new Image();
-        image.src = this.data;
-        ctx.drawImage(image, 0, 0, view.canvas.width, view.canvas.height);
+    if (this.data == undefined){
+        this.ctx.clearRect(0,0,this.offcanvas.width, this.offcanvas.height);
+        this.data = this.ctx.getImageData(0,0,this.offcanvas.width, this.offcanvas.height);
     }
+    this.ctx.putImageData(this.data,0,0);
+};
 
-    ctx.beginPath();
-    ctx.strokeStyle = "#F0A5F6";
-    ctx.fillStyle   = "#F0A5F6";
-    ctx.lineJoin    = brush.type;
-    ctx.lineCap     = brush.type;
-    ctx.lineWidth   = brush.size;
+plx.AnnotationSlice.prototype.startAnnotation = function(x,y,view){
 
-    if (!start) {
-        ctx.moveTo(x,y);
-        ctx.lineTo(x+1,y+1);
-    }
-    else{
-        ctx.moveTo(this.lastX, this.lastY);
-        ctx.lineTo(x,y);
-    }
-    console.debug(x,y, this.lastX, this.lastY);
-    this.list.push({x:x, y:y, lastX:this.lastX, lastY:this.lastY, start:start});
+    var brush               = plx.brush;
 
-    ctx.closePath();
-    ctx.stroke();
+    this.offcanvas.width    = view.canvas.width;
+    this.offcanvas.height   = view.canvas.height;
+
+    this.ctx                = this.offcanvas.getContext("2d");
+    var ctx                 = this.ctx;
+    ctx.strokeStyle         = plx.brush.setColor("#00A5F6");
+    ctx.fillStyle           = plx.brush.setColor("#00A5F6");
+    ctx.lineJoin            = brush.type;
+    ctx.lineCap             = brush.type;
+    ctx.lineWidth           = brush.size;
 
     this.lastX = x;
     this.lastY = y;
-    this.data = this.offcanvas.toDataURL('image/png');
+
+
+    if (this.data){
+        ctx.clearRect(0,0,this.offcanvas.width, this.offcanvas.height);
+        ctx.putImageData(this.data,0,0);
+    }
+
+}
+
+
+plx.AnnotationSlice.prototype.updateAnnotation = function(x,y,view) {
+
+    var ctx = this.ctx;
+    var brush   = plx.brush;
+
+    var mouseX = x, mouseY = y;
+    var x1 = x, x2 = this.lastX, y1 = y, y2 = this.lastY;
+    var steep = (Math.abs(y2 - y1) > Math.abs(x2 - x1));
+
+    if (steep){
+        var x = x1; x1 = y1; y1 = x;
+        var y = y2; y2 = x2; x2 = y;
+    }
+
+    if (x1 > x2) {
+        var x = x1; x1 = x2; x2 = x;
+        var y = y1; y1 = y2; y2 = y;
+    }
+
+    var dx = x2 - x1,
+        dy = Math.abs(y2 - y1),
+        error = 0,
+        de = dy / dx,
+        yStep = -1,
+        y = y1;
+
+    if (y1 < y2) {
+        yStep = 1;
+    }
+
+    var bsize2 = brush.size*2;
+    for (var x = x1; x < x2; x+=1) {
+        if (brush.type == 'square') {
+            if (steep) {
+                ctx.fillRect(y-brush.size, x-brush.size, bsize2, bsize2);
+            } else {
+                ctx.fillRect(x-brush.size, y-brush.size, bsize2, bsize2);
+            }
+        }
+        else{
+            if (steep) {
+                ctx.beginPath();
+                ctx.arc(y, x, brush.size, 0, plx.PI2);
+                ctx.fill();
+
+            } else {
+                ctx.beginPath();
+                ctx.arc(x,y, brush.size, 0, plx.PI2);
+                ctx.fill();
+            }
+        }
+        error += de;
+        if (error >= 0.5) {
+            y += yStep;
+            error -= 1.0;
+        }
+    }
+
+    this.lastX = mouseX;
+    this.lastY = mouseY;
+
+
+    view.ctx.globalAlpha = 1;
+    view.ctx.clearRect(0,0,view.canvas.width, view.canvas.height);
+    view.ctx.drawImage(view.currentSlice.image, 0,0, view.canvas.width, view.canvas.height);
+
+    view.ctx.globalAlpha = plx.brush.opacity;
+    view.ctx.drawImage(this.offcanvas, 0, 0, view.canvas.width, view.canvas.height);
 
 };
 
+plx.AnnotationSlice.prototype.stopAnnotation = function(){
+    this.data = this.ctx.getImageData(0,0, this.offcanvas.width, this.offcanvas.height);
+    this.saveStep();
+};
+
+
 plx.AnnotationSlice.prototype.draw = function(view){
+    var view_ctx     = view.ctx;
+    var off_ctx      = this.ctx;
 
-    var ctx = view.ctx;
-    var brush = plx.brush;
-
-    var image2 = document.getElementById('image-id');
+    off_ctx.clearRect(0,0,this.offcanvas.width, this.offcanvas.height);
 
     if (this.data) {
-        var image = new Image();
-        image.src = this.data;
-        ctx.drawImage(image, 0, 0, view.canvas.width, view.canvas.height);
-        image2.src = this.data;
+        off_ctx.putImageData(this.data,0,0);
+
+        view.ctx.globalAlpha = 1;
+        view.ctx.clearRect(0,0,view.canvas.width, view.canvas.height);
+        view.ctx.drawImage(view.currentSlice.image, 0,0, view.canvas.width, view.canvas.height);
+
+        view_ctx.globalAlpha = plx.brush.opacity;
+        view_ctx.drawImage(this.offcanvas, 0, 0, view.canvas.width, view.canvas.height);
    }
-
-    ctx.beginPath();
-    ctx.strokeStyle = "#F0A5F6";
-    ctx.fillStyle = "#F0A5F6";
-    ctx.lineJoin = brush.type;
-    ctx.lineCap = brush.type;
-    ctx.lineWidth = brush.size;
-
-    var N = this.list.length;
-    for (var i= 0; i<N; i++){
-        var item = this.list[i];
-        var x = item.x;
-        var y = item.y;
-        var lastX = item.lastX;
-        var lastY = item.lastY;
-        var start = item.start;
-        if (!start){
-            ctx.moveTo(x,y);
-            ctx.lineTo(x+1,y+1);
-        }
-        else {
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(x, y);
-        }
-}
-    ctx.closePath();
-    ctx.stroke();
-
-    /*else {
-        ctx.drawImage(this.offcanvas, 0, 0, view.canvas.width, view.canvas.height);
-    }*/
 };
 
 
@@ -310,6 +379,9 @@ plx.View.prototype.load = function(dataset, callback){
 plx.View.prototype.showSliceByObject = function(slice){
     this.currentSlice = slice;
     this.resizeTo(slice.image.width, slice.image.height);
+
+    this.ctx.globalAlpha = 1;
+    this.ctx.clearRect(0,0, this.canvas.width, this.canvas.height);
     this.ctx.drawImage(slice.image, 0, 0, this.canvas.width, this.canvas.height);
 
 };
@@ -319,32 +391,18 @@ plx.View.prototype.showSliceByObject = function(slice){
  * dataset is loaded with step != 1).
  * @param slice
  */
-plx.View.prototype.showSliceByIndex = function(slice_index, redraw){
-
-    _redraw = redraw==undefined?false:redraw;
-
+plx.View.prototype.showSliceByIndex = function(slice_index){
     var slice = this.dataset.slicemap[slice_index];
-
     if (slice == undefined){
         console.error('slice does not exist');
         return;
     }
-
-    if (this.currentSlice != slice){
-        this.showSliceByObject(slice);
-    }
-    else if (this.currentSlice == slice && _redraw){
-        this.showSliceByObject(slice);
-    }
+    this.showSliceByObject(slice);
 };
 
 
 plx.View.prototype.showMiddleSlice = function(){
-    var keys = [];
-    for (key in this.dataset.slicemap){
-        keys.push(key);
-    }
-
+    var keys = this.dataset.keys;
     var index = Math.floor(keys.length/2);
     var slice = this.dataset.slicemap[keys[index]];
     this.showSliceByObject(slice);
@@ -353,6 +411,34 @@ plx.View.prototype.showMiddleSlice = function(){
 
 plx.View.prototype.showCurrentSlice = function(){
     this.showSliceByObject(this.currentSlice);
+};
+
+plx.View.prototype.showNextSlice = function(){
+    var keys        = this.dataset.keys;
+    var key         = this.currentSlice.index;
+    var index_key   = keys.indexOf(key);
+    var index       = undefined;
+
+    if (index_key < keys.length-1){
+        index = keys[index_key+1];
+        this.showSliceByObject(this.dataset.slicemap[index]);
+
+    }
+    return index;
+};
+
+plx.View.prototype.showPreviousSlice = function(){
+    var keys        = this.dataset.keys;
+    var key         = this.currentSlice.index;
+    var index_key   = keys.indexOf(key);
+    var index       = undefined;
+
+    if (index_key > 0){
+        index = keys[index_key-1];
+        this.showSliceByObject(this.dataset.slicemap[index]);
+    }
+
+    return index;
 };
 
 plx.View.prototype.showCurrentAnnotationSlice = function(){
@@ -379,9 +465,16 @@ plx.View.prototype.getCurrentAnnotationSlice = function(){
 };
 
 
+plx.View.prototype.undo = function(){
+    var aslice = this.getCurrentAnnotationSlice();
+    aslice.undo();
+    this.showCurrentSlice();
+    this.showCurrentAnnotationSlice();
+};
+
 plx.View.prototype.toggleFullscreen = function(){
 
-    var canvas = this.canvas;
+    /*var canvas = this.canvas;
     var memento = undefined;
 
     var ratio = window.devicePixelRatio || 1;
@@ -389,8 +482,10 @@ plx.View.prototype.toggleFullscreen = function(){
     var height = window.innerHeight * ratio;
 
     if (!this.fullscreen){
+
+        canvas.mozRequestFullScreen();
         //go fullscreen
-        memento = {};
+        /*memento = {};
         memento['width'] = canvas.width;
         memento['height'] = canvas.height;
         memento['style-position'] = canvas.style.position;
@@ -406,12 +501,13 @@ plx.View.prototype.toggleFullscreen = function(){
         canvas.style.top = 0;
         canvas.style.zIndex = 1000;
         this.fullscreen = true;
-        this.memento = memento;
+        this.memento = memento;*/
+    /*    this.fullscreen = true;
 
-    }
-    else{
+    }*/
+    /*else{
         //go back from fullscreen
-        memento = this.memento;
+        /*memento = this.memento;
         if (memento != undefined){
             canvas.width = memento['width'] ;
             canvas.height = memento['height'];
@@ -421,17 +517,20 @@ plx.View.prototype.toggleFullscreen = function(){
             canvas.style.zIndex = memento['style-z-index'];
 
         }
+        this.fullscreen = false;*/
+        /*document.mozCancelFullScreen();
         this.fullscreen = false;
-    }
+    }*/
 
-    this.showCurrentSlice();
-    this.showCurrentAnnotationSlice();
+    /*this.showCurrentSlice();
+    this.showCurrentAnnotationSlice();*/
 };
 
 
 plx.ViewInteractor = function(view){
     this.dragging = false;
     this.view = view;
+    this.aslice = undefined; //annotation slice
 };
 
 plx.ViewInteractor.prototype.connectView = function(){
@@ -449,113 +548,117 @@ plx.ViewInteractor.prototype.connectView = function(){
     canvas.addEventListener('touchmove',    function(ev){ interactor.onTouchMove(ev); }, false);
     canvas.addEventListener('touchend',     function(ev){ interactor.onTouchEnd(ev); }, false);
 
-    /*if (Hammer){
+    if (Hammer){
 
-        console.debug('hammer is included');
         this.mc = new Hammer.Manager(canvas);
         this.mc.add(new Hammer.Press({ event: 'press', pointers: 1 }));
+        this.mc.add(new Hammer.Swipe({ event: 'swipe', pointers: 2 }));
+
         this.mc.on('press', function(ev){
-            alert('press');
-            view.toggleFullscreen();
+            //view.toggleFullscreen();
         });
-    }*/
+
+        this.mc.on('swiperight', function(ev){
+            view.showNextSlice();
+        });
+
+        this.mc.on('swipeleft', function(ev){
+            view.showPreviousSlice();
+        });
+    }
 
 };
 
 plx.ViewInteractor.prototype.onMouseDown = function(ev){
 
     this.dragging = true;
-    var canvas = this.view.canvas;
-    var rect = canvas.getBoundingClientRect();
-    var x = Math.round((ev.clientX-rect.left)/(rect.right-rect.left)*canvas.width);
-    var y = Math.round((ev.clientY-rect.top)/(rect.bottom-rect.top)*canvas.height);
 
-    var view = this.view;
-    var aslice = view.getCurrentAnnotationSlice();
+    var view    = this.view,
+    canvas      = view.canvas,
+    rect        = canvas.getBoundingClientRect(),
+    x           = Math.round((ev.clientX-rect.left)/(rect.right-rect.left)*canvas.width),
+    y           = Math.round((ev.clientY-rect.top)/(rect.bottom-rect.top)*canvas.height);
 
-    aslice.update('label-any',x,y,false, this.view);
-    aslice.draw(this.view);
+    //@TODO: if brush active
+    this.aslice = view.getCurrentAnnotationSlice();
+    this.aslice.startAnnotation(x,y,view);
+    //this.aslice.draw(view);
+    //$('#btn-undo-id').removeClass('disabled');
 };
 
 plx.ViewInteractor.prototype.onMouseMove = function(ev){
 
     if  (this.dragging){
-        var canvas = this.view.canvas;
-        var rect = canvas.getBoundingClientRect();
-        var x = Math.round((ev.clientX-rect.left)/(rect.right-rect.left)*canvas.width);
-        var y = Math.round((ev.clientY-rect.top)/(rect.bottom-rect.top)*canvas.height);
 
-        var view = this.view;
-        var aslice = view.getCurrentAnnotationSlice();
-        aslice.update('label-any', x, y, true, this.view);
-        aslice.draw(this.view);
+        var view    = this.view,
+        canvas      = view.canvas,
+        rect        = canvas.getBoundingClientRect(),
+        x           = Math.round((ev.clientX-rect.left)/(rect.right-rect.left)*canvas.width),
+        y           = Math.round((ev.clientY-rect.top)/(rect.bottom-rect.top)*canvas.height);
+
+        //@TODO: if brush active
+        this.aslice.updateAnnotation(x, y, view);
+        //this.aslice.draw(view);
     }
 };
 
 plx.ViewInteractor.prototype.onMouseUp = function(ev){
     if (this.dragging) {
         this.dragging = false;
+        this.aslice.stopAnnotation();
+        this.aslice.draw(this.view);
     }
-
 };
-
 
 plx.ViewInteractor.prototype.onMouseLeave = function(ev){
     if (this.dragging){
         this.dragging = false;
     }
-
 };
-
+/**
+ * Toggles the view to/from fullscreen
+ * @param ev
+ */
 plx.ViewInteractor.prototype.onDoubleClick = function(ev){
     this.view.toggleFullscreen();
 };
-
-plx.ViewInteractor.prototype.onMouseWheel = function(ev){
-
-};
+plx.ViewInteractor.prototype.onMouseWheel = function(ev){};
 
 plx.ViewInteractor.prototype.onTouchStart = function(ev){
     if (ev.targetTouches.length !=1) return;
 
     ev.preventDefault();
-    var canvas = this.view.canvas;
-    var rect = canvas.getBoundingClientRect();
 
+    var view    = this.view,
+    canvas      = view.canvas,
+    rect        = canvas.getBoundingClientRect(),
+    touch       = ev.targetTouches[0],
+    x           = Math.round((touch.clientX-rect.left)/(rect.right-rect.left)*canvas.width),
+    y           = Math.round((touch.clientY-rect.top)/(rect.bottom-rect.top)*canvas.height);
 
-    var touch = ev.targetTouches[0];
-
-    var x = Math.round((touch.clientX-rect.left)/(rect.right-rect.left)*canvas.width);
-    var y = Math.round((touch.clientY-rect.top)/(rect.bottom-rect.top)*canvas.height);
-
-    var view = this.view;
-    var aslice = view.getCurrentAnnotationSlice();
-    aslice.update('label-any', x, y, false, this.view);
-    aslice.draw(this.view);
+    this.aslice = view.getCurrentAnnotationSlice();
+    this.aslice.startAnnotation(x,y,view);
+    //this.aslice.draw(view);
 
 };
-
 plx.ViewInteractor.prototype.onTouchMove = function(ev){
 
     if (ev.targetTouches.length !=1) return;
 
-    var canvas = this.view.canvas;
-    var rect = canvas.getBoundingClientRect();
+    var view    = this.view,
+    canvas      = view.canvas,
+    rect        = canvas.getBoundingClientRect(),
+    touch       = ev.targetTouches[0],
+    x           = Math.round((touch.clientX-rect.left)/(rect.right-rect.left)*canvas.width),
+    y           = Math.round((touch.clientY-rect.top)/(rect.bottom-rect.top)*canvas.height);
 
 
-    var touch = ev.targetTouches[0];
+    this.aslice.updateAnnotation(x, y, view);
 
-    var x = Math.round((touch.clientX-rect.left)/(rect.right-rect.left)*canvas.width);
-    var y = Math.round((touch.clientY-rect.top)/(rect.bottom-rect.top)*canvas.height);
-
-    var view = this.view;
-    var aslice = view.getCurrentAnnotationSlice();
-    aslice.update('label-any', x, y, true, this.view);
-    aslice.draw(this.view);
 };
-
 plx.ViewInteractor.prototype.onTouchEnd = function(ev){
-
+    this.aslice.stopAnnotation();
+    this.aslice.draw(view);
 };
 
 
