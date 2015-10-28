@@ -366,6 +366,8 @@ plx.View = function(canvas_id){
 
     this.interactor = new plx.ViewInteractor(this);
     this.fullscreen = false;
+
+
 };
 
 

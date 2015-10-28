@@ -39,7 +39,10 @@
 		if (percentage == 100) {
 			$('#dataset-progressbar-container-id').fadeOut(1000,
 					function () {
+
 						index = view.showMiddleSlice();
+                        //setViewDimensions();
+
 						setup_slider(index);
 					});
 			view.interactor.connectView();
@@ -154,7 +157,7 @@
 
 		ctx.fillStyle = pattern;
 		ctx.fillRect(0, 0, can.width, can.height);
-	}
+	};
 
 	function setup_zoom_button() {
 		$('#btn-zoom-id').click(function () {
@@ -162,16 +165,14 @@
 			view.showCurrentSlice();
 			view.showCurrentAnnotationSlice();
 		});
-	}
-	;
+	};
 
 
 	function setup_undo_button() {
 		$('#btn-undo-id').click(function () {
 			view.undo();
 		});
-	}
-	;
+	};
 
 	function setup_brush_color_picker() {
 		$('#brush-color-id').simplecolorpicker().on('change', function () {
@@ -185,24 +186,53 @@
 
 	//var iphone = navigator.userAgent.match(/iPhone/i)?true:false;
 	function initApp() {
-
-
-//            setup_zoom_button();
-//            setup_undo_button();
-//            setup_brush_sliders();
-//            setup_brush_type_buttons();
+        setup_zoom_button();
+        setup_undo_button();
 		setup_brush_color_picker();
-//
-//            draw_checkboard_brush_canvas(6, 6);
-//            draw_brush_preview();
 
 		view = new plx.View('plexo-canvas-id');
 		dataset = new plx.Dataset('data/ds_us_1', init_slice, end_slice, step_slice);
 		view.load(dataset, load_dataset_callback);
-	}
-	;
+	};
 
 	//var iphone = navigator.userAgent.match(/iPhone/i)?true:false;
+
+      /**
+      * Conserve aspect ratio of the orignal region. Useful when shrinking/enlarging
+      * images to fit into a certain area.
+      *
+      * @param {Number} srcWidth Source area width
+      * @param {Number} srcHeight Source area height
+      * @param {Number} maxWidth Fittable area maximum available width
+      * @param {Number} maxHeight Fittable area maximum available height
+      * @return {Object} { width, heigth }
+      */
+    function calculateAspectRatioFit(srcWidth, srcHeight, maxWidth, maxHeight) {
+
+        var ratio = Math.min(maxWidth / srcWidth, maxHeight / srcHeight);
+
+        return { width: Math.floor(srcWidth*ratio), height: Math.floor(srcHeight*ratio) };
+     }
+
+
+
+
+    function setViewDimensions(){
+        var heightNavBar = $('div.navbar-header').outerHeight();
+        var heightFooter = $('.plexo-footer').outerHeight();
+        var heightWindow = $(window).height();
+        var widthWindow  = $(window).width();
+        var hAvailable = heightWindow - (heightNavBar + heightFooter);
+
+        var ratio = calculateAspectRatioFit(view.currentSlice.image.width,
+                                            view.currentSlice.image.height,
+                                            widthWindow,
+                                            hAvailable);
+        view.height=ratio.height;
+        view.width =ratio.width;
+        view.showCurrentSlice();
+
+    };
 
 </script>
 
@@ -211,7 +241,7 @@
 <body class="top-navigation" onload="initApp()">
 
 <div id="wrapper">
-	<div id="page-wrapper" class="gray-bg">
+	<div id="page-wrapper" class="custom-background-color" style="min-height: 620px;">
 		<div class="row">
 			<nav class="navbar navbar-fixed-top custom-color-navbar custom-bottom-border" role="navigation">
 				<div class="navbar-header">
@@ -229,7 +259,7 @@
 							<a href="#"><i class="fa fa-cloud-upload fa-lg"></i><span class="nav-label">Send us your data</span> </a>
 						</li>
 						<li>
-							<a href="#"><i class="fa fa-bullhorn fa-lg"></i><span class="nav-label">Announcements</span> </a>
+							<a href="#"><i class="fa fa-bullhorn fa-lg"></i><span class="nav-label">News</span> </a>
 						</li>
 						<li>
 							<a href="#"><i class="fa fa-gear fa-lg"></i><span class="nav-label">Tour</span> </a>
@@ -252,43 +282,45 @@
 			</nav>
 		</div><!-- header row -->
 		<div class="row">
-			<div class="wrapper wrapper-content">
-				<div class="row">
-					<div class="col-lg-12">
-						<div id="dataset-progressbar-container-id" class="progress progress-striped active">
-							<div id="dataset-progressbar-id" class="progress-bar progress-bar-info" role="progressbar"
-							     aria-valuenow="0" aria-value-min="0" aria-value-max="100" style="width:100%">
-								Loading...
-							</div>
-						</div>
-					</div>
-					<div class="col-lg-12">
-						<canvas id="plexo-canvas-id"></canvas>
-					</div>
 
-					<div class="'col-lg-12">
-						<div class="wrapper">
-							<input style="display:none" type="text" id="dataset-slider-id" name="dataset-slider" value=""/>
-						</div>
-					</div>
-				</div>
-			</div>
+
+            <div class="col-lg-12 plexo-canvas-container">
+
+                <div id="dataset-progressbar-container-id" class="progress progress-striped active">
+                    <div id="dataset-progressbar-id" class="progress-bar progress-bar-info" role="progressbar"
+                         aria-valuenow="0" aria-value-min="0" aria-value-max="100" style="width:100%">
+                        Loading...
+                    </div>
+                </div>
+
+                <canvas id="plexo-canvas-id"></canvas>
+
+            </div>
+
 		</div><!-- body row-->
-		<div class="row">
-		</div>
+
+        <div class="row footer fixed plexo-footer">
+
+            <div class="row clearfix">
+                <div class="col-lg-8 col-sm-8 col-xs-8">
+                <a class="btn btn-white" href="#" data-toggle="modal" data-target="#brush-options-modal"><i class="fa fa-paint-brush"></i></a>
+                <a class="btn btn-white" href="#" data-toggle="modal"><i class="fa fa-eraser"></i></a>
+                <a id='btn-zoom-id' class="btn btn-white" href="#tab-zoom-options" data-toggle="tab"><i class="fa fa-search"></i></a>
+                <span class="inline"></span>
+                <a id='btn-undo-id' class="btn btn-white"><i class="fa fa-undo"></i></a>
+                <a class="btn btn-white"><i class="fa fa-save"></i></a>
+                 </div>
+                <div class="col-lg-4 col-sm-4 col-xs-4">
+                 <div class="wrapper"><input style="display:none" type="text" id="dataset-slider-id" name="dataset-slider" value=""/>
+                     </div>
+                </div>
+            </div>
+        </div><!--footer-->
+
 	</div><!-- page wrapper-->
 </div><!--wrapper -->
 
-<div class="footer fixed plexo-footer">
-	<div>
-		<a class="btn btn-white" href="#" data-toggle="modal" data-target="#brush-options-modal"><i class="fa fa-paint-brush"></i></a>
-		<a class="btn btn-white" href="#" data-toggle="modal"><i class="fa fa-eraser"></i></a>
-		<a id='btn-zoom-id' class="btn btn-white" href="#tab-zoom-options" data-toggle="tab"><i class="fa fa-search"></i></a>
-		<span class="inline"></span>
-		<a class="btn btn-white"><i class="fa fa-undo"></i></a>
-		<a class="btn btn-white"><i class="fa fa-save"></i></a>
-	</div>
-</div><!--footer-->
+
 
 
 <div id="brush-options-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="">
@@ -296,9 +328,8 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3 class="modal-title">Brush</h3>
-			</div>
+			</div><!-- modal header-->
 			<div class="modal-body">
-
 				<div class="row">
 					<div class="col-xs-12 col-md-12 col-lg-12">
 						<h4>Current Label</h4>
@@ -330,8 +361,6 @@
 						</select>
 					</div>
 				</div>
-
-
 				<div class="row">
 					<div class="col-xs-6 col-md-6 col-lg-6">
 						<h4>Size</h4>
@@ -355,13 +384,13 @@
 					<div class="col-xs-6 col-md-6 col-lg-6">
 						<h4>Shape</h4>
 
-						<div class="radio radio-info">
+						<div class="radio radio-info radio-inline">
 							<input id="brush-shape-circle" type="radio"
 							       checked="true"
 							       value="brush-circle" name="brush-shape"></input>
 							<label for="brush-shape-circle">circle</label>
 						</div>
-						<div class="radio radio-info">
+						<div class="radio radio-info radio-inline">
 							<input id="brush-shape-square" type="radio"
 							       value="brush-square" name="brush-shape"></input>
 							<label for="brush-shape-square">square</label>
@@ -374,15 +403,15 @@
 					</div>
 
 				</div>
+            </div><!-- modal body -->
+            <div class="modal-footer">
 
+					<button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
 
-				<div class="row">
-					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-				</div>
-			</div>
-		</div>
-	</div>
-</div>
+			</div><!--modal footer-->
+		</div><!-- modal content-->
+	</div><!-- modal dialog-->
+</div><!-- modal -->
 
 <!--    <div class="ibox">
 		<div class="ibox-title"><h5>Spine Phantom 1 <small> Find all the spinous, articular and transverse processes</small></h5> </div>
@@ -461,8 +490,11 @@
 	$('#brush-options-modal').on('shown.bs.modal', function () {
 		setup_brush_sliders();
 		setup_brush_type_buttons();
-		//setup_brush_color_picker();
-	})
+        setup_brush_color_picker();
+        draw_checkboard_brush_canvas(6, 6);
+        draw_brush_preview();
+
+    })
 </script>
 
 </body>
