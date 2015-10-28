@@ -8146,28 +8146,30 @@ body.md-skin {
   min-height: 58px;
 }
 
-.row-eq-height {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display:         flex;
-}
 
-.vcenter {
-  vertical-align: middle;
-}
+/*.footer {*/
+  /*position: absolute;*/
+  /*bottom: 0;*/
+  /*width: 100%;*/
+  /*/!* Set the fixed height of the footer here *!/*/
+  /*height: 60px;*/
+  /*background-color: #f5f5f5;*/
+/*}*/
 
-
-#page-wrapper{
-  background-color: #ddd;
-}
-
-/*html {
-  height  : 100%;
-  overflow: hidden;
-}
-
-body {
-  height  : 100%;
-  overflow: auto;
+/*html {*/
+  /*height: 100%;*/
+/*}*/
+/*html body {*/
+  /*height: 100%;*/
+  /*overflow: hidden;*/
+/*}*/
+/*.wrapper .wrapper-content{
+  top: 50px;
 }*/
+  /*position: absolute;*/
+
+  /*bottom: 60px;*/
+  /*right: 0;*/
+  /*left: 0;*/
+  /*overflow-y: auto;*/
+/*}*/
