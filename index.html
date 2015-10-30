@@ -1,117 +1,241 @@
 <!DOCTYPE html>
 <html>
-
 <head>
+	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+	<meta http-equiv="Pragma" content="no-cache"/>
+	<meta http-equiv="Expires" content="0"/>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>PLEXO - Online annotation tool for medical images</title>
+	<title>PLEXO - Labelling of medical imagery for research</title>
 
-    <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link href="font-awesome/css/font-awesome.css" rel="stylesheet">
-
-    <link href="css/animate.css" rel="stylesheet">
-    <link href="css/style.css" rel="stylesheet">
-
+	<link href="css/bootstrap.min.css" rel="stylesheet">
+	<link href="css/whhg.css" rel="stylesheet">
+	<link href="css/font-awesome.css" rel="stylesheet">
+	<link href="css/plugins/ionRangeSlider/ion.rangeSlider.css" rel="stylesheet">
+	<link href="css/plugins/ionRangeSlider/ion.rangeSlider.skinFlat.css" rel="stylesheet">
+	<link href="css/plugins/awesome-bootstrap-checkbox/awesome-bootstrap-checkbox.css" rel="stylesheet">
+	<link href="css/plugins/simplecolorpicker/jquery.simplecolorpicker.css" rel="stylesheet">
+	<link href="css/animate.css" rel="stylesheet">
+	<link href="css/style.css" rel="stylesheet">
+	<link href="css/custom.css" rel="stylesheet">
 </head>
 
-<body class="skin-1">
-
+<body class="top-navigation">
 <div id="wrapper">
-
-    <nav class="navbar-default navbar-static-side" role="navigation">
-        <div class="sidebar-collapse">
-            <ul class="nav metismenu" id="side-menu">
-                <li class="nav-header">
-                    <div class="dropdown profile-element">
-                            <a data-toggle="dropdown" class="dropdown-toggle" href="#">
-                            <span class="clear"> <span class="block m-t-xs"> <strong class="font-bold">Username</strong>
-                             </span> <span class="text-muted text-xs block">Title <b class="caret"></b></span> </span> </a>
-                            <!--<ul class="dropdown-menu animated fadeInRight m-t-xs">
-                                <li><a href="#">Logout</a></li>
-                            </ul>//-->
-                    </div>
-                    <div class="logo-element">
-                        <img src="plexo_min.png"/>
-                    </div>
-                </li>
-                <li class="active">
-                    <a href="index.html"><i class="fa fa-th-large"></i> <span class="nav-label">Images</span> <span class="fa arrow"></span></a>
-                    <ul class="nav nav-second-level">
-                        <li><a href="spine_phantom_1.html">Spine Phantom #1</a></li>
-                        <li><a href="#">Image 2</a></li>
-                        <li><a href="#">Image 3</a></li>
-                        <li><a href="#">Image 4</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="minor.html"><i class="fa fa-th-large"></i> <span class="nav-label">Minor view</span> </a>
-                </li>
-            </ul>
-
-        </div>
-    </nav>
-
-    <div id="page-wrapper" class="gray-bg">
-        <div class="row border-bottom">
-            <nav class="navbar navbar-static-top white-bg" role="navigation" style="margin-bottom: 0">
-                <div class="navbar-header">
-                    <a class="navbar-minimalize minimalize-styl-2 btn btn-primary " href="#"><i class="fa fa-bars"></i> </a>
-                    <form role="search" class="navbar-form-custom" method="post" action="#">
-                        <div class="form-group">
-                            <input type="text" placeholder="Search for something..." class="form-control" name="top-search" id="top-search">
-                        </div>
-                    </form>
-                </div>
-                <ul class="nav navbar-top-links navbar-right">
-                    <li>
-                        <a href="#">
-                            <i class="fa fa-sign-out"></i> Log out
-                        </a>
-                    </li>
-                </ul>
-
-            </nav>
-        </div>
-        <div class="wrapper wrapper-content animated fadeInDown">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="text-center m-t-lg">
-                        <h1>
-                            Welcome to PLEXO
-                        </h1>
-                        <p>
-                            Plexo is an application to segment and/or annotate medical images online.
-                            It is free of charge and made with love at the <a href="http://imaging.robarts.ca/petergrp">VASST Lab</a> by <a href="#">Diego Cantor</a>
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="footer">
-            <div class="pull-right">
-                10GB of <strong>250GB</strong> Free.
-            </div>
-            <div>
-                <strong>Copyright</strong> Diego Cantor &copy; 2015-2016
-            </div>
-        </div>
-
-    </div>
+	<div id="page-wrapper" class="custom-background-color" style="min-height: 620px;">
+		<div class="row">
+			<nav class="navbar navbar-fixed-top custom-background-color custom-bottom-border" role="navigation">
+				<div class="navbar-header custom-color-navbar">
+					<button aria-controls="navbar" aria-expanded="false" data-target="#navbar" data-toggle="collapse" class="navbar-toggle collapsed" type="button">
+						<i class="fa fa-reorder"></i>
+					</button>
+					<a href="#" class="navbar-brand"><img src="img/plexo_inv2.svg" style="height:30px"/></a>
+				</div>
+				<div class="navbar-collapse collapse" id="navbar">
+					<ul class="nav navbar-nav">
+						<li>
+							<a href="#"><i class="fa fa-database fa-lg"></i><span class="nav-label">Datasets</span></a>
+						</li>
+						<li>
+							<a href="#"><i class="fa fa-bullhorn fa-lg"></i><span class="nav-label">News</span> </a>
+						</li>
+						<li>
+							<a href="#"><i class="fa fa-gear fa-lg"></i><span class="nav-label">Tour</span> </a>
+						</li>
+						<li>
+							<a href="#"><i class="fa fa-facebook fa-lg"></i><span class="nav-label">Follow us</span> </a>
+						</li>
+						<li>
+							<a href="#"><i class="fa fa-info fa-lg"></i><span class="nav-label">About us</span> </a>
+						</li>
+					</ul>
+					<ul class="nav navbar-top-links navbar-right">
+						<li>
+							<a href="login.html">
+								<i class="fa fa-sign-out"></i> Log out
+							</a>
+						</li>
+					</ul>
+				</div>
+			</nav>
+		</div>
+		<!-- header row -->
+		<div class="row">
+			<div class="col-lg-12 plexo-canvas-container">
+				<div id="dataset-progressbar-container-id" class="progress progress-striped active">
+					<div id="dataset-progressbar-id" class="progress-bar progress-bar-info" role="progressbar"
+					     aria-valuenow="0" aria-value-min="0" aria-value-max="100" style="width:100%">
+						Loading...
+					</div>
+				</div>
+				<canvas id="plexo-canvas-id"></canvas>
+			</div>
+		</div>
+		<!-- body row-->
+		<div class="row footer fixed plexo-footer">
+			<div class="row clearfix">
+				<div class="col-lg-8 col-sm-8 col-xs-8 no-padding">
+					<a id='btn-brush-id' class="btn btn-brush" href="#" data-toggle="modal" data-target="#brush-options-modal-id"><i class="fa fa-paint-brush"></i></a>
+					<a class="btn btn-white btn-icon btn-paint-bucket" href="#" ><i class="icon-bucket"></i></a>
+					<a class="btn btn-white btn-icon" href="#" data-toggle="modal" data-target="#eraser-options-modal-id"><i class="fa fa-eraser"></i></a>
+					<a id='btn-zoom-id' class="btn btn-white btn-icon" href="#tab-zoom-options" data-toggle="tab"><i class="fa fa-search"></i></a>
+					<span class="inline"></span>
+					<a id='btn-undo-id' class="btn btn-white btn-icon"><i class="fa fa-undo"></i></a>
+					<a id='btn-redo-id' class="btn btn-white btn-icon"><i class="fa fa-repeat"></i></a>
+					<a class="btn btn-white btn-icon"><i class="fa fa-save"></i></a>
+				</div>
+				<div class="col-lg-4 col-sm-4 col-xs-4 no-padding">
+					<div class="wrapper"><input style="display:none" type="text" id="dataset-slider-id" name="dataset-slider" value=""/>
+					</div>
+				</div>
+			</div>
+			<div class="row no-padding">
+				<div class="col-lg-12 no-padding">
+					<small id="status-current-label-id" class="label label-white">Undefined</small>
+					<small id="status-current-coordinates-id" class="label label-white">x:0, y:0</small>
+				</div>
+			</div>
+		</div>
+		<!--footer-->
+	</div>
+	<!-- page wrapper-->
 </div>
+<!--wrapper -->
+<div id="brush-options-modal-id" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="">
+	<div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h3 class="modal-title">Brush</h3>
+			</div>
+			<!-- modal header-->
+			<div id='brush-options-modal-body-id' class="modal-body">
+				<div class="row">
+					<div class="col-xs-12 col-md-12 col-lg-12">
+						<h4>Current Label: <span id="current-label-text-id"></span></h4>
+						<select id="brush-color-id">
+						</select><!-- label colors selector-->
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-xs-6 col-md-6 col-lg-6">
+						<h4>Size</h4>
+
+						<div><input style="display:none" type="text" id="brush-size-slider-id" name="brush-size-slider" value=""/></div>
+					</div>
+
+					<div class="col-xs-6 col-md-6 col-lg-6">
+						<h4>Opacity</h4>
+
+						<div><input style="display:none" type="text"
+						            id="brush-opacity-slider-id"
+						            name="dataset-slider"
+						            value=""/></div>
+					</div>
+
+				</div>
+				<div class="row">
+					<div class="col-xs-6 col-md-6 col-lg-6">
+						<h4>Shape</h4>
+
+						<div class="radio radio-info">
+							<input id="brush-shape-circle-id" type="radio" checked="true" value="brush-circle" name="brush-shape"></input>
+							<label for="brush-shape-circle-id">circle</label>
+						</div>
+						<div class="radio radio-info">
+							<input id="brush-shape-square-id" type="radio" value="brush-square" name="brush-shape"></input>
+							<label for="brush-shape-square-id">square</label>
+						</div>
+					</div>
+					<div class="col-xs-6 col-md-6 col-lg-6">
+						<h4>Preview</h4>
+						<canvas id="brush-canvas-id" width="50px" height="50px"></canvas>
+					</div>
+
+				</div>
+			</div>
+			<!-- modal body -->
+			<div class="modal-footer">
+
+				<button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+
+			</div>
+			<!--modal footer-->
+		</div>
+		<!-- modal content-->
+	</div>
+	<!-- modal dialog-->
+</div>
+<!-- modal brush-options  -->
+<div id="eraser-options-modal-id" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="">
+	<div class="modal-dialog modal-sm">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h3 class="modal-title">Eraser</h3>
+			</div>
+			<!-- modal header-->
+			<div class="modal-body">
+				<div class="row">
+					<div class="col-xs-8 col-md-8 col-lg-8">
+						<h4>Size</h4>
+
+						<div><input style="display:none" type="text" id="eraser-size-slider-id" name="eraser-size-slider" value=""/></div>
+					</div>
+
+<!--    			<div class="col-xs-4 col-md-4 col-lg-4">
+						<h4>Shape</h4>
+						<div class="radio radio-info">
+							<input id="eraser-shape-circle-id" type="radio" checked="true" value="eraser-circle" name="eraser-shape"></input>
+							<label for="eraser-shape-circle-id">circle</label>
+						</div>
+						<div class="radio radio-info">
+							<input id="eraser-shape-square-id" type="radio" value="eraser-square" name="eraser-shape"></input>
+							<label for="eraser-shape-square-id">square</label>
+						</div>
+					</div> //-->
+				<!--</div>-->
+				<!--<div class="row">-->
+					<div class="col-xs-4 col-md-4col-lg-4 ">
+						<h4>Preview</h4>
+						<canvas id="eraser-canvas-id" width="50px" height="50px"></canvas>
+					</div>
+				</div>
+			</div>
+			<!-- modal body -->
+
+			<div class="modal-footer">
+				<button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+			</div>
+			<!--modal footer-->
+		</div>
+		<!-- modal content-->
+	</div>
+	<!-- modal dialog-->
+</div>
+<!-- modal eraser-options  -->
+
 
 <!-- Mainly scripts -->
 <script src="js/jquery-2.1.1.js"></script>
-<script src="js/bootstrap.min.js"></script>
+<script src="js/plugins/jquery-ui/jquery-ui.min.js"></script>
+
+<script src="js/bootstrap.js"></script>
 <script src="js/plugins/metisMenu/jquery.metisMenu.js"></script>
 <script src="js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
-
 <!-- Custom and plugin javascript -->
 <script src="js/inspinia.js"></script>
 <script src="js/plugins/pace/pace.min.js"></script>
 
+<script src="js/plugins/ionRangeSlider/ion.rangeSlider.min.js"></script>
+<script src="js/plugins/simplecolorpicker/jquery.simplecolorpicker.js"></script>
 
+<script src="js/plugins/hammer/hammer.min.js"></script>
+<script src="js/code/plexo.js"></script>
+<script src="js/code/gui.js"></script>
+
+<script>
+	initPlexo();
+</script>
 </body>
-
 </html>
