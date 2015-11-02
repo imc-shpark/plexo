@@ -12,6 +12,9 @@ LABELS = {};
 
 var GUI_TOUCH = false;
 
+
+var gui = {} || gui; //gui namespace
+
 /*-----------------------------------------------------------------------------------------------
  loading callback, progress bar
  ------------------------------------------------------------------------------------------------*/
@@ -32,10 +35,16 @@ function load_dataset_callback(dataset) {
 
 function setup_slice_slider(idx) {
     $('#dataset-slider-id').ionRangeSlider({
-        grid: false, grid_snap:true, min: init_slice, max: end_slice, step: step_slice, from: idx, onChange: function (data) {
+        grid: false,
+        grid_snap: true,
+        min: init_slice,
+        max: end_slice,
+        step: step_slice,
+        from: idx,
+        onChange: function (data) {
             index = data.from;
             VIEW.showSliceByIndex(index);
-            VIEW.showCurrentAnnotationSlice();
+
         }
     });
 };
@@ -215,13 +224,19 @@ function draw_eraser_preview() {
  ------------------------------------------------------------------------------------------------*/
 function setup_undo_button() {
     $('#btn-undo-id').click(function () {
-        VIEW.undo();
+        var successFlag  = VIEW.undo();
+        if (!successFlag){
+            show_alert('Undo','Nothing to undo',4000,'alert-info');
+        }
     });
 };
 
 function setup_redo_button() {
     $('#btn-redo-id').click(function () {
-        VIEW.redo();
+        var successFlag = VIEW.redo();
+        if (!successFlag){
+            show_alert('Redo','Nothing to redo',4000,'alert-info');
+        }
     });
 };
 
@@ -262,7 +277,7 @@ function setup_keyboard() {
             }
 
         }
-        else if (event.key == 'e' || event.key == 'E'){
+        else if (event.key == 'e' || event.key == 'E') {
             plx.setCurrentOperation(plx.OP_EROSION);
         }
         else {
@@ -276,16 +291,82 @@ function setup_keyboard() {
  ------------------------------------------------------------------------------------------------*/
 function update_brush_gui() {
     $('#btn-brush-id').css('color', BRUSH.color + ' !important');
-    $('#status-current-label-id').html(BRUSH.label_id + ' [' + BRUSH.size + ', ' + BRUSH.type + ']');
+    $('#status-current-label-id').html(BRUSH.label_id + ' [' + BRUSH.size + ', ' + BRUSH.type + ', ' + BRUSH.getHexColor() + ']');
 };
 
 function update_eraser_gui() {
     $('#status-current-label-id').html('Eraser [' + ERASER.size + ']');
+};
+
+
+
+function show_alert(title,message,delay,alert_type){
+
+    var alert  = $('#alert-message-id');
+    $(alert).removeAttr('class').attr('class','alert');
+
+
+    if (alert_type == undefined || alert_type == 'alert-info'){
+        $(alert).addClass('alert-info');
+    }
+    else{
+        $(alert).addClass(alert_type);
+    }
+
+    $(alert).html('<strong>'+title+'</strong>  '+message);
+
+
+
+   var container = $('#alert-container-id');
+
+
+
+
+   $(container).removeAttr('class').attr('class', '');
+   $(container).addClass('animated');
+   $(container).addClass('fadeInDown');
+
+
+
+    //timing out the alert
+    var timeout = window.setTimeout(function(){
+        $(container).removeClass('fadeInDown').addClass('fadeOutUp');
+
+    }, 5000);
+
+    $(container).click(function(ev){
+         window.clearTimeout(timeout);
+        $(container).removeClass('fadeInDown').addClass('fadeOutUp');
+    });
+
+    //dismissing it with a click in the alert
+    var canvas = document.getElementById('plexo-canvas-id');
+
+
+    $(canvas).on('click', function(evt){
+
+        console.debug('click');
+        window.clearTimeout(timeout);
+        $(container).removeClass('fadeInDown').addClass('fadeOutUp');
+        $(this).off(evt);
+    });
+
 }
 
 /*-----------------------------------------------------------------------------------------------
  Modal Dialogs setup
  ------------------------------------------------------------------------------------------------*/
+
+gui.CoordinatesTracker = function(view){
+    view.interactor.addObserver(this);
+};
+
+
+gui.CoordinatesTracker.prototype.processNotification = function(view_interactor){
+    $('#status-current-coordinates-id').html('x:' + plx.COORDINATES.X + ', y:' + plx.COORDINATES.Y);
+};
+
+
 function setup_modal_dialogs() {
 
     $('#brush-options-modal-id').on('shown.bs.modal', function () {
@@ -318,12 +399,14 @@ function initPlexo() {
     setup_undo_button();
     setup_redo_button();
     setup_brush_color_picker();
+
     setup_keyboard();
     setup_modal_dialogs();
 
     VIEW    = new plx.View('plexo-canvas-id');
     dataset = new plx.Dataset('data/ds_us_1', init_slice, end_slice, step_slice);
     VIEW.load(dataset, load_dataset_callback);
+    gui.ctracker  = new gui.CoordinatesTracker(VIEW);
 };
 
 /*-----------------------------------------------------------------------------------------------
@@ -331,7 +414,7 @@ function initPlexo() {
  ------------------------------------------------------------------------------------------------*/
 function set_view_dimensions() {
 
-    if (!VIEW.dataset.hasLoaded() || VIEW.currentSlice == undefined) return;
+    if (!VIEW.dataset.hasLoaded() || VIEW.current_slice == undefined) return;
 
     /**
      * Conserve aspect ratio of the orignal region. Useful when shrinking/enlarging
@@ -356,7 +439,7 @@ function set_view_dimensions() {
     var widthWindow  = $(window).width();
     var hAvailable   = heightWindow - (heightNavBar + heightFooter);
 
-    var ratio  = calculateAspectRatioFit(view.currentSlice.image.width, view.currentSlice.image.height, widthWindow, hAvailable);
+    var ratio  = calculateAspectRatioFit(view.current_slice.image.width, view.current_slice.image.height, widthWindow, hAvailable);
     var height = ratio.height;
     var width  = ratio.width;
 
@@ -369,19 +452,20 @@ function set_view_dimensions() {
     if (hAvailable > height) {
         $(view.canvas).css('top', Math.ceil((hAvailable - height) / 2));
     }
-    else if (hAvailable == height){
+    else if (hAvailable == height) {
         $(view.canvas).css('top', 0);
     }
 
     if (widthWindow > width) {
         $(view.canvas).css('left', Math.ceil((widthWindow - width) / 2));
     }
-    else if(widthWindow == width){
-        $(view.canvas).css('left',0);
+    else if (widthWindow == width) {
+        $(view.canvas).css('left', 0);
     }
 
-    view.showCurrentSlice();
-    view.showCurrentAnnotationSlice();
+    view.render();
+    //view.current_slice.updateLayer(view);
+    //view.current_annotation.updateLayer(view);
 };
 
 /**
@@ -405,9 +489,26 @@ window.addEventListener('resize', function () {
  *
  * @see http://www.stucox.com/blog/you-cant-detect-a-touchscreen/
  */
+
+var touch_tracker_setup = false;
+
 window.addEventListener('touchstart', function setHasTouch() {
     GUI_TOUCH = true;
     console.debug('touch device detected');
+
+
+     if (GUI_TOUCH && touch_tracker_setup == false){
+
+         var canvas = document.getElementById('plexo-canvas-id');
+        canvas.addEventListener('touchmove', function (ev) {
+        var rect = canvas.getBoundingClientRect();
+        var x    = Math.round((ev.clientX - rect.left) / (rect.right - rect.left) * canvas.width);
+        var y    = Math.round((ev.clientY - rect.top) /   (rect.bottom - rect.top) * canvas.height);
+        $('#status-current-coordinates-id').html('x:' + x + ', y:' + y);
+            touch_tracker_setup = true;
+    });
+    }
+
     window.removeEventListener('touchstart', setHasTouch);
 });
 

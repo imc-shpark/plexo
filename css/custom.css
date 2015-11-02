@@ -54,12 +54,14 @@
 }
 
 .top-navigation .nav > li > a {
-    color:#ededed;
+    color: #cccccc !important;
+
 }
+
 
 .top-navigation .nav > li a:hover,
 .top-navigation .nav > li a:focus{
-    background:#484848 none repeat scroll 0% 0%;
+     background-color: #4A4949 !important;
     color: #fff;
 }
 
@@ -67,7 +69,7 @@
     background-color: rgba(51, 51, 51, 0.7);
 }
 
-@media only screen and (max-width: 1046px) {
+@media only screen and (max-width: 817px) {
     .custom-color-navbar {
         background: #3bafda  none repeat scroll 0% 0% !important;
     }
@@ -75,6 +77,19 @@
     .navbar-collapse{
         background-color: rgba(59, 175, 218, 0.7);
     }
+
+    .top-navigation .nav > li > a {
+    color: #fafafa !important;
+
+}
+
+    .top-navigation .nav > li a:hover,
+    .top-navigation .nav > li a:focus{
+    background:#3bafda none repeat scroll 0% 0% !important;
+    color: #fff !important;
+
+
+}
 
 }
 .custom-background-color{
@@ -139,3 +154,22 @@ body{
     background-color: rgba(0,0,0,0);
 }
 
+.plexo-logo{
+    position:relative;
+    top:-5px;
+    height:30px;
+}
+
+#alert-container-id{
+    position:absolute;
+    top:50px;
+    width:100%;
+    margin:0px;
+    right:0px;
+    visibility:hidden;
+
+}
+
+.animated{
+    visibility: visible !important;
+}
