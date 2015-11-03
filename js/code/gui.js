@@ -12,47 +12,29 @@ LABELS = {};
 
 var GUI_TOUCH = false;
 
-
 var gui = {} || gui; //gui namespace
 
 /*-----------------------------------------------------------------------------------------------
- loading callback, progress bar
+ UTILITIES
  ------------------------------------------------------------------------------------------------*/
-function load_dataset_callback(dataset) {
-    var percentage = (dataset.num_loaded / dataset.num_items) * 100;
-    $('#dataset-progress-bar-id').css('width', percentage + '%').attr('aria-valuenow', percentage);
-    if (percentage == 100) {
-        $('#dataset-progressbar-container-id').fadeOut(1000, function () {
-
-            index = VIEW.showMiddleSlice();
-            VIEW.interactor.connectView();
-            set_view_dimensions();
-            setup_slice_slider(index);
-        });
-
-    }
-};
-
-function setup_slice_slider(idx) {
-    $('#dataset-slider-id').ionRangeSlider({
-        grid: false,
-        grid_snap: true,
-        min: init_slice,
-        max: end_slice,
-        step: step_slice,
-        from: idx,
-        onChange: function (data) {
-            index = data.from;
-            VIEW.showSliceByIndex(index);
-
-        }
-    });
+function draw_checkboard_canvas(canvas, nRow, nCol) {
+    var ctx        = canvas.getContext("2d");
+    var p          = document.createElement('canvas');
+    p.width        = 2 * canvas.width / nRow;
+    p.height       = 2 * canvas.height / nCol;
+    var pctx       = p.getContext('2d');
+    pctx.fillStyle = "rgb(200, 200, 200)";
+    pctx.fillRect(0, 0, p.width / 2, p.height / 2);
+    pctx.fillRect(p.width / 2, p.height / 2, p.width / 2, p.height / 2);
+    var pattern    = ctx.createPattern(p, "repeat");
+    ctx.fillStyle  = pattern;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 };
 
 /*-----------------------------------------------------------------------------------------------
- Set up brush tool
+ BRUSH MODAL DIALOG
  ------------------------------------------------------------------------------------------------*/
-function draw_brush_preview() {
+function update_brush_preview() {
 
     var canvas = document.getElementById('brush-canvas-id');
     var ctx    = canvas.getContext("2d");
@@ -80,7 +62,427 @@ function draw_brush_preview() {
     }
 };
 
-function setup_brush_color_picker() {
+function update_brush_color_picker() {
+
+    var labels = LABELS;
+
+    $('#brush-color-id').simplecolorpicker('destroy');
+
+    var widget = $('#brush-color-id');
+    widget.html('');
+    $.each(labels, function () {
+        widget.append($("<option />", {value: this.color, text: this.id}));
+    });
+
+    $("#brush-color-id option").filter(function () {
+        return this.text == BRUSH.label_id;
+    }).attr('selected', 'selected');
+
+    $('#current-label-text-id').html(BRUSH.label_id);
+
+    $('#brush-color-id').simplecolorpicker().on('change', function () {
+        var value            = $('#brush-color-id').val();
+        var current_label_id = $(this).find(':selected').text();
+        //BRUSH.setColor(value);
+        BRUSH.setLabelID(current_label_id);
+        $('#current-label-text-id').html(BRUSH.label_id);
+        update_brush_preview()
+    });
+
+    if (BRUSH.label_id == undefined) {
+        BRUSH.setLabelID(LABELS[0].id);
+        $('#current-label-text-id').html(BRUSH.label_id);
+        update_brush_gui();
+    }
+};
+
+function update_brush_sliders() {
+
+    var slider_size = $('#brush-size-slider-id').data('ionRangeSlider');
+    slider_size.update({from: BRUSH.size});
+
+    var slider_opacity = $('#brush-opacity-slider-id').data('ionRangeSlider');
+    slider_opacity.update({from: BRUSH.opacity});
+};
+
+function setup_brush_modal_dialog() {
+
+    $('#brush-shape-circle-id').click(function () {
+        BRUSH.type = 'round';
+        //$('.simplecolorpicker span.color').css('border-radius','30px')
+        update_brush_preview();
+    });
+
+    $('#brush-shape-square-id').click(function () {
+        BRUSH.type = 'square';
+        //$('.simplecolorpicker span.color').css('border-radius','5px')
+        update_brush_preview();
+    });
+
+    $('#brush-size-slider-id').ionRangeSlider({
+        grid: true, min: 1, max: 10, from: BRUSH.size, onChange: function (data) {
+            BRUSH.size = data.from;
+            update_brush_preview();
+        }
+    });
+
+    $('#brush-opacity-slider-id').ionRangeSlider({
+        grid: true, min: 0.5, max: 1, step: 0.1, from: BRUSH.opacity, onChange: function (data) {
+            BRUSH.setOpacity(data.from);
+            update_brush_preview();
+        }
+    });
+};
+
+/*-----------------------------------------------------------------------------------------------
+ ERASER MODAL DIALOG
+ ------------------------------------------------------------------------------------------------*/
+function update_eraser_preview() {
+    var canvas = document.getElementById('eraser-canvas-id');
+    var ctx    = canvas.getContext("2d");
+
+    var centerX = canvas.width / 2;
+    var centerY = canvas.height / 2;
+    var radius  = ERASER.size;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    draw_checkboard_canvas(canvas, 6, 6);
+
+    ctx.fillStyle = "#000";
+
+    var x1, y1, p;
+    p  = radius;
+    x1 = centerX - p;
+    y1 = centerY - p;
+    ctx.fillRect(x1, y1, p * 2, p * 2);
+};
+
+function update_clear_slice_button() {
+    var alayer = VIEW.getCurrentAnnotationLayer();
+    if (alayer.isEmpty()) {
+        $('#btn-clear-slice-id').hide();
+    }
+    else {
+        $('#btn-clear-slice-id').show();
+    }
+};
+
+function update_eraser_slider() {
+    var slider = $('#eraser-size-slider-id').data("ionRangeSlider");
+    slider.update({from: ERASER.size});
+};
+
+function setup_eraser_modal_dialog() {
+    $('#eraser-size-slider-id').ionRangeSlider({
+        grid: true, min: 1, max: 20, from: ERASER.size, onChange: function (data) {
+            ERASER.size = data.from;
+            update_eraser_preview();
+        }
+    });
+
+    $('#btn-clear-slice-id').click(function () {
+        var layer = VIEW.getCurrentAnnotationLayer();
+        if (layer.isEmpty() && gui.alert) {
+            gui.alert.showAlert('Delete', 'The layer is empty, nothing to delete', 'alarm-info', 3000);
+        }
+        else {
+            layer.clearAnnotations();
+            VIEW.render();
+        }
+    });
+};
+
+/*-----------------------------------------------------------------------------------------------
+ MAIN TOOLBAR
+ ------------------------------------------------------------------------------------------------*/
+function setup_toolbar() {
+    $('#btn-undo-id').click(function () {
+
+        if (!VIEW.undo() && gui.alert) {
+                gui.alert.showAlert('Undo', 'Nothing to undo', 'alert-info', 3000);
+        }
+        else {
+            update_selected_tool('undo');
+        }
+    });
+
+    $('#btn-redo-id').click(function () {
+
+        if (!VIEW.redo() && gui.alert) {
+                gui.alert.showAlert('Redo', 'Nothing to redo', 'alert-info', 2000);
+        }
+        else {
+            update_selected_tool('redo');
+        }
+    });
+
+    $('#btn-paint-bucket-id').click(function () {
+        plx.setCurrentOperation(plx.OP_PAINT_BUCKET);
+        update_selected_tool(plx.OP_PAINT_BUCKET);
+
+    });
+
+    $('#btn-zoom-id').click(function () {
+        plx.setCurrentOperation(plx.OP_ZOOM);
+        update_selected_tool(plx.OP_ZOOM);
+    });
+};
+
+/*-----------------------------------------------------------------------------------------------
+ UPDATE GUI METHODS
+ ------------------------------------------------------------------------------------------------*/
+function update_brush_gui() {
+    $('#btn-brush-id').css('color', BRUSH.color + ' !important');
+    $('#status-current-label-id').html(BRUSH.label_id + ' [' + BRUSH.size + ', ' + BRUSH.type + ', ' + BRUSH.getHexColor() + ']');
+};
+
+function update_eraser_gui() {
+    $('#status-current-label-id').html('Eraser [' + ERASER.size + ']');
+};
+
+function update_selected_tool(last_used) {
+    $('.btn-icon-active').removeClass('btn-icon-active');
+
+    if (last_used == plx.OP_ANNOTATE) {
+        $('#btn-brush-id').addClass('btn-icon-active');
+    }
+    else if (last_used == plx.OP_PAINT_BUCKET) {
+        $('#btn-paint-bucket-id').addClass('btn-icon-active');
+    }
+    else if (last_used == plx.OP_DELETE) {
+        $('#btn-eraser-id').addClass('btn-icon-active');
+    }
+    else if (last_used == plx.OP_ZOOM) {
+        $('#btn-zoom-id').addClass('btn-icon-active');
+    }
+    else if (last_used == 'undo') {
+        $('#btn-undo-id').addClass('btn-icon-active');
+    }
+    else if (last_used == 'redo') {
+        $('#btn-redo-id').addClass('btn-icon-active');
+    }
+};
+
+/*-----------------------------------------------------------------------------------------------
+ KEY BINDINGS
+ ------------------------------------------------------------------------------------------------*/
+function setup_keyboard() {
+
+    function inList(value, list) {
+        return (list.indexOf(value) >= 0);
+    }
+
+    document.onkeypress = function (event) {
+        var letter = String.fromCharCode(event.which).toLowerCase();
+
+        if (inList(letter, ['1', '2', '3',
+                '4', '5', '6', '7', '8', '9'])) {
+            event.preventDefault();
+            BRUSH.setLabelByIndex(parseInt(letter));
+            plx.setCurrentOperation(plx.OP_ANNOTATE);
+            update_brush_gui();
+            update_selected_tool(plx.OP_ANNOTATE);
+        }
+
+
+    };
+
+    document.onkeydown = function (event) {
+        //console.debug(event.key, event.charCode, event.ctrlKey);
+
+        var mod    = (event.ctrlKey || event.metaKey);
+        var letter = String.fromCharCode(event.which).toLowerCase();
+
+        if (mod) {
+            if (letter == 'd') { //Ctrl+D
+                event.preventDefault();
+                plx.setCurrentOperation(plx.OP_DELETE);
+                update_eraser_gui();
+
+            }
+            else if (letter == 'a') { //Ctrl+A
+                event.preventDefault();
+                plx.setCurrentOperation(plx.OP_ANNOTATE);
+                update_brush_gui()
+                update_selected_tool(plx.OP_ANNOTATE);
+            }
+
+            else if (letter == 'z' && !event.shiftKey) {
+                event.preventDefault();
+                if (!VIEW.undo() && gui.alert) {
+                    gui.alert.showAlert('Undo', 'Nothing to undo', 'alert-info', 3000);
+                }
+                else {
+                    update_selected_tool('undo');
+                }
+            }
+            else if (letter == 'z' && event.shiftKey) {
+                event.preventDefault();
+                if (!VIEW.redo() && gui.alert) {
+                    gui.alert.showAlert('Redo', 'Nothing to redo', 'alert-info', 2000);
+                }
+                else{
+                    update_selected_tool('redo');
+                }
+            }
+            else if (letter == 's') { //Ctrl + S
+                event.preventDefault();
+                plx.setCurrentOperation(plx.OP_PAINT_BUCKET);
+                update_selected_tool(plx.OP_PAINT_BUCKET);
+            }
+            else if (letter == 'x') {
+                event.preventDefault();
+                plx.setCurrentOperation(plx.OP_ZOOM);
+                update_selected_tool(plx.OP_ZOOM);
+            }
+        }
+
+    };
+};
+
+/*-----------------------------------------------------------------------------------------------
+ MODALS CONFIGURATION
+ ------------------------------------------------------------------------------------------------*/
+function configure_modal_dialogs() {
+
+    $('#brush-options-modal-id').on('show.bs.modal', function () {
+        update_brush_color_picker();
+        update_brush_sliders();
+        update_brush_gui();
+        update_brush_preview();
+    });
+
+    $('#brush-options-modal-id').on('shown.bs.modal', function () {
+        plx.setCurrentOperation(plx.OP_ANNOTATE);
+        update_selected_tool(plx.OP_ANNOTATE);
+    });
+
+    $('#brush-options-modal-id').on('hidden.bs.modal', function () {
+        update_brush_gui();
+    });
+
+    $('#eraser-options-modal-id').on('show.bs.modal', function () {
+        update_eraser_slider();
+        update_clear_slice_button();
+        update_eraser_preview();
+    });
+
+    $('#eraser-options-modal-id').on('shown.bs.modal', function () {
+        plx.setCurrentOperation(plx.OP_DELETE);
+        update_selected_tool(plx.OP_DELETE);
+    });
+
+    $('#eraser-options-modal-id').on('hidden.bs.modal', function () {
+        update_eraser_gui();
+    });
+
+};
+
+/*-----------------------------------------------------------------------------------------------
+ GUI OBJECTS
+ ------------------------------------------------------------------------------------------------*/
+gui.CoordinatesTracker = function (view) {
+    view.interactor.addObserver(this, 'coordinates-event');
+};
+
+gui.CoordinatesTracker.prototype.processNotification = function (data) {
+    $('#status-current-coordinates-id').html('x:' + plx.COORDINATES.X + ', y:' + plx.COORDINATES.Y);
+};
+
+gui.AlertWidget = function (view) {
+    view.interactor.addObserver(this, 'alert-event');
+};
+
+gui.AlertWidget.prototype.showAlert = function (title, message, alert_type, delay) {
+
+    var alert = $('#alert-message-id');
+    $(alert).removeAttr('class').attr('class', 'alert');
+
+    if (alert_type == undefined || alert_type == 'alert-info') {
+        $(alert).addClass('alert-info');
+    }
+    else {
+        $(alert).addClass(alert_type);
+    }
+
+    $(alert).html('<strong>' + title + '</strong>  ' + message);
+
+    var container = $('#alert-container-id');
+    $(container).removeAttr('class').attr('class', '');
+    $(container).addClass('animated');
+    $(container).addClass('fadeInDown');
+
+    //timing out the alert
+    var timeout = window.setTimeout(function () {
+        $(container).removeClass('fadeInDown').addClass('fadeOutUp');
+
+    }, 5000);
+
+    $(container).click(function (ev) {
+        window.clearTimeout(timeout);
+        $(container).removeClass('fadeInDown').addClass('fadeOutUp');
+    });
+
+    //dismissing it with a click in the alert
+    var canvas = document.getElementById('plexo-canvas-id');
+
+    $(canvas).on('click', function (evt) {
+        console.debug('click');
+        window.clearTimeout(timeout);
+        $(container).removeClass('fadeInDown').addClass('fadeOutUp');
+        $(this).off(evt);
+    });
+};
+
+gui.AlertWidget.prototype.processNotification = function (data) {
+    this.showAlert(data.title, data.message, data.type, 3000);
+};
+
+gui.SliceTracker = function (view) {
+    view.interactor.addObserver(this, 'slice-change-event');
+};
+
+gui.SliceTracker.prototype.processNotification = function (data) {
+    var slider = $('#dataset-slider-id').data('ionRangeSlider');
+    slider.update({from: data.slice});
+
+};
+
+/*-----------------------------------------------------------------------------------------------
+ DATA GATHERING METHODS
+ ------------------------------------------------------------------------------------------------*/
+function load_dataset_callback(dataset) {
+
+    var percentage = (dataset.num_loaded / dataset.num_items) * 100;
+
+    $('#dataset-progress-bar-id').css('width', percentage + '%').attr('aria-valuenow', percentage);
+
+    if (percentage == 100) {
+        $('#dataset-progressbar-container-id').fadeOut(1000, function () {
+            index = VIEW.showMiddleSlice();
+            VIEW.interactor.connectView();
+            update_canvas_size();
+            setup_slice_slider(index);
+        });
+    }
+};
+
+function setup_slice_slider(idx) {
+    $('#dataset-slider-id').ionRangeSlider({
+        grid     : false,
+        grid_snap: true,
+        min      : init_slice,
+        max      : end_slice,
+        step     : step_slice,
+        from     : idx,
+        onChange : function (data) {
+            index = data.from;
+            VIEW.showSliceByIndex(index);
+        }
+    });
+};
+
+function setup_labels() {
 
     var palette = [
         "#ac725e", "#d06b64", "#f83a22", "#fa573c", "#ff7537", "#ffad46", "#42d692",
@@ -98,323 +500,39 @@ function setup_brush_color_picker() {
 
     LABELS = plx.setGlobalLabels(labels);
 
-    $('#brush-color-id').simplecolorpicker('destroy');
-
-    var widget = $('#brush-color-id');
-    widget.html('');
-    $.each(labels, function () {
-        widget.append($("<option />", {value: this.color, text: this.id}));
-    });
-
-    $('#brush-color-id').simplecolorpicker().on('change', function () {
-        var value            = $('#brush-color-id').val();
-        var current_label_id = $(this).find(':selected').text();
-
-        //BRUSH.setColor(value);
-        BRUSH.setLabelID(current_label_id);
-        $('#current-label-text-id').html(BRUSH.label_id);
-        draw_brush_preview()
-    });
+    BRUSH.setLabelID(LABELS[0].id);
+    update_brush_gui();
 };
-
-function setup_label_tooltips() {
-    var children = $('#brush-color-id').next().children();
-    $.each(children, function () { $(this).attr('data-placement', 'top');});
-    $.each(children, function () { $(this).attr('data-toggle', 'tooltip');});
-    $.each(children, function () { $(this).attr('data-container', '#brush-options-modal-body-id');});
-    $('[data-toggle="tooltip"]').tooltip();
-
-    if (GUI_TOUCH) {
-        // Force click of the option on touch
-        $('[data-toggle="tooltip"]').on('shown.bs.tooltip', function () {
-            $(this).click();
-        });
-    }
-};
-
-function setup_brush_sliders() {
-    $('#brush-size-slider-id').ionRangeSlider({
-        grid: true, min: 1, max: 10, from: BRUSH.size, onChange: function (data) {
-            BRUSH.size = data.from;
-            draw_brush_preview();
-        }
-    });
-    $('#brush-opacity-slider-id').ionRangeSlider({
-        grid: true, min: 0.5, max: 1, step: 0.1, from: BRUSH.opacity, onChange: function (data) {
-            BRUSH.setOpacity(data.from);
-            draw_brush_preview();
-        }
-    });
-};
-
-function setup_brush_type_buttons() {
-    $('#brush-shape-circle-id').click(function () {
-        BRUSH.type = 'round';
-        draw_brush_preview();
-    });
-    $('#brush-shape-square-id').click(function () {
-        BRUSH.type = 'square';
-        draw_brush_preview();
-    });
-};
-
-function draw_checkboard_canvas(canvas, nRow, nCol) {
-    var ctx        = canvas.getContext("2d");
-    var p          = document.createElement('canvas');
-    p.width        = 2 * canvas.width / nRow;
-    p.height       = 2 * canvas.height / nCol;
-    var pctx       = p.getContext('2d');
-    pctx.fillStyle = "rgb(200, 200, 200)";
-    pctx.fillRect(0, 0, p.width / 2, p.height / 2);
-    pctx.fillRect(p.width / 2, p.height / 2, p.width / 2, p.height / 2);
-    var pattern    = ctx.createPattern(p, "repeat");
-    ctx.fillStyle  = pattern;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-};
-
-/*-----------------------------------------------------------------------------------------------
- Eraser options
- ------------------------------------------------------------------------------------------------*/
-function setup_eraser_options() {
-    $('#eraser-size-slider-id').ionRangeSlider({
-        grid: true, min: 1, max: 20, from: ERASER.size, onChange: function (data) {
-            ERASER.size = data.from;
-            draw_eraser_preview();
-        }
-    });
-
-//			$('#eraser-shape-circle-id').click(function () {
-//				ERASER.type = 'round';
-//				draw_eraser_preview();
-//			});
-//			$('#eraser-shape-square-id').click(function () {
-//				ERASER.type = 'square';
-//				draw_eraser_preview();
-//			});
-};
-
-function draw_eraser_preview() {
-    var canvas = document.getElementById('eraser-canvas-id');
-    var ctx    = canvas.getContext("2d");
-
-    var centerX = canvas.width / 2;
-    var centerY = canvas.height / 2;
-    var radius  = ERASER.size;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    draw_checkboard_canvas(canvas, 6, 6);
-
-    ctx.fillStyle = "#000";
-
-    //if (ERASER.type == 'round') {
-    //	ctx.beginPath();
-    //	ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-    //	ctx.fill();
-    //} else {
-    var x1, y1, p;
-    p  = radius;
-    x1 = centerX - p;
-    y1 = centerY - p;
-    ctx.fillRect(x1, y1, p * 2, p * 2);
-    //}
-};
-
-/*-----------------------------------------------------------------------------------------------
- Undo/Redo options
- ------------------------------------------------------------------------------------------------*/
-function setup_undo_button() {
-    $('#btn-undo-id').click(function () {
-        var successFlag  = VIEW.undo();
-        if (!successFlag){
-            show_alert('Undo','Nothing to undo',4000,'alert-info');
-        }
-    });
-};
-
-function setup_redo_button() {
-    $('#btn-redo-id').click(function () {
-        var successFlag = VIEW.redo();
-        if (!successFlag){
-            show_alert('Redo','Nothing to redo',4000,'alert-info');
-        }
-    });
-};
-
-/*-----------------------------------------------------------------------------------------------
- Zoom option
- ------------------------------------------------------------------------------------------------*/
-function setup_zoom_button() {
-    $('#btn-zoom-id').click(function () {
-        VIEW.toggleFullscreen();
-        VIEW.showCurrentSlice();
-        VIEW.showCurrentAnnotationSlice();
-    });
-};
-
-/*-----------------------------------------------------------------------------------------------
- Configure Keyboard Events
- ------------------------------------------------------------------------------------------------*/
-function inList(value, list) {
-    return (list.indexOf(value) >= 0);
-};
-
-function setup_keyboard() {
-    document.onkeypress = function (event) {
-        //console.debug(event.key, event.charCode, event.ctrlKey);
-        if (event.key == 'd' || event.key == 'D') {
-            plx.setCurrentOperation(plx.OP_DELETE);
-            update_eraser_gui();
-        }
-        else if (event.key == 'a' || event.key == 'A') {
-            plx.setCurrentOperation(plx.OP_ANNOTATE);
-            update_brush_gui()
-        }
-        else if (event.ctrlKey) {
-            if (inList(event.key, ['1', '2', '3', '4', '5', '6', '7', '8', '9'])) {
-                BRUSH.setLabelByIndex(parseInt(event.key));
-                plx.setCurrentOperation(plx.OP_ANNOTATE);
-                update_brush_gui();
-            }
-
-        }
-        else if (event.key == 'e' || event.key == 'E') {
-            plx.setCurrentOperation(plx.OP_EROSION);
-        }
-        else {
-            plx.setCurrentOperation(plx.OP_NONE);
-        }
-    }
-};
-
-/*-----------------------------------------------------------------------------------------------
- Update GUI Methods
- ------------------------------------------------------------------------------------------------*/
-function update_brush_gui() {
-    $('#btn-brush-id').css('color', BRUSH.color + ' !important');
-    $('#status-current-label-id').html(BRUSH.label_id + ' [' + BRUSH.size + ', ' + BRUSH.type + ', ' + BRUSH.getHexColor() + ']');
-};
-
-function update_eraser_gui() {
-    $('#status-current-label-id').html('Eraser [' + ERASER.size + ']');
-};
-
-
-
-function show_alert(title,message,delay,alert_type){
-
-    var alert  = $('#alert-message-id');
-    $(alert).removeAttr('class').attr('class','alert');
-
-
-    if (alert_type == undefined || alert_type == 'alert-info'){
-        $(alert).addClass('alert-info');
-    }
-    else{
-        $(alert).addClass(alert_type);
-    }
-
-    $(alert).html('<strong>'+title+'</strong>  '+message);
-
-
-
-   var container = $('#alert-container-id');
-
-
-
-
-   $(container).removeAttr('class').attr('class', '');
-   $(container).addClass('animated');
-   $(container).addClass('fadeInDown');
-
-
-
-    //timing out the alert
-    var timeout = window.setTimeout(function(){
-        $(container).removeClass('fadeInDown').addClass('fadeOutUp');
-
-    }, 5000);
-
-    $(container).click(function(ev){
-         window.clearTimeout(timeout);
-        $(container).removeClass('fadeInDown').addClass('fadeOutUp');
-    });
-
-    //dismissing it with a click in the alert
-    var canvas = document.getElementById('plexo-canvas-id');
-
-
-    $(canvas).on('click', function(evt){
-
-        console.debug('click');
-        window.clearTimeout(timeout);
-        $(container).removeClass('fadeInDown').addClass('fadeOutUp');
-        $(this).off(evt);
-    });
-
-}
-
-/*-----------------------------------------------------------------------------------------------
- Modal Dialogs setup
- ------------------------------------------------------------------------------------------------*/
-
-gui.CoordinatesTracker = function(view){
-    view.interactor.addObserver(this);
-};
-
-
-gui.CoordinatesTracker.prototype.processNotification = function(view_interactor){
-    $('#status-current-coordinates-id').html('x:' + plx.COORDINATES.X + ', y:' + plx.COORDINATES.Y);
-};
-
-
-function setup_modal_dialogs() {
-
-    $('#brush-options-modal-id').on('shown.bs.modal', function () {
-        setup_brush_sliders();
-        setup_brush_type_buttons();
-        draw_brush_preview();
-        setup_label_tooltips();
-        plx.setCurrentOperation(plx.OP_ANNOTATE);
-    });
-
-    $('#brush-options-modal-id').on('hidden.bs.modal', function () {
-        $('#btn-brush-id').blur();
-        update_brush_gui();
-
-    });
-
-    $('#eraser-options-modal-id').on('shown.bs.modal', function () {
-        setup_eraser_options();
-        draw_eraser_preview();
-        plx.setCurrentOperation(plx.OP_DELETE);
-        update_eraser_gui();
-    });
-}
-
 /*-----------------------------------------------------------------------------------------------
  MAIN
  ------------------------------------------------------------------------------------------------*/
 function initPlexo() {
-    setup_zoom_button();
-    setup_undo_button();
-    setup_redo_button();
-    setup_brush_color_picker();
 
+    setup_labels();
+    setup_toolbar();
     setup_keyboard();
-    setup_modal_dialogs();
+    setup_brush_modal_dialog();
+    setup_eraser_modal_dialog();
+    configure_modal_dialogs();
 
-    VIEW    = new plx.View('plexo-canvas-id');
     dataset = new plx.Dataset('data/ds_us_1', init_slice, end_slice, step_slice);
+
+    VIEW = new plx.View('plexo-canvas-id');
     VIEW.load(dataset, load_dataset_callback);
-    gui.ctracker  = new gui.CoordinatesTracker(VIEW);
+
+    gui.ctracker      = new gui.CoordinatesTracker(VIEW);
+    gui.alert         = new gui.AlertWidget(VIEW);
+    gui.slice_tracker = new gui.SliceTracker(VIEW);
 };
 
 /*-----------------------------------------------------------------------------------------------
- Global Event Listeners
+ GLOBAL METHODS - WINDOW OBJECT
  ------------------------------------------------------------------------------------------------*/
-function set_view_dimensions() {
+function update_canvas_size() {
 
-    if (!VIEW.dataset.hasLoaded() || VIEW.current_slice == undefined) return;
+    if (!VIEW.dataset.hasLoaded() || VIEW.current_slice == undefined) {
+        return;
+    }
 
     /**
      * Conserve aspect ratio of the orignal region. Useful when shrinking/enlarging
@@ -439,7 +557,9 @@ function set_view_dimensions() {
     var widthWindow  = $(window).width();
     var hAvailable   = heightWindow - (heightNavBar + heightFooter);
 
-    var ratio  = calculateAspectRatioFit(view.current_slice.image.width, view.current_slice.image.height, widthWindow, hAvailable);
+    var ratio  = calculateAspectRatioFit(view.current_slice.image.width,
+        view.current_slice.image.height,
+        widthWindow, hAvailable);
     var height = ratio.height;
     var width  = ratio.width;
 
@@ -464,8 +584,6 @@ function set_view_dimensions() {
     }
 
     view.render();
-    //view.current_slice.updateLayer(view);
-    //view.current_annotation.updateLayer(view);
 };
 
 /**
@@ -476,40 +594,54 @@ function set_view_dimensions() {
 var resize_timeout_id;
 window.addEventListener('resize', function () {
     clearTimeout(resize_timeout_id);
-    resize_timeout_id = setTimeout(set_view_dimensions, 500);
+    resize_timeout_id = setTimeout(update_canvas_size, 500);
 });
-
-//window.addEventListener('orientationchange', function(){
-//   console.debug('checking orientation');
-//   alert(window.orientation);
-//});
 
 /**
  * Detects if the device is touch-enabled
  *
  * @see http://www.stucox.com/blog/you-cant-detect-a-touchscreen/
  */
-
-var touch_tracker_setup = false;
-
+//var touch_tracker_setup = false;
 window.addEventListener('touchstart', function setHasTouch() {
     GUI_TOUCH = true;
     console.debug('touch device detected');
+    /*     if (GUI_TOUCH && touch_tracker_setup == false){
 
+     var canvas = document.getElementById('plexo-canvas-id');
+     canvas.addEventListener('touchmove', function (ev) {
+     var rect = canvas.getBoundingClientRect();
+     var x    = Math.round((ev.clientX - rect.left) / (rect.right - rect.left) * canvas.width);
+     var y    = Math.round((ev.clientY - rect.top) /   (rect.bottom - rect.top) * canvas.height);
+     $('#status-current-coordinates-id').html('x:' + x + ', y:' + y);
+     touch_tracker_setup = true;
+     });
+     }*/
+    window.removeEventListener('touchstart', setHasTouch);
+});
 
-     if (GUI_TOUCH && touch_tracker_setup == false){
+/**
+ * Center modal dialogs in screen
+ * Credit for this elegant solution to keep the modals centered goes to Cory LaViska
+ * http://www.abeautifulsite.net/vertically-centering-bootstrap-modals/
+ */
+$(function () {
+    function reposition() {
+        var modal  = $(this),
+            dialog = modal.find('.modal-dialog');
+        modal.css('display', 'block');
 
-         var canvas = document.getElementById('plexo-canvas-id');
-        canvas.addEventListener('touchmove', function (ev) {
-        var rect = canvas.getBoundingClientRect();
-        var x    = Math.round((ev.clientX - rect.left) / (rect.right - rect.left) * canvas.width);
-        var y    = Math.round((ev.clientY - rect.top) /   (rect.bottom - rect.top) * canvas.height);
-        $('#status-current-coordinates-id').html('x:' + x + ', y:' + y);
-            touch_tracker_setup = true;
-    });
+        // Dividing by two centers the modal exactly, but dividing by three
+        // or four works better for larger screens.
+        dialog.css("margin-top", Math.max(0, ($(window).height() - dialog.height()) / 2));
     }
 
-    window.removeEventListener('touchstart', setHasTouch);
+    // Reposition when a modal is shown
+    $('.modal').on('show.bs.modal', reposition);
+    // Reposition when the window is resized
+    $(window).on('resize', function () {
+        $('.modal:visible').each(reposition);
+    });
 });
 
 

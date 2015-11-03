@@ -106,45 +106,53 @@
     position:relative;
     height:100%;
     width:100%;
+    /*image-rendering: optimizeSpeed;
+    image-rendering: crisp-edges;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -o-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    -ms-interpolation-mode: nearest-neighbor;*/
 }
 
 
 
 body{
     background-color: #000;
+    overflow-y: hidden;
 }
 
-.btn-brush,
+.btn-colored-icon,
 .btn-icon{
     font-size:14pt;
-    border:0px;
+    border: none;
     background-color: rgba(50,50,50,0.0) !important;
     color:#aaa;
 }
 
+.btn-icon:hover, .btn-icon:active,.btn-icon:focus{
+    color: #E6E6E6 !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
 
-.btn-icon:hover, .btn-icon:active, .btn-icon:focus{
-    color: #fff !important;
-    border: 0px !important;
+
+.btn-colored-icon:hover, .btn-colored-icon:active, .btn-colored-icon:focus {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    color:#aaa;
+}
+
+.btn-icon-active{
+    background-color: rgba(50,50,50,0.7) !important;
     outline: none !important;
 }
 
-.btn-brush:hover {
-    color: #fff !important;
-    border: 0px !important;
-    outline: none !important;
-}
 
-.btn-brush:active, .btn-brush:focus{
-    border: 0px !important;
-    outline: none !important;
+.btn-icon:active,.btn-colored-icon:active, {
+     box-shadow:none !important;
 }
-
-.btn-icon:active, .btn-icon.active,
-.btn-brush:active, .btn-brush.active{
-     box-shadow:none;
-}
-
 
 .btn-paint-bucket{
     font-size:13pt;
@@ -153,7 +161,6 @@ body{
 .label-white{
     background-color: rgba(0,0,0,0);
 }
-
 .plexo-logo{
     position:relative;
     top:-5px;

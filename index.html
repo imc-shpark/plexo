@@ -14,9 +14,9 @@
 	<link href="css/whhg.css" rel="stylesheet">
 	<link href="css/font-awesome.css" rel="stylesheet">
 	<link href="css/plugins/ionRangeSlider/ion.rangeSlider.css" rel="stylesheet">
-	<link href="css/plugins/ionRangeSlider/ion.rangeSlider.skinFlat.css" rel="stylesheet">
+	<link href="css/plugins/ionRangeSlider/ion.rangeSlider.skinFlat.plexo.css" rel="stylesheet">
 	<link href="css/plugins/awesome-bootstrap-checkbox/awesome-bootstrap-checkbox.css" rel="stylesheet">
-	<link href="css/plugins/simplecolorpicker/jquery.simplecolorpicker.css" rel="stylesheet">
+	<link href="css/plugins/simplecolorpicker/jquery.simplecolorpicker.plexo.css" rel="stylesheet">
 	<link href="css/animate.css" rel="stylesheet">
 	<link href="css/style.css" rel="stylesheet">
 	<link href="css/custom.css" rel="stylesheet">
@@ -77,14 +77,14 @@
 		<div class="row footer fixed plexo-footer">
 			<div class="row clearfix">
 				<div class="col-lg-8 col-sm-8 col-xs-8 no-padding">
-					<a id='btn-brush-id' class="btn btn-brush" href="#" data-toggle="modal" data-target="#brush-options-modal-id"><i class="fa fa-paint-brush"></i></a>
-					<a class="btn btn-white btn-icon btn-paint-bucket" href="#" ><i class="icon-bucket"></i></a>
-					<a class="btn btn-white btn-icon" href="#" data-toggle="modal" data-target="#eraser-options-modal-id"><i class="fa fa-eraser"></i></a>
-					<a id='btn-zoom-id' class="btn btn-white btn-icon" href="#tab-zoom-options" data-toggle="tab"><i class="fa fa-search"></i></a>
+					<a id='btn-brush-id' class="btn btn-colored-icon" href="#" data-toggle="modal" data-target="#brush-options-modal-id"><i class="fa fa-paint-brush"></i></a>
+					<a id='btn-paint-bucket-id' class="btn  btn-icon btn-paint-bucket" href="#" ><i class="icon-bucket"></i></a>
+					<a id='btn-eraser-id' class="btn  btn-icon" href="#" data-toggle="modal" data-target="#eraser-options-modal-id"><i class="fa fa-eraser"></i></a>
+					<a id='btn-zoom-id' class="btn  btn-icon" href="#tab-zoom-options" data-toggle="tab"><i class="fa fa-search"></i></a>
 					<span class="inline"></span>
-					<a id='btn-undo-id' class="btn btn-white btn-icon"><i class="fa fa-undo"></i></a>
-					<a id='btn-redo-id' class="btn btn-white btn-icon"><i class="fa fa-repeat"></i></a>
-					<a class="btn btn-white btn-icon"><i class="fa fa-save"></i></a>
+					<a id='btn-undo-id' class="btn  btn-icon"><i class="fa fa-undo"></i></a>
+					<a id='btn-redo-id' class="btn  btn-icon"><i class="fa fa-repeat"></i></a>
+					<a class="btn  btn-icon"><i class="fa fa-save"></i></a>
 				</div>
 				<div class="col-lg-4 col-sm-4 col-xs-4 no-padding">
 					<div class="wrapper"><input style="display:none" type="text" id="dataset-slider-id" name="dataset-slider" value=""/>
@@ -140,7 +140,7 @@
 						<h4>Shape</h4>
 
 						<div class="radio radio-info">
-							<input id="brush-shape-circle-id" type="radio" checked="true" value="brush-circle" name="brush-shape"></input>
+							<input id="brush-shape-circle-id" type="radio" checked value="brush-circle" name="brush-shape"></input>
 							<label for="brush-shape-circle-id">circle</label>
 						</div>
 						<div class="radio radio-info">
@@ -182,20 +182,6 @@
 
 						<div><input style="display:none" type="text" id="eraser-size-slider-id" name="eraser-size-slider" value=""/></div>
 					</div>
-
-<!--    			<div class="col-xs-4 col-md-4 col-lg-4">
-						<h4>Shape</h4>
-						<div class="radio radio-info">
-							<input id="eraser-shape-circle-id" type="radio" checked="true" value="eraser-circle" name="eraser-shape"></input>
-							<label for="eraser-shape-circle-id">circle</label>
-						</div>
-						<div class="radio radio-info">
-							<input id="eraser-shape-square-id" type="radio" value="eraser-square" name="eraser-shape"></input>
-							<label for="eraser-shape-square-id">square</label>
-						</div>
-					</div> //-->
-				<!--</div>-->
-				<!--<div class="row">-->
 					<div class="col-xs-4 col-md-4col-lg-4 ">
 						<h4>Preview</h4>
 						<canvas id="eraser-canvas-id" width="50px" height="50px"></canvas>
@@ -205,6 +191,9 @@
 			<!-- modal body -->
 
 			<div class="modal-footer">
+				<button id='btn-clear-slice-id' type="button" class="btn btn-danger" data-dismiss="modal"><i class="fa fa-warning"></i>
+					Clear slice
+				</button>
 				<button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
 			</div>
 			<!--modal footer-->
