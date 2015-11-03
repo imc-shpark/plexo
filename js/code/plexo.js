@@ -1,35 +1,34 @@
 /**
  * Created by dcantor on 20/10/15.
  */
-var plx    = plx || {};
-plx.PI2    = Math.PI * 2;
-plx.BRUSH  = undefined;
-plx.ERASER = undefined;
-plx.LABELS = undefined;
-
-plx.OP_ANNOTATE     = 'plx-op-annotate';
-plx.OP_DELETE       = 'plx-op-delete';
-plx.OP_EROSION      = 'plx-op-erosion';
-plx.OP_PAINT_BUCKET = 'plx-op-paint-bucket';
-plx.OP_ZOOM         = 'plx-op-zoom';
-plx.OP_NONE         = 'plx-op-none';
-
+var plx               = plx || {};
+plx.PI2               = Math.PI * 2;
+plx.BRUSH             = undefined;
+plx.ERASER            = undefined;
+plx.LABELS            = undefined;
+plx.OP_ANNOTATE       = 'plx-op-annotate';
+plx.OP_DELETE         = 'plx-op-delete';
+plx.OP_EROSION        = 'plx-op-erosion';
+plx.OP_PAINT_BUCKET   = 'plx-op-paint-bucket';
+plx.OP_ZOOM           = 'plx-op-zoom';
+plx.OP_NONE           = 'plx-op-none';
 plx.CURRENT_OPERATION = plx.OP_NONE;
+plx.COORDINATES       = {X: 0, Y: 0};
+plx.GUI_TOUCH         = false;
 
-plx.COORDINATES                     = {X: 0, Y: 0};
 /**
  * Helper function to transform hex colors into rgb colors
  * @param hex
  * @returns {{r: Number, g: Number, b: Number}}
  */
-plx.hex2rgb                         = function (hex) {
+plx.hex2rgb                  = function (hex) {
     hex   = hex.replace('#', '');
     var r = parseInt(hex.substring(0, 2), 16);
     var g = parseInt(hex.substring(2, 4), 16);
     var b = parseInt(hex.substring(4, 6), 16);
     return {'r': r, 'g': g, 'b': b};
 }
-plx.rgb2hex                         = function (R, G, B) {
+plx.rgb2hex                  = function (R, G, B) {
     function toHex(n) {
         n = parseInt(n, 10);
         if (isNaN(n)) {
@@ -42,8 +41,8 @@ plx.rgb2hex                         = function (R, G, B) {
 
     return '#' + toHex(R) + toHex(G) + toHex(B);
 };
-plx.LabelSet                        = {}
-plx.LabelSet.getLabelByIndex        = function (label_index) {
+plx.LabelSet                 = {}
+plx.LabelSet.getLabelByIndex = function (label_index) {
     if (label_index > 0 && label_index <= plx.LABELS.length) {
         return plx.LABELS[label_index - 1];
     }
@@ -51,7 +50,7 @@ plx.LabelSet.getLabelByIndex        = function (label_index) {
         return undefined;
     }
 };
-plx.LabelSet.getLabelByID           = function (label_id) {
+plx.LabelSet.getLabelByID    = function (label_id) {
     var N = plx.LABELS.length;
     for (var i = 0; i < N; i += 1) {
         if (plx.LABELS[i].id == label_id) {
@@ -61,7 +60,7 @@ plx.LabelSet.getLabelByID           = function (label_id) {
     return undefined;
 };
 
-plx.Brush                           = function (size, opacity, type) {
+plx.Brush = function (size, opacity, type) {
     this.size     = size;
     this.opacity  = opacity;
     this.type     = type;
@@ -73,11 +72,11 @@ plx.Brush                           = function (size, opacity, type) {
     this.label_id = undefined;
 };
 
-plx.Brush.prototype.getHexColor     = function () {
+plx.Brush.prototype.getHexColor = function () {
     return plx.rgb2hex(this.r, this.g, this.b);
 };
 
-plx.Brush.prototype.setColor        = function (hex) {
+plx.Brush.prototype.setColor = function (hex) {
     var clr    = plx.hex2rgb(hex);
     this.r     = clr.r;
     this.g     = clr.g;
@@ -85,12 +84,12 @@ plx.Brush.prototype.setColor        = function (hex) {
     this.color = 'rgba(' + this.r + ',' + this.g + ',' + this.b + ',' + this.opacity + ')';
 };
 
-plx.Brush.prototype.setOpacity      = function (opacity) {
+plx.Brush.prototype.setOpacity = function (opacity) {
     this.opacity = opacity;
     this.color   = 'rgba(' + this.r + ',' + this.g + ',' + this.b + ',' + this.opacity + ')';
 };
 
-plx.Brush.prototype.setLabelID      = function (label_id) {
+plx.Brush.prototype.setLabelID = function (label_id) {
     this.label_id = label_id;
     var label     = plx.LabelSet.getLabelByID(label_id);
     this.setColor(label.color);
@@ -103,27 +102,27 @@ plx.Brush.prototype.setLabelByIndex = function (label_index) {
     this.label_id = label.id;
 };
 
-plx.setGlobalBrush                  = function (brush) {
+plx.setGlobalBrush = function (brush) {
     plx.BRUSH = brush;
     return plx.BRUSH;
 };
 
-plx.Eraser                          = function (size) {
+plx.Eraser = function (size) {
     this.size = size;
     this.type = 'square';
 };
 
-plx.setGlobalEraser                 = function (eraser) {
+plx.setGlobalEraser = function (eraser) {
     plx.ERASER = eraser;
     return plx.ERASER;
 };
 
-plx.setGlobalLabels                 = function (labels) {
+plx.setGlobalLabels = function (labels) {
     plx.LABELS = labels;
     return plx.LABELS;
 };
 
-plx.setCurrentOperation             = function (operation) {
+plx.setCurrentOperation = function (operation) {
 
     plx.CURRENT_OPERATION = operation;
     console.debug('set operation: ' + plx.CURRENT_OPERATION);
@@ -132,7 +131,7 @@ plx.setCurrentOperation             = function (operation) {
 /**
  * Displays an image on a canvas
  */
-plx.Slice                           = function (uri, dataset) {
+plx.Slice                     = function (uri, dataset) {
     this.dataset = dataset;
     this.uri     = uri;
     this.image   = new Image();
@@ -142,7 +141,7 @@ plx.Slice                           = function (uri, dataset) {
  * Loads he image to display and tries to display it
  * @param filename
  */
-plx.Slice.prototype.load            = function () {
+plx.Slice.prototype.load      = function () {
     var slice              = this;
     var xhr                = new XMLHttpRequest();
     xhr.onreadystatechange = function () {
@@ -162,7 +161,7 @@ plx.Slice.prototype.load            = function () {
  * Checks if this is the current slice
  * @returns {boolean}
  */
-plx.Slice.prototype.isCurrent       = function (view) {
+plx.Slice.prototype.isCurrent = function (view) {
     return view.currentSlice == this;
 };
 
@@ -183,11 +182,10 @@ plx.Slice.prototype.updateLayer = function (view) {
     view.canvas.height = height;
     /*---------------------------------------------*/
 
-
     ctx.globalAlpha = 1;
     ctx.clearRect(0, 0, width, height);
 
-    if (plx.zoom){
+    if (plx.zoom) {
         plx.zoom.apply(ctx);
     }
 
@@ -343,9 +341,9 @@ plx.AnnotationLayer.prototype.startAnnotation = function (x, y, view) {
     this.lastX = x;
     this.lastY = y;
 
-    if (plx.zoom){
-        this.lastX = ((this.lastX-plx.zoom.x)/ plx.zoom.factor) + plx.zoom.x;
-        this.lastY = ((this.lastY-plx.zoom.y)/ plx.zoom.factor) + plx.zoom.y;
+    if (plx.zoom) {
+        this.lastX = ((this.lastX - plx.zoom.x) / plx.zoom.factor) + plx.zoom.x;
+        this.lastY = ((this.lastY - plx.zoom.y) / plx.zoom.factor) + plx.zoom.y;
     }
 
     if (this.data) {
@@ -359,13 +357,12 @@ plx.AnnotationLayer.prototype.startAnnotation = function (x, y, view) {
 
 plx.AnnotationLayer.prototype.updateAnnotation = function (curr_x, curr_y, view) {
 
-    var ctx    = this.ctx;
+    var ctx = this.ctx;
 
-    if (plx.zoom){
-        curr_x = ((curr_x-plx.zoom.x)/ plx.zoom.factor) + plx.zoom.x;
-        curr_y = ((curr_y-plx.zoom.y)/ plx.zoom.factor) + plx.zoom.y;
+    if (plx.zoom) {
+        curr_x = ((curr_x - plx.zoom.x) / plx.zoom.factor) + plx.zoom.x;
+        curr_y = ((curr_y - plx.zoom.y) / plx.zoom.factor) + plx.zoom.y;
     }
-
 
     var brush  = plx.BRUSH;
     var eraser = plx.ERASER;
@@ -562,15 +559,12 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
     var imdata = this.ctx.getImageData(0, 0, this.sizeX, this.sizeY);
     var width  = this.sizeX, height = this.sizeY;
 
-    console.debug('paint bucket. coords: [',x,',',y,']');
-    if (plx.zoom){
-         x = Math.floor(((x-plx.zoom.x)/ plx.zoom.factor) + plx.zoom.x);
-         y = Math.floor(((y-plx.zoom.y)/ plx.zoom.factor) + plx.zoom.y);
-        console.debug('paint bucket. zoom-coords: [',x,',',y,']');
+    console.debug('paint bucket. coords: [', x, ',', y, ']');
+    if (plx.zoom) {
+        x = Math.floor(((x - plx.zoom.x) / plx.zoom.factor) + plx.zoom.x);
+        y = Math.floor(((y - plx.zoom.y) / plx.zoom.factor) + plx.zoom.y);
+        console.debug('paint bucket. zoom-coords: [', x, ',', y, ']');
     }
-
-
-
 
     var posOri = (y * width) + x;
     var ori    = {
@@ -705,7 +699,7 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
             }
         }
 
-        if (y < height-1) {
+        if (y < height - 1) {
             addNextLine(y + 1, !up, true);
         }
         if (y > 0) {
@@ -716,25 +710,23 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
     this.ctx.putImageData(imdata, 0, 0);
 };
 
-
-plx.Zoom = function(view){
-    this.view = view;
+plx.Zoom = function (view) {
+    this.view        = view;
     this.scaleFactor = 1.1;
-    this.x = undefined;
-    this.y = undefined;
-    this.factor = 1;
-    this.delta = 0;
+    this.x           = undefined;
+    this.y           = undefined;
+    this.factor      = 1;
+    this.delta       = 0;
 };
 
-plx.Zoom.prototype.setFocus = function(x,y){
+plx.Zoom.prototype.setFocus = function (x, y) {
     this.x = x;
     this.y = y;
 }
 
+plx.Zoom.prototype.zoom = function (delta) {
 
-plx.Zoom.prototype.zoom = function(delta){
-
-    if (this.delta + delta < 0 || this.delta + delta > 30){
+    if (this.delta + delta < 0 || this.delta + delta > 30) {
         return;
     }
     var ctx = this.view.ctx;
@@ -744,13 +736,12 @@ plx.Zoom.prototype.zoom = function(delta){
 
 };
 
-plx.Zoom.prototype.apply = function(ctx){
-    ctx.clearRect(0,0, this.view.canvas.width, this.view.canvas.height);
-    ctx.translate(this.x,this.y);
-    ctx.scale(this.factor,this.factor);
-    ctx.translate(-this.x,-this.y);
+plx.Zoom.prototype.apply = function (ctx) {
+    ctx.clearRect(0, 0, this.view.canvas.width, this.view.canvas.height);
+    ctx.translate(this.x, this.y);
+    ctx.scale(this.factor, this.factor);
+    ctx.translate(-this.x, -this.y);
 }
-
 
 plx.AnnotationSet = function (dataset_id, user_id, annotation_set_id, labelset_id) {
     this.annotations = {}; //dictionary containing the slice-uri, annotation slice object pairing.
@@ -792,7 +783,7 @@ plx.AnnotationSet.prototype.hasAnnotation = function (slice_uri) {
  * when requested by the different layers.
  * @constructor
  */
-plx.Renderer                  = function (view) {
+plx.Renderer = function (view) {
     this.current = undefined;
     this.stacks  = {};
     this.view    = view;
@@ -987,12 +978,10 @@ plx.ViewInteractor.prototype.connectView = function () {
     canvas.onmouseleave = function (ev) { interactor.onMouseLeave(ev); };
     canvas.onwheel      = function (ev) { interactor.onWheel(ev);};
     canvas.addEventListener('dblclick', function (ev) { interactor.onDoubleClick(ev); });
-    // canvas.addEventListener('touchstart', function (ev) { interactor.onTouchStart(ev); }, false);
-    // canvas.addEventListener('touchmove', function (ev) { interactor.onTouchMove(ev); }, false);
-    // canvas.addEventListener('touchend', function (ev) { interactor.onTouchEnd(ev); }, false);
-    if (Hammer) {
-        this._setHammerGestures;
-    }
+    canvas.addEventListener('touchstart', function (ev) { interactor.onTouchStart(ev); }, false);
+    canvas.addEventListener('touchmove', function (ev) { interactor.onTouchMove(ev); }, false);
+    canvas.addEventListener('touchend', function (ev) { interactor.onTouchEnd(ev); }, false);
+
 };
 
 plx.ViewInteractor.prototype.addObserver = function (observer, kind) {
@@ -1019,6 +1008,7 @@ plx.ViewInteractor.prototype.notify = function (kind, data) {
     }
 };
 
+var _long_press_timer                    = null;
 plx.ViewInteractor.prototype.onMouseDown = function (ev) {
     var view   = this.view,
         canvas = view.canvas,
@@ -1026,6 +1016,15 @@ plx.ViewInteractor.prototype.onMouseDown = function (ev) {
         x      = Math.round((ev.clientX - rect.left) / (rect.right - rect.left) * canvas.width),
         y      = Math.round((ev.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height);
 
+    this.initX = plx.COORDINATES.X;
+    this.initY = plx.COORDINATES.Y;
+
+    var interactor = this;
+    var event      = ev;
+
+    function callDoubleClick() {interactor.onDoubleClick(event);}
+
+    _long_press_timer = window.setTimeout(callDoubleClick, 1000);
 
     if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE ||
         plx.CURRENT_OPERATION == plx.OP_DELETE) {
@@ -1051,6 +1050,12 @@ plx.ViewInteractor.prototype.onMouseMove = function (ev) {
         x      = Math.round((ev.clientX - rect.left) / (rect.right - rect.left) * canvas.width),
         y      = Math.round((ev.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height);
 
+    if ((Math.abs(this.initX - x) > 5) &&
+        (Math.abs(this.initY - y) > 5)) {
+        //it moved too much
+        clearTimeout(_long_press_timer);
+    }
+
     if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE ||
         plx.CURRENT_OPERATION == plx.OP_DELETE) {
         if (this.dragging) {
@@ -1064,9 +1069,12 @@ plx.ViewInteractor.prototype.onMouseMove = function (ev) {
     this.notify('coordinates-event');
 };
 
-plx.ViewInteractor.prototype.onMouseUp     = function (ev) {
+plx.ViewInteractor.prototype.onMouseUp = function (ev) {
+
+    clearTimeout(_long_press_timer);
+
     if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE ||
-        plx.CURRENT_OPERATION == plx.OP_DELETE ) {
+        plx.CURRENT_OPERATION == plx.OP_DELETE) {
         if (this.dragging) {
             this.dragging = false;
             this.aslice.stopAnnotation();
@@ -1075,7 +1083,11 @@ plx.ViewInteractor.prototype.onMouseUp     = function (ev) {
     }
 
 };
-plx.ViewInteractor.prototype.onMouseLeave  = function (ev) {
+
+plx.ViewInteractor.prototype.onMouseLeave = function (ev) {
+
+    clearTimeout(_long_press_timer);
+
     if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE ||
         plx.CURRENT_OPERATION == plx.OP_DELETE ||
         plx.CURRENT_OPERATION == plx.OP_EROSION) {
@@ -1085,14 +1097,9 @@ plx.ViewInteractor.prototype.onMouseLeave  = function (ev) {
     }
 
 };
-/**
- *
- * @param ev
- */
+
 plx.ViewInteractor.prototype.onDoubleClick = function (ev) {
     ev.preventDefault();
-
-    //Quick paint bucket operation.
 
     var aslice = this.view.getCurrentAnnotationLayer();
     plx.bucket = new plx.PaintBucket(aslice);
@@ -1105,9 +1112,8 @@ plx.ViewInteractor.prototype.onDoubleClick = function (ev) {
 
     console.debug('double-click op:', plx.CURRENT_OPERATION);
 
-
     if (plx.CURRENT_OPERATION == plx.OP_PAINT_BUCKET ||
-        plx.CURRENT_OPERATION == plx.OP_ANNOTATE     ||
+        plx.CURRENT_OPERATION == plx.OP_ANNOTATE ||
         plx.CURRENT_OPERATION == plx.OP_ZOOM) {
 
         plx.bucket.fill(x, y, plx.BRUSH.getHexColor());
@@ -1129,12 +1135,11 @@ plx.ViewInteractor.prototype.onDoubleClick = function (ev) {
 
 };
 
-plx.ViewInteractor.prototype.onWheel       = function (ev) {
+plx.ViewInteractor.prototype.onWheel = function (ev) {
 
     ev.preventDefault();
 
-    var direction = (ev.deltaY<0 || ev.wheelDeltaY>0) ? 1 : -1;
-
+    var direction = (ev.deltaY < 0 || ev.wheelDeltaY > 0) ? 1 : -1;
 
     if (!ev.ctrlKey && plx.CURRENT_OPERATION != plx.OP_ZOOM) {
 
@@ -1147,17 +1152,16 @@ plx.ViewInteractor.prototype.onWheel       = function (ev) {
             slice = this.view.showNextSlice();
         }
         this.view.render();
-        this.notify('slice-change-event',{'slice':slice});
+        this.notify('slice-change-event', {'slice': slice});
         return;
     }
-    else{
-
+    else {
 
         if (plx.zoom == undefined) {
             plx.zoom = new plx.Zoom(VIEW);
         }
 
-        if (plx.zoom.factor == 1){
+        if (plx.zoom.factor == 1) {
             plx.zoom.setFocus(plx.COORDINATES.X, plx.COORDINATES.Y);
         }
 
@@ -1168,24 +1172,36 @@ plx.ViewInteractor.prototype.onWheel       = function (ev) {
     }
 
 };
+
 /*-----------------------------------------------------------------------------------------------
  Touch Events
  ------------------------------------------------------------------------------------------------*/
+var _tap_hold_timer                       = null;
 plx.ViewInteractor.prototype.onTouchStart = function (ev) {
 
     ev.preventDefault();
+
+    var view          = this.view;
+    var canvas        = view.canvas;
+    var rect          = canvas.getBoundingClientRect();
+    var touch         = ev.targetTouches[0];
+    plx.COORDINATES.X = Math.round((touch.clientX - rect.left) / (rect.right - rect.left) * canvas.width);
+    plx.COORDINATES.Y = Math.round((touch.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height);
+
+    this.initX = plx.COORDINATES.X;
+    this.initY = plx.COORDINATES.Y;
+
+    var interactor = this;
+    var event      = ev;
+    function callDoubleClick() {interactor.onDoubleClick(event);}
+
+    _tap_hold_timer = window.setTimeout(callDoubleClick, 1000);
+
     if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE ||
         plx.CURRENT_OPERATION == plx.OP_DELETE) {
         if (ev.targetTouches.length != 1) {
             return;
         }
-        ev.stopPropagation();
-        var view          = this.view;
-        var canvas        = view.canvas;
-        var rect          = canvas.getBoundingClientRect();
-        var touch         = ev.targetTouches[0];
-        plx.COORDINATES.X = Math.round((touch.clientX - rect.left) / (rect.right - rect.left) * canvas.width);
-        plx.COORDINATES.Y = Math.round((touch.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height);
 
         this.aslice = view.getCurrentAnnotationLayer();
         this.aslice.startAnnotation(plx.COORDINATES.X, plx.COORDINATES.Y, view);
@@ -1196,12 +1212,21 @@ plx.ViewInteractor.prototype.onTouchStart = function (ev) {
 
 plx.ViewInteractor.prototype.onTouchMove = function (ev) {
 
-    var view          = this.view;
-    var canvas        = view.canvas;
-    var rect          = canvas.getBoundingClientRect();
-    var touch         = ev.targetTouches[0];
+    //
+
+    var view   = this.view;
+    var canvas = view.canvas;
+    var rect   = canvas.getBoundingClientRect();
+    var touch  = ev.targetTouches[0];
+
     plx.COORDINATES.X = Math.round((touch.clientX - rect.left) / (rect.right - rect.left) * canvas.width);
     plx.COORDINATES.Y = Math.round((touch.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height);
+
+    if ((Math.abs(this.initX - plx.COORDINATES.X) > 5) &&
+        (Math.abs(this.initY - plx.COORDINATES.Y) > 5)) {
+        //it moved too much
+        clearTimeout(_tap_hold_timer);
+    }
 
     if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE ||
         plx.CURRENT_OPERATION == plx.OP_DELETE) {
@@ -1216,6 +1241,9 @@ plx.ViewInteractor.prototype.onTouchMove = function (ev) {
 };
 
 plx.ViewInteractor.prototype.onTouchEnd = function (ev) {
+
+    clearTimeout(_tap_hold_timer);
+
     if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE ||
         plx.CURRENT_OPERATION == plx.OP_DELETE) {
         this.aslice.stopAnnotation();
@@ -1223,34 +1251,11 @@ plx.ViewInteractor.prototype.onTouchEnd = function (ev) {
     }
 };
 
-plx.ViewInteractor.prototype._setHammerGestures = function () {
-
-    console.debug('setting hammer gestures');
-
-    this.mc = new Hammer.Manager(canvas);
-    this.mc.add(new Hammer.Press({event: 'press', pointers: 1}));
-    this.mc.add(new Hammer.Swipe({event: 'swipe', pointers: 1}));
-    this.mc.add(new Hammer.Tap({event: 'doubletap', taps: 2}));
-
-    this.mc.on('press', function (ev) {
-        alert('OK');
-        plx.setCurrentOperation(plx.OP_NONE);
-    });
-    this.mc.on('swiperight', function (ev) {
-        if (plx.CURRENT_OPERATION == plx.OP_NONE) {
-            view.showNextSlice();
-        }
-    });
-    this.mc.on('swipeleft', function (ev) {
-        if (plx.CURRENT_OPERATION == plx.OP_NONE) {
-            view.showPreviousSlice();
-        }
-    });
-
-    this.mc.on('doubletap tap', function (ev) {
-        if (ev.taps == 2) {
-            ev.preventDefault();
-        }
-    });
-};
-
+/**
+ * Detects if the device is touch-enabled
+ */
+window.addEventListener('touchstart', function setHasTouch() {
+    plx.GUI_TOUCH = true;
+    console.debug('touch device detected');
+    window.removeEventListener('touchstart', setHasTouch);
+});

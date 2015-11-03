@@ -10,7 +10,7 @@ BRUSH  = plx.setGlobalBrush(new plx.Brush(5, 0.5, 'round'));
 ERASER = plx.setGlobalEraser(new plx.Eraser(10));
 LABELS = {};
 
-var GUI_TOUCH = false;
+
 
 var gui = {} || gui; //gui namespace
 
@@ -597,28 +597,7 @@ window.addEventListener('resize', function () {
     resize_timeout_id = setTimeout(update_canvas_size, 500);
 });
 
-/**
- * Detects if the device is touch-enabled
- *
- * @see http://www.stucox.com/blog/you-cant-detect-a-touchscreen/
- */
-//var touch_tracker_setup = false;
-window.addEventListener('touchstart', function setHasTouch() {
-    GUI_TOUCH = true;
-    console.debug('touch device detected');
-    /*     if (GUI_TOUCH && touch_tracker_setup == false){
 
-     var canvas = document.getElementById('plexo-canvas-id');
-     canvas.addEventListener('touchmove', function (ev) {
-     var rect = canvas.getBoundingClientRect();
-     var x    = Math.round((ev.clientX - rect.left) / (rect.right - rect.left) * canvas.width);
-     var y    = Math.round((ev.clientY - rect.top) /   (rect.bottom - rect.top) * canvas.height);
-     $('#status-current-coordinates-id').html('x:' + x + ', y:' + y);
-     touch_tracker_setup = true;
-     });
-     }*/
-    window.removeEventListener('touchstart', setHasTouch);
-});
 
 /**
  * Center modal dialogs in screen
@@ -644,7 +623,12 @@ $(function () {
     });
 });
 
-
+/**
+ * Deactivate global touch events (tested on ipad so far)
+ */
+//document.ontouchmove = function(event){
+//    event.preventDefault();
+//}
 
 
 
