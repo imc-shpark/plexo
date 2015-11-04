@@ -727,6 +727,9 @@ plx.Zoom.prototype.setFocus = function (x, y) {
 plx.Zoom.prototype.zoom = function (delta) {
 
     if (this.delta + delta < 0 || this.delta + delta > 30) {
+        if (this.delta +delta <0) {
+            this.factor = 1;
+        }
         return;
     }
     var ctx = this.view.ctx;
@@ -965,7 +968,12 @@ plx.ViewInteractor = function (view) {
     this.dragging = false;
     this.view     = view;
     this.aslice   = undefined; //annotation slice
-    this.observers = {};
+    this.observers         = {};
+    this._tap_hold_timer   = null;
+    this._long_press_timer = null;
+    this._ongoing_touches  = [];
+    this._distance         = 0;
+    this._midpoint         = 0;
 };
 
 plx.ViewInteractor.prototype.connectView = function () {
@@ -1008,7 +1016,6 @@ plx.ViewInteractor.prototype.notify = function (kind, data) {
     }
 };
 
-var _long_press_timer                    = null;
 plx.ViewInteractor.prototype.onMouseDown = function (ev) {
     var view   = this.view,
         canvas = view.canvas,
@@ -1022,9 +1029,11 @@ plx.ViewInteractor.prototype.onMouseDown = function (ev) {
     var interactor = this;
     var event      = ev;
 
-    function callDoubleClick() {interactor.onDoubleClick(event);}
+    function callDoubleClick() {
+        interactor.onDoubleClick(event);
+    }
 
-    _long_press_timer = window.setTimeout(callDoubleClick, 1000);
+    this._long_press_timer = window.setTimeout(callDoubleClick, 1000);
 
     if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE ||
         plx.CURRENT_OPERATION == plx.OP_DELETE) {
@@ -1051,9 +1060,8 @@ plx.ViewInteractor.prototype.onMouseMove = function (ev) {
         y      = Math.round((ev.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height);
 
     if ((Math.abs(this.initX - x) > 5) &&
-        (Math.abs(this.initY - y) > 5)) {
-        //it moved too much
-        clearTimeout(_long_press_timer);
+        (Math.abs(this.initY - y) > 5)) { //it moved too much
+        clearTimeout(this._long_press_timer);
     }
 
     if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE ||
@@ -1071,7 +1079,7 @@ plx.ViewInteractor.prototype.onMouseMove = function (ev) {
 
 plx.ViewInteractor.prototype.onMouseUp = function (ev) {
 
-    clearTimeout(_long_press_timer);
+    clearTimeout(this._long_press_timer);
 
     if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE ||
         plx.CURRENT_OPERATION == plx.OP_DELETE) {
@@ -1081,12 +1089,11 @@ plx.ViewInteractor.prototype.onMouseUp = function (ev) {
 
         }
     }
-
 };
 
 plx.ViewInteractor.prototype.onMouseLeave = function (ev) {
 
-    clearTimeout(_long_press_timer);
+    clearTimeout(this._long_press_timer);
 
     if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE ||
         plx.CURRENT_OPERATION == plx.OP_DELETE ||
@@ -1095,7 +1102,6 @@ plx.ViewInteractor.prototype.onMouseLeave = function (ev) {
             this.dragging = false;
         }
     }
-
 };
 
 plx.ViewInteractor.prototype.onDoubleClick = function (ev) {
@@ -1176,79 +1182,214 @@ plx.ViewInteractor.prototype.onWheel = function (ev) {
 /*-----------------------------------------------------------------------------------------------
  Touch Events
  ------------------------------------------------------------------------------------------------*/
-var _tap_hold_timer                       = null;
+plx.ViewInteractor.prototype._getDistance = function (arr) {
+    var x = Math.pow(arr[0] - arr[2], 2);
+    var y = Math.pow(arr[1] - arr[3], 2);
+    return Math.sqrt(x + y);
+};
+
+plx.ViewInteractor.prototype._getMidpoint = function (arr) {
+    var coords = {};
+    coords.x   = (arr[0] + arr[2]) / 2;
+    coords.y   = (arr[1] + arr[3]) / 2;
+    return coords;
+};
+
+function copyTouch(touch) {
+    return {
+        identifier: touch.identifier,
+        pageX     : touch.pageX,
+        pageY     : touch.pageY,
+        clientX   : touch.clientX,
+        clientY   : touch.clientY
+    };
+};
+
+function ongoingTouchIndexById(idToFind,ongoingTouches) {
+
+    for (var i = 0; i < ongoingTouches.length; i++) {
+        if (ongoingTouches[i].identifier == idToFind) {
+            return i;
+        }
+    }
+    return -1;
+};
+
 plx.ViewInteractor.prototype.onTouchStart = function (ev) {
 
     ev.preventDefault();
 
-    var view          = this.view;
-    var canvas        = view.canvas;
-    var rect          = canvas.getBoundingClientRect();
-    var touch         = ev.targetTouches[0];
-    plx.COORDINATES.X = Math.round((touch.clientX - rect.left) / (rect.right - rect.left) * canvas.width);
-    plx.COORDINATES.Y = Math.round((touch.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height);
+    message('started touch');
 
-    this.initX = plx.COORDINATES.X;
-    this.initY = plx.COORDINATES.Y;
+    var view    = this.view;
+    var canvas  = view.canvas;
+    var rect    = canvas.getBoundingClientRect();
+    var touches = ev.changedTouches;
 
-    var interactor = this;
-    var event      = ev;
-    function callDoubleClick() {interactor.onDoubleClick(event);}
+    for (var i = 0; i < touches.length; i++) {
+        this._ongoing_touches.push(copyTouch(touches[i]));
+    }
 
-    _tap_hold_timer = window.setTimeout(callDoubleClick, 1000);
+    touches = this._ongoing_touches;
 
-    if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE ||
-        plx.CURRENT_OPERATION == plx.OP_DELETE) {
-        if (ev.targetTouches.length != 1) {
-            return;
+    if (touches.length == 1) {
+
+        var touch = touches[0];
+
+        plx.COORDINATES.X = Math.round((touch.clientX - rect.left) / (rect.right - rect.left) * canvas.width);
+        plx.COORDINATES.Y = Math.round((touch.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height);
+
+        this.initX = plx.COORDINATES.X;
+        this.initY = plx.COORDINATES.Y;
+
+        var interactor = this;
+        var event      = ev;
+
+        event.clientX = touch.clientX;
+        event.clientY = touch.clientY;
+
+        function callDoubleClick() {
+            interactor.onDoubleClick(event);
         }
 
-        this.aslice = view.getCurrentAnnotationLayer();
-        this.aslice.startAnnotation(plx.COORDINATES.X, plx.COORDINATES.Y, view);
+        this._tap_hold_timer = window.setTimeout(callDoubleClick, 1000);
 
-        //this.notify();
+        if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE ||
+            plx.CURRENT_OPERATION == plx.OP_DELETE) {
+            this.aslice = view.getCurrentAnnotationLayer();
+            this.aslice.startAnnotation(plx.COORDINATES.X, plx.COORDINATES.Y, view);
+            this.notify('coordinates-event');
+        }
+    }
+    else if (touches.length == 2) {
+        message('zoom start');
+        window.clearTimeout(this._tap_hold_timer);
+
+        var coords = [];
+        for (var i = 0, touch2; touch2 = touches[i]; i++) {
+            var x = Math.round((touch2.clientX - rect.left) / (rect.right - rect.left) * canvas.width);
+            var y = Math.round((touch2.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height);
+            coords.push(x, y);
+        }
+
+        this._distance = this._getDistance(coords);
+        this._midpoint = this._getMidpoint(coords);
+        this._last_distance = undefined;
+
     }
 };
 
 plx.ViewInteractor.prototype.onTouchMove = function (ev) {
 
-    //
 
-    var view   = this.view;
-    var canvas = view.canvas;
-    var rect   = canvas.getBoundingClientRect();
-    var touch  = ev.targetTouches[0];
 
-    plx.COORDINATES.X = Math.round((touch.clientX - rect.left) / (rect.right - rect.left) * canvas.width);
-    plx.COORDINATES.Y = Math.round((touch.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height);
+    var view    = this.view;
+    var canvas  = view.canvas;
+    var rect    = canvas.getBoundingClientRect();
 
-    if ((Math.abs(this.initX - plx.COORDINATES.X) > 5) &&
-        (Math.abs(this.initY - plx.COORDINATES.Y) > 5)) {
-        //it moved too much
-        clearTimeout(_tap_hold_timer);
-    }
+    var touches = ev.targetTouches;
+    var changed_touches = ev.changedTouches;
 
-    if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE ||
-        plx.CURRENT_OPERATION == plx.OP_DELETE) {
-        if (ev.targetTouches.length != 1) {
-            return;
+
+    if (touches.length == 1 && changed_touches.length == 1) { //annotating
+
+        message('annotating..');
+
+        var touch = touches[0];
+        plx.COORDINATES.X = Math.round((touch.clientX - rect.left) / (rect.right - rect.left) * canvas.width);
+        plx.COORDINATES.Y = Math.round((touch.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height);
+
+        if ((Math.abs(this.initX - plx.COORDINATES.X) > 5) &&
+            (Math.abs(this.initY - plx.COORDINATES.Y) > 5)) {
+            //it moved too much
+            clearTimeout(this._tap_hold_timer);
         }
 
-        this.aslice.updateAnnotation(plx.COORDINATES.X, plx.COORDINATES.Y, view);
+        if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE ||
+            plx.CURRENT_OPERATION == plx.OP_DELETE) {
+            if (ev.targetTouches.length != 1) {
+                return;
+            }
+
+            this.aslice.updateAnnotation(plx.COORDINATES.X, plx.COORDINATES.Y, view);
+
+        }
+        this.notify('coordinates-event');
+    }
+
+
+    if (touches.length == 2 && (changed_touches.length == 1 || changed_touches.length == 2)) {
+
+
+        var coords = [];
+        for (var i = 0, touch2; touch2 = touches[i]; i++) {
+            var x = Math.round((touch2.clientX - rect.left) / (rect.right - rect.left) * canvas.width);
+            var y = Math.round((touch2.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height);
+            coords.push(x, y);
+        }
+
+        var distance = this._getDistance(coords);
+
+        if (this._last_distance == undefined){
+            this._last_distance = this._distance;
+        }
+
+
+        var direction = (distance >= this._last_distance)?0.3:-0.3;
+        message('zooming ');
+
+
+        this._last_distance = distance;
+
+        var midpoint = this._getMidpoint(coords);
+
+
+
+        if (plx.zoom == undefined) {
+            plx.zoom = new plx.Zoom(VIEW);
+        }
+
+        if (plx.zoom.factor == 1) {
+            plx.zoom.setFocus(midpoint.x, midpoint.y);
+        };
+
+        plx.zoom.zoom(direction);
+        this.view.render();
 
     }
-    //this.notify();
+
 };
 
 plx.ViewInteractor.prototype.onTouchEnd = function (ev) {
 
-    clearTimeout(_tap_hold_timer);
+    message('touch end');
 
-    if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE ||
-        plx.CURRENT_OPERATION == plx.OP_DELETE) {
-        this.aslice.stopAnnotation();
-        this.view.render();
+    clearTimeout(this._tap_hold_timer);
+
+    var touches = ev.changedTouches;
+
+    for (var i=0; i<touches.length;i++){ // remove the touch and see what we are left with
+        var idx = ongoingTouchIndexById(touches[i].identifier, this._ongoing_touches);
+        if (idx>=0){
+            this._ongoing_touches.splice(idx, 1);
+        }
     }
+
+    if (touches.length == 1 && this._ongoing_touches.length == 0)     {
+        if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE ||
+            plx.CURRENT_OPERATION == plx.OP_DELETE) {
+            this.aslice.stopAnnotation();
+            this.view.render();
+        }
+    }
+    else if (touches.length == 2 || (touches.lenght == 1 && this._ongoing_touches.length == 1) ){
+        this._last_distance = undefined;
+        message('zoom end');
+    }
+};
+
+function message(text){
+    document.getElementById('status-message-id').innerHTML = text;
 };
 
 /**
@@ -1259,3 +1400,10 @@ window.addEventListener('touchstart', function setHasTouch() {
     console.debug('touch device detected');
     window.removeEventListener('touchstart', setHasTouch);
 });
+
+/**
+ * Deactivate global touch events (tested on ipad so far)
+ */
+document.ontouchmove = function (event) {
+    event.preventDefault();
+}

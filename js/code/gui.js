@@ -386,7 +386,7 @@ gui.CoordinatesTracker = function (view) {
 };
 
 gui.CoordinatesTracker.prototype.processNotification = function (data) {
-    $('#status-current-coordinates-id').html('x:' + plx.COORDINATES.X + ', y:' + plx.COORDINATES.Y);
+    document.getElementById('status-current-coordinates-id').innerHTML = 'x:' + plx.COORDINATES.X + ', y:' + plx.COORDINATES.Y;
 };
 
 gui.AlertWidget = function (view) {
@@ -623,12 +623,7 @@ $(function () {
     });
 });
 
-/**
- * Deactivate global touch events (tested on ipad so far)
- */
-//document.ontouchmove = function(event){
-//    event.preventDefault();
-//}
+
 
 
 
