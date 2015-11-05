@@ -8,18 +8,26 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 
-	<title>PLEXO - Labelling of medical imagery for research</title>
+	<title>PLEXO - Online Medical Annotation</title>
 
-	<link href="css/bootstrap.min.css" rel="stylesheet">
-	<link href="css/whhg.css" rel="stylesheet">
-	<link href="css/font-awesome.css" rel="stylesheet">
-	<link href="css/plugins/ionRangeSlider/ion.rangeSlider.css" rel="stylesheet">
-	<link href="css/plugins/ionRangeSlider/ion.rangeSlider.skinFlat.plexo.css" rel="stylesheet">
-	<link href="css/plugins/awesome-bootstrap-checkbox/awesome-bootstrap-checkbox.css" rel="stylesheet">
-	<link href="css/plugins/simplecolorpicker/jquery.simplecolorpicker.plexo.css" rel="stylesheet">
-	<link href="css/animate.css" rel="stylesheet">
-	<link href="css/style.css" rel="stylesheet">
-	<link href="css/custom.css" rel="stylesheet">
+	<link href="_/css/bootstrap.min.css" rel="stylesheet">
+	<link href="_/css/webglyphs.css" rel="stylesheet">
+	<link href="_/css/font-awesome.css" rel="stylesheet">
+
+	<link href="_/css/plugins/ion_range_slider/ion.rangeSlider.css" rel="stylesheet">
+	<link href="_/css/plugins/ion_range_slider/ion.rangeSlider.flat.plexo.css" rel="stylesheet">
+	<!--<link href="_/css/plugins/ion_range_slider/ion.rangeSlider.skinFlat.css" rel="stylesheet">-->
+
+	<link href="_/css/plugins/bs_checkbox/awesome-bootstrap-checkbox.css" rel="stylesheet">
+	<link href="_/css/plugins/simple_color_picker/jquery.simplecolorpicker.plexo.css" rel="stylesheet">
+
+	<link href="_/css/plugins/no_ui_slider/nouislider.pips.plexo.css" rel="stylesheet">
+	<link href="_/css/plugins/no_ui_slider/nouislider.tooltips.plexo.css" rel="stylesheet">
+	<link href="_/css/plugins/no_ui_slider/nouislider.plexo.css" rel="stylesheet">
+
+	<link href="_/css/animate.css" rel="stylesheet">
+	<link href="_/css/style.css" rel="stylesheet">
+	<link href="_/css/custom.css" rel="stylesheet">
 </head>
 
 <body class="top-navigation">
@@ -31,7 +39,7 @@
 					<button aria-controls="navbar" aria-expanded="false" data-target="#navbar" data-toggle="collapse" class="navbar-toggle collapsed" type="button">
 						<i class="fa fa-reorder"></i>
 					</button>
-					<a href="#" class="navbar-brand"><img src="img/plexo_inv2.svg" class="plexo-logo"/></a>
+					<a href="#" class="navbar-brand"><img src="_/img/plexo_inv2.svg" class="plexo-logo"/></a>
 				</div>
 				<div class="navbar-collapse collapse" id="navbar">
 					<ul class="nav navbar-nav">
@@ -53,7 +61,7 @@
 					</ul>
 					<ul class="nav navbar-top-links navbar-right">
 						<li>
-							<a href="login.html">
+							<a href="#">
 								<i class="fa fa-sign-out"></i> Log out
 							</a>
 						</li>
@@ -87,7 +95,7 @@
 					<a class="btn  btn-icon"><i class="fa fa-save"></i></a>
 				</div>
 				<div class="col-lg-4 col-sm-4 col-xs-4 no-padding">
-					<div class="wrapper"><input style="display:none" type="text" id="dataset-slider-id" name="dataset-slider" value=""/>
+					<div class="wrapper"><div id="dataset-slider-id" ></div>
 					</div>
 				</div>
 			</div>
@@ -141,11 +149,11 @@
 						<h4>Shape</h4>
 
 						<div class="radio radio-info">
-							<input id="brush-shape-circle-id" type="radio" checked value="brush-circle" name="brush-shape"></input>
+							<input id="brush-shape-circle-id" type="radio" checked value="brush-circle" name="brush-shape">
 							<label for="brush-shape-circle-id">circle</label>
 						</div>
 						<div class="radio radio-info">
-							<input id="brush-shape-square-id" type="radio" value="brush-square" name="brush-shape"></input>
+							<input id="brush-shape-square-id" type="radio" value="brush-square" name="brush-shape">
 							<label for="brush-shape-square-id">square</label>
 						</div>
 					</div>
@@ -211,22 +219,24 @@
 </div>
 
 <!-- Mainly scripts -->
-<script src="js/jquery-2.1.1.js"></script>
-<script src="js/plugins/jquery-ui/jquery-ui.min.js"></script>
+<script src="_/js/jquery-2.1.1.js"></script>
+<script src="_/js/plugins/jquery_ui/jquery-ui.min.js"></script>
 
-<script src="js/bootstrap.js"></script>
-<script src="js/plugins/metisMenu/jquery.metisMenu.js"></script>
-<script src="js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
+<script src="_/js/bootstrap.js"></script>
+<script src="_/js/plugins/metis_menu/jquery.metisMenu.js"></script>
+<script src="_/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
 <!-- Custom and plugin javascript -->
-<script src="js/inspinia.js"></script>
-<script src="js/plugins/pace/pace.min.js"></script>
+<script src="_/js/inspinia.js"></script>
+<script src="_/js/plugins/pace/pace.min.js"></script>
 
-<script src="js/plugins/ionRangeSlider/ion.rangeSlider.min.js"></script>
-<script src="js/plugins/simplecolorpicker/jquery.simplecolorpicker.js"></script>
+<script src="_/js/plugins/ion_range_slider/ion.rangeSlider.min.js"></script>
+<script src="_/js/plugins/no_ui_slider/nouislider.js"></script>
+<script src="_/js/plugins/simple_color_picker/jquery.simplecolorpicker.js"></script>
 
-<script src="js/plugins/hammer/hammer.js"></script>
-<script src="js/code/plexo.js"></script>
-<script src="js/code/gui.js"></script>
+
+
+<script src="_/js/plexo/plexo.js"></script>
+<script src="_/js/plexo/gui.js"></script>
 
 <script>
 	initPlexo();
