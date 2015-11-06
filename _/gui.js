@@ -96,11 +96,8 @@ function update_brush_color_picker() {
 
 function update_brush_sliders() {
 
-    var slider_size = $('#brush-size-slider-id').data('ionRangeSlider');
-    slider_size.update({from: BRUSH.size});
-
-    var slider_opacity = $('#brush-opacity-slider-id').data('ionRangeSlider');
-    slider_opacity.update({from: BRUSH.opacity});
+    gui.brush_size_slider.noUiSlider.set(BRUSH.size);
+    gui.brush_opacity_slider.noUiSlider.set(BRUSH.opacity);
 };
 
 function setup_brush_modal_dialog() {
@@ -117,24 +114,61 @@ function setup_brush_modal_dialog() {
         update_brush_preview();
     });
 
-    $('#brush-size-slider-id').ionRangeSlider({
-        grid: false,
-        min: 1,
-        max: 15,
-        from: BRUSH.size,
-        values:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
-        onChange: function (data) {
-            BRUSH.size = data.from;
-            update_brush_preview();
-        }
+    gui.brush_size_slider = document.getElementById('brush-size-slider-id');
+
+    noUiSlider.create(gui.brush_size_slider, {
+     tooltips:true,
+       start:6,
+        step:1,
+       range:{
+           'min':1,
+           'max':12
+       },
+        connect:'lower',
+        format: wNumb({decimals:0})
+        /*,pips:{
+            mode:'positions',
+            density:4,
+            values: [0,25,50,75,100]
+        },*/
+
     });
 
-    $('#brush-opacity-slider-id').ionRangeSlider({
-        grid: true, min: 0.5, max: 1, step: 0.1, from: BRUSH.opacity, onChange: function (data) {
-            BRUSH.setOpacity(data.from);
-            update_brush_preview();
-        }
+    gui.brush_size_slider.noUiSlider.on('slide', function(values,handle){
+       var value = parseInt(values[handle]);
+        BRUSH.size = value;
+        update_brush_preview();
     });
+
+
+    gui.brush_opacity_slider = document.getElementById('brush-opacity-slider-id');
+
+    noUiSlider.create(gui.brush_opacity_slider, {
+        tooltips: true,
+        start:0.5,
+        step: 0.05,
+        range:{
+            'min':[0.5],
+            'max':[1]
+        },
+        connect:'lower',
+        format: wNumb({decimals:2})
+        /*,
+        pips:{
+            mode:'steps',
+            density:4
+        },*/
+
+
+    });
+
+    gui.brush_opacity_slider.noUiSlider.on('slide', function(values,handle){
+
+        var value =parseFloat(values[handle]);
+        BRUSH.setOpacity(value);
+        update_brush_preview();
+    });
+
 };
 
 /*-----------------------------------------------------------------------------------------------
@@ -171,17 +205,36 @@ function update_clear_slice_button() {
 };
 
 function update_eraser_slider() {
-    var slider = $('#eraser-size-slider-id').data("ionRangeSlider");
-    slider.update({from: ERASER.size});
+    gui.eraser_size_slider.noUiSlider.set(ERASER.size);
 };
 
 function setup_eraser_modal_dialog() {
-    $('#eraser-size-slider-id').ionRangeSlider({
-        grid: true, min: 1, max: 20, from: ERASER.size, onChange: function (data) {
-            ERASER.size = data.from;
-            update_eraser_preview();
-        }
+
+    gui.eraser_size_slider = document.getElementById('eraser-size-slider-id');
+
+    noUiSlider.create(gui.eraser_size_slider, {
+        tooltips: true,
+        start:5,
+        step: 1,
+        range:{
+            'min':1,
+            'max':20
+        },
+        connect:'lower',
+        format: wNumb({decimals:0})
+       /* pips:{
+            mode:'positions',
+            values: [0,50,100]
+        },*/
+
     });
+
+    gui.eraser_size_slider.noUiSlider.on('slide', function(values,handle){
+        var value = parseInt(values[handle]);
+        ERASER.size = value;
+        update_eraser_preview();
+    });
+
 
     $('#btn-clear-slice-id').click(function () {
         var layer = VIEW.getCurrentAnnotationLayer();
@@ -446,7 +499,6 @@ gui.SliceTracker = function (view) {
     noUiSlider.create(this.slider, {
         start: init_slice,
         step : step_slice,
-        tooltips: true,
         range: {
             'min':[init_slice],
             'max':[end_slice]

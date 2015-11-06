@@ -8,7 +8,7 @@
 	box-sizing: border-box;
 }
 .noUi-pips {
-	position: absolute;
+	position: relative;
 	/*color: #999;*/
 	color: #ccc;
 }
@@ -24,7 +24,7 @@
 }
 .noUi-value-sub {
 	color: #ccc;
-	font-size: 10px;
+	font-size: 8px;
 }
 
 /* Markings;
@@ -49,7 +49,7 @@
  *
  */
 .noUi-pips-horizontal {
-	padding: 10px 0;
+	padding: 0px 0px;
 	height: 50px;
 	top: 100%;
 	left: 0;
@@ -100,4 +100,14 @@
 }
 .noUi-marker-vertical.noUi-marker-large {
 	width: 15px;
+}
+
+.noUi-pips-light-gray .noUi-value{
+	color:#555;
+}
+.noUi-pips-light-gray .noUi-value-sub {
+	color: #555;
+}
+.noUi-pips-light-gray .noUi-marker{
+	background: #C8C8C8;
 }

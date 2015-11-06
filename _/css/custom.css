@@ -187,3 +187,12 @@ body{
 #btn-clear-slice-id{
     float:left;
 }
+
+
+.preview_canvas{
+border: 1px solid #ccc;
+}
+
+.col-centered{
+    text-align:center;
+}
