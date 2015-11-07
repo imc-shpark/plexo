@@ -1,6 +1,25 @@
 /**
- * Created by dcantor on 20/10/15.
- */
+*  Plexo
+*  Created by Diego Cantor 
+*  (c) 2015 onwards
+*/
+
+
+//@koala-append "definitions.js"
+//@koala-append "LabelSet.js"
+//@koala-append "Brush.js"
+//@koala-append "Eraser.js"
+//@koala-append "Slice.js"
+//@koala-append "Dataset.js"
+//@koala-append "AnnotationLayer.js"
+//@koala-append "PaintBucket.js"
+//@koala-append "Zoom.js"
+//@koala-append "AnnotationSet.js"
+//@koala-append "Renderer.js"
+//@koala-append "View.js"
+//@koala-append "ViewInteractor.js"
+
+
 
 var plx = plx || {};
 
@@ -38,6 +57,26 @@ plx.setCurrentCoordinates = function (x, y) {
  ------------------------------------------------------------------------------------------------*/
 plx.EV_SLICE_CHANGED  = 'plx-ev-slice-changed';
 plx.EV_COORDS_UPDATED = 'plx-ev-coords-updated';
+
+/*-----------------------------------------------------------------------------------------------
+  Utilities
+ ------------------------------------------------------------------------------------------------*/
+
+function message(text) {
+    document.getElementById('status-message-id').innerHTML = text;
+};
+
+/**
+ * Detects if the device is touch-enabled
+ */
+window.addEventListener('touchstart', function setHasTouch() {
+    plx.GUI_TOUCH = true;
+    console.debug('touch device detected');
+    window.removeEventListener('touchstart', setHasTouch);
+});
+
+
+
 
 /*-----------------------------------------------------------------------------------------------
  Labels
@@ -89,6 +128,8 @@ plx.rgb2hex = function (R, G, B) {
 
     return '#' + toHex(R) + toHex(G) + toHex(B);
 };
+
+
 /*-----------------------------------------------------------------------------------------------
  Brush
  ------------------------------------------------------------------------------------------------*/
@@ -139,6 +180,8 @@ plx.setGlobalBrush = function (brush) {
     return plx.BRUSH;
 };
 
+
+
 /*-----------------------------------------------------------------------------------------------
  Eraser
  ------------------------------------------------------------------------------------------------*/
@@ -151,6 +194,7 @@ plx.setGlobalEraser = function (eraser) {
     plx.ERASER = eraser;
     return plx.ERASER;
 };
+
 
 /*-----------------------------------------------------------------------------------------------
  Slice
@@ -221,6 +265,7 @@ plx.Slice.prototype.updateLayer = function (view) {
     ctx.drawImage(this.image, 0, 0, width, height);
 };
 
+
 /*-----------------------------------------------------------------------------------------------
  Dataset
  ------------------------------------------------------------------------------------------------*/
@@ -264,6 +309,7 @@ plx.Dataset.prototype.onLoadSlice = function (slice) {
 plx.Dataset.prototype.hasLoaded = function () {
     return (this.num_loaded == this.num_items);
 };
+
 
 /*-----------------------------------------------------------------------------------------------
  Annotation Layer
@@ -552,6 +598,7 @@ plx.AnnotationLayer.prototype.updateLayer = function (view) {
     }
 };
 
+
 /*-----------------------------------------------------------------------------------------------
  Paint Bucket
  ------------------------------------------------------------------------------------------------*/
@@ -748,6 +795,7 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
     this.ctx.putImageData(imdata, 0, 0);
 };
 
+
 /*-----------------------------------------------------------------------------------------------
  Zoom Object
  ------------------------------------------------------------------------------------------------*/
@@ -801,6 +849,7 @@ plx.Zoom.prototype.apply = function (ctx) {
     ctx.translate(-this.x, -this.y);
 };
 
+
 /*-----------------------------------------------------------------------------------------------
  Annotation Set
  ------------------------------------------------------------------------------------------------*/
@@ -838,6 +887,7 @@ plx.AnnotationSet.prototype.getAnnotation = function (slice_uri) {
 plx.AnnotationSet.prototype.hasAnnotation = function (slice_uri) {
     return (slice_uri in this.annotations);
 };
+
 
 /*-----------------------------------------------------------------------------------------------
  Renderer
@@ -890,6 +940,7 @@ plx.Renderer.prototype.update = function () {
         stack[i].updateLayer(this.view);
     }
 };
+
 
 /*-----------------------------------------------------------------------------------------------
  View
@@ -1025,6 +1076,8 @@ plx.View.prototype.redo = function () {
     return successFlag;  //false if nothing to redo
 };
 
+
+
 /*-----------------------------------------------------------------------------------------------
  View Interactor
  ------------------------------------------------------------------------------------------------*/
@@ -1150,6 +1203,8 @@ plx.ViewInteractor.prototype.onMouseDown = function (ev) {
     this.initY = plx.COORDINATES.Y;
 
     var coords = this._getCanvasCoordinates(ev.clientX, ev.clientY);
+
+
     this.action_paintBucket_long_press(coords[0], coords[1], 1000);
 
     switch (plx.CURRENT_OPERATION) {
@@ -1176,6 +1231,17 @@ plx.ViewInteractor.prototype.onMouseMove = function (ev) {
     if ((Math.abs(this.initX - x) > 5) && (Math.abs(this.initY - y) > 5)) { //it moved too much
         clearTimeout(this._long_press_timer);
     }
+
+
+    if (ev.shiftKey){
+        clearTimeout(this._long_press_timer);
+        console.log('new focus ',x,y);
+        plx.zoom.setFocus(x,y);
+        this.view.render();
+
+    }
+
+
 
     if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE || plx.CURRENT_OPERATION == plx.OP_DELETE) {
         if (this.dragging) {
@@ -1507,19 +1573,4 @@ plx.ViewInteractor.prototype.onDoubleTouchEnd = function (touchesReleased) {
     this._scale  = this._last_scale;
     message('lifted two fingers. ending zoom :' + this._scale);
 };
-
-
-
-function message(text) {
-    document.getElementById('status-message-id').innerHTML = text;
-};
-
-/**
- * Detects if the device is touch-enabled
- */
-window.addEventListener('touchstart', function setHasTouch() {
-    plx.GUI_TOUCH = true;
-    console.debug('touch device detected');
-    window.removeEventListener('touchstart', setHasTouch);
-});
 

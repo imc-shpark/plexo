@@ -251,6 +251,19 @@ function setup_eraser_modal_dialog() {
 /*-----------------------------------------------------------------------------------------------
  MAIN TOOLBAR
  ------------------------------------------------------------------------------------------------*/
+var view, zoom;
+
+function init_test(){
+    zoom = plx.zoom;
+    view = VIEW;
+}
+
+function dozoom(x,y,scale){
+    zoom.setFocus(x,y);
+    zoom.scale = scale;
+    view.render();
+}
+
 function setup_toolbar() {
     $('#btn-undo-id').click(function () {
 
@@ -279,8 +292,9 @@ function setup_toolbar() {
     });
 
     $('#btn-zoom-id').click(function () {
-        plx.setCurrentOperation(plx.OP_ZOOM);
-        update_selected_tool(plx.OP_ZOOM);
+
+        init_test();
+
     });
 };
 
@@ -353,6 +367,7 @@ function setup_keyboard() {
                 event.preventDefault();
                 plx.setCurrentOperation(plx.OP_DELETE);
                 update_eraser_gui();
+                update_selected_tool(plx.OP_DELETE);
 
             }
             else if (letter == 'a') { //Ctrl+A
@@ -437,7 +452,7 @@ function configure_modal_dialogs() {
  GUI OBJECTS
  ------------------------------------------------------------------------------------------------*/
 gui.CoordinatesTracker = function (view) {
-    view.interactor.addObserver(this, 'coordinates-event');
+    view.interactor.addObserver(this, plx.EV_COORDS_UPDATED);
 };
 
 gui.CoordinatesTracker.prototype.processNotification = function (data) {
@@ -536,7 +551,8 @@ function load_dataset_callback(dataset) {
 
     if (percentage == 100) {
         $('#dataset-progressbar-container-id').fadeOut(1000, function () {
-            index = VIEW.showMiddleSlice();
+            var sliceIdx = index = VIEW.showMiddleSlice();
+            gui.slice_tracker.slider.noUiSlider.set(sliceIdx);
             VIEW.interactor.connectView();
             update_canvas_size();
         });

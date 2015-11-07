@@ -80,17 +80,17 @@
 		<!-- body row-->
 		<div class="row footer fixed plexo-footer">
 			<div class="row clearfix">
-				<div class="col-lg-8 col-sm-8 col-xs-8 no-padding">
-					<a id='btn-brush-id' class="btn btn-colored-icon" href="#" data-toggle="modal" data-target="#brush-options-modal-id"><i class="fa fa-paint-brush"></i></a>
-					<a id='btn-paint-bucket-id' class="btn  btn-icon btn-paint-bucket" href="#"><i class="icon-bucket"></i></a>
-					<a id='btn-eraser-id' class="btn  btn-icon" href="#" data-toggle="modal" data-target="#eraser-options-modal-id"><i class="fa fa-eraser"></i></a>
-					<a id='btn-zoom-id' class="btn  btn-icon" href="#tab-zoom-options" data-toggle="tab"><i class="fa fa-search"></i></a>
-					<span class="inline"></span>
-					<a id='btn-undo-id' class="btn  btn-icon"><i class="fa fa-undo"></i></a>
-					<a id='btn-redo-id' class="btn  btn-icon"><i class="fa fa-repeat"></i></a>
-					<a class="btn  btn-icon"><i class="fa fa-save"></i></a>
+				<div class="col-xs-12 col-sm-6 col-md-6 col-lg-6 no-padding">
+					<button id='btn-brush-id' class="btn btn-colored-icon" href="#" data-toggle="modal" data-target="#brush-options-modal-id"><i class="fa fa-paint-brush"></i></button>
+					<button id='btn-paint-bucket-id' class="btn  btn-icon btn-paint-bucket" href="#"><i class="icon-bucket"></i></button>
+					<button id='btn-eraser-id' class="btn  btn-icon" href="#" data-toggle="modal" data-target="#eraser-options-modal-id"><i class="fa fa-eraser"></i></>
+					<button id='btn-zoom-id' class="btn  btn-icon" href="#tab-zoom-options" data-toggle="tab"><i class="fa fa-search"></i></button>
+					<span class="inline">|</span>
+					<button id='btn-undo-id' class="btn  btn-icon"><i class="fa fa-undo"></i></button>
+					<button id='btn-redo-id' class="btn  btn-icon"><i class="fa fa-repeat"></i></button>
+					<button class="btn  btn-icon"><i class="fa fa-save"></i></button>
 				</div>
-				<div class="col-lg-4 col-sm-4 col-xs-4 no-padding">
+				<div class="col-xs-12 col-sm-6 col-md-6 col-lg-6 no-padding">
 					<div class="wrapper">
 						<div id="dataset-slider-id"></div>
 					</div>
@@ -231,9 +231,9 @@
 <script src="_/js/plugins/no_ui_slider/nouislider.js"></script>
 <script src="_/js/plugins/simple_color_picker/jquery.simplecolorpicker.js"></script>
 
-<script src="_/plexo.js"></script>
+<script src="_/plexo.lib.js"></script>
 <script src="_/gui.js"></script>
-
+<!--<script src="http://jsconsole.com/remote.js?FAE031CD-74A0-46D3-AE36-757BAB262BEA"></script>-->
 <script>
 	initPlexo();
 </script>
