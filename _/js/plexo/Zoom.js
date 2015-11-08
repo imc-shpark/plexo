@@ -45,7 +45,7 @@ plx.Zoom.prototype.zoomMouse = function (delta) {
 
 plx.Zoom.prototype.apply = function (ctx) {
     ctx.clearRect(0, 0, this.view.canvas.width, this.view.canvas.height);
-    // ctx.setTransform(1, 0, 0, 1, 0, 0); //identitiy
+    ctx.setTransform(1, 0, 0, 1, 0, 0); //identitiy
     ctx.translate(this.x, this.y);
     ctx.scale(this.scale, this.scale);
     ctx.translate(-this.x, -this.y);

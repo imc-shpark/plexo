@@ -53,9 +53,10 @@ plx.Slice.prototype.updateLayer = function (view) {
     var width  = this.image.width;
     var height = this.image.height;
 
-    view.canvas.width  = width;
+    view.canvas.width  = width;  //this will reset the transforms
     view.canvas.height = height;
     /*---------------------------------------------*/
+
 
     ctx.globalAlpha = 1;
     ctx.clearRect(0, 0, width, height);
@@ -65,4 +66,15 @@ plx.Slice.prototype.updateLayer = function (view) {
     }
 
     ctx.drawImage(this.image, 0, 0, width, height);
+
+
+    //var p1 = [150,150];
+    //var p2 = [300,300];
+    //ctx.fillStyle = '#FF0000';
+    //ctx.beginPath();
+    //ctx.arc(p1[0], p1[1], 5, 0, plx.PI2);
+    //ctx.fill();
+    //ctx.beginPath();
+    //ctx.arc(p2[0], p2[1], 5, 0, plx.PI2);
+    //ctx.fill();
 };

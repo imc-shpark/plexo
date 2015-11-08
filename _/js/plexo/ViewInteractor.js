@@ -12,9 +12,7 @@ plx.ViewInteractor = function (view) {
     this._ongoing_touches  = [];
     this._distance         = 0;
     this._midpoint         = 0;
-    this._last_scale             = 1;
     this._scale            = 1;
-
 
     plx.zoom = new plx.Zoom(view);  //this is a good place
 };
@@ -309,7 +307,7 @@ plx.ViewInteractor.prototype.onTouchEnd = function (ev) {
             this.onSingleTouchEnd(touches[0]);
         }
         else {
-            message('zooming ended');
+            //message('zooming ended');
         }
         this.zooming = false;
     }
@@ -323,22 +321,10 @@ plx.ViewInteractor.prototype.onTouchEnd = function (ev) {
     }
 };
 
-
-
-plx.ViewInteractor.prototype._getMidpoint = function (arr, scale) {
+plx.ViewInteractor.prototype._getMidpoint = function (arr) {
     var coords = {};
-
-    if (scale == true) {
-        var p1 = plx.zoom.transformPoint(arr[0], arr[1]);
-        var p2 = plx.zoom.transformPoint(arr[2], arr[3]);
-
-        coords.x = ((p1[0] + p2[0]) / 2);
-        coords.y = ((p1[1] + p2[1]) / 2);
-    }
-    else {
-        coords.x = Math.round((arr[0] + arr[2]) / 2);
-        coords.y = Math.round((arr[1] + arr[3]) / 2);
-    }
+    coords.x   = Math.round((arr[0] + arr[2]) / 2);
+    coords.y   = Math.round((arr[1] + arr[3]) / 2);
     return coords;
 };
 
@@ -366,8 +352,10 @@ plx.ViewInteractor.prototype.onSingleTouchStart = function (touch) {
 
     var coords = this._getCanvasCoordinates(touch.clientX, touch.clientY);
 
-    var x = coords[0];
-    var y = coords[1];
+    console.log('single coords:' + coords[0] + ', ' + coords[1]);
+
+    var x = Math.round(coords[0]);
+    var y = Math.round(coords[1]);
 
     this.initX = x;
     this.initY = y;
@@ -395,8 +383,8 @@ plx.ViewInteractor.prototype.onSingleTouchMove = function (touch) {
 
     var coords = this._getCanvasCoordinates(touch.clientX, touch.clientY);
 
-    var x = coords[0];
-    var y = coords[1];
+    var x = Math.round(coords[0]);
+    var y = Math.round(coords[1]);
 
     //required because of sensitivity of screen to motion
     if ((Math.abs(this.initY - y) > 5) && (Math.abs(this.initX - x) > 5)) {
@@ -421,29 +409,28 @@ plx.ViewInteractor.prototype.onSingleTouchEnd = function (touchReleased) {
     message('last touch ended');
 };
 
-
 //plx.ViewInteractor.prototype._getDistance = function (arr) {
 //    var x = Math.pow(arr[0] - arr[2], 2);
 //    var y = Math.pow(arr[1] - arr[3], 2);
 //    return Math.sqrt(x + y);
 //};
 
-plx.ViewInteractor.prototype._getDistanceScreen = function (touches){
+plx.ViewInteractor.prototype._getDistanceScreen = function (touches) {
     var canvas = this.view.canvas;
     var rect   = canvas.getBoundingClientRect();
 
     t1 = touches[0];
     t2 = touches[1];
 
-    var t1_x      = Math.round((t1.clientX - rect.left) / (rect.right - rect.left) * canvas.width);
-    var t1_y      = Math.round((t1.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height);
-    var t2_x      = Math.round((t2.clientX - rect.left) / (rect.right - rect.left) * canvas.width);
-    var t2_y      = Math.round((t2.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height);
+    var t1_x = Math.round((t1.clientX - rect.left) / (rect.right - rect.left) * canvas.width);
+    var t1_y = Math.round((t1.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height);
+    var t2_x = Math.round((t2.clientX - rect.left) / (rect.right - rect.left) * canvas.width);
+    var t2_y = Math.round((t2.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height);
 
     var x = Math.pow(t1_x - t2_x, 2);
     var y = Math.pow(t1_y - t2_y, 2);
 
-    return Math.sqrt(x+y);
+    return Math.sqrt(x + y);
 };
 
 plx.ViewInteractor.prototype.onDoubleTouchStart = function (touches) {
@@ -451,18 +438,23 @@ plx.ViewInteractor.prototype.onDoubleTouchStart = function (touches) {
     window.clearTimeout(this._long_press_timer);
 
     //Distance in screeen coordinates
-    this._distance      = this._getDistanceScreen(touches);
-
+    this._distance = this._getDistanceScreen(touches);
 
     //Zooming centre
     var touch1 = touches[0];
     var touch2 = touches[1];
-    var coords = [touch1.clientX, touch1.clientY, touch2.clientX, touch2.clientY];
-    this._midpoint = this._getMidpoint(coords, true);
+
+    var tc1 = this._getCanvasCoordinates(touch1.clientX, touch1.clientY);
+    var tc2 = this._getCanvasCoordinates(touch2.clientX, touch2.clientY);
+
+    var coords     = [tc1[0], tc1[1], tc2[0], tc2[1]];
+    this._midpoint = this._getMidpoint(coords);
+    this._scale    = plx.zoom.scale;
+
     plx.zoom.setFocus(this._midpoint.x, this._midpoint.y);
 
     //Notifications
-    console.log('>>> initial midpoint:', this._midpoint.x, ', ', this._midpoint.y);
+    console.log('>>> INITIAL FOCUS:' + this._midpoint.x + ', ' + this._midpoint.y);
     message('zoom start. scale:' + this._scale);
     plx.setCurrentCoordinates(this._midpoint.x, this._midpoint.y);
     this.notify(plx.EV_COORDS_UPDATED);
@@ -472,40 +464,43 @@ plx.ViewInteractor.prototype.onDoubleTouchMove = function (touches) {
 
     //Updating scale
     var distance = this._getDistanceScreen(touches);
-    var scale    = distance / this._distance * this._scale;
-    if (scale < 1) { scale = 1;}
+    var scale    = distance / this._distance * this._scale; //wait until release to update this._scale
+    if (scale < 1) { scale = 1;}                            //to avoid 'snowballing'
 
-    //Updating zoom centre
     var touch1 = touches[0];
     var touch2 = touches[1];
-    var coords = [touch1.clientX, touch1.clientY, touch2.clientX, touch2.clientY];
-    var mp = this._getMidpoint(coords, true);
+
+    var tc1 = this._getCanvasCoordinates(touch1.clientX, touch1.clientY);
+    var tc2 = this._getCanvasCoordinates(touch2.clientX, touch2.clientY);
+
+    var coords     = [tc1[0], tc1[1], tc2[0], tc2[1]];
+    this._midpoint = this._getMidpoint(coords);
+    var mp         = this._midpoint;
+
+    if (plx.CURRENT_OPERATION == plx.OP_ZOOM) {
+
+        plx.zoom.setScaleTouch(scale);
+        this.view.render();
+        message('zooming :' + scale);
+    }
+    else if (plx.CURRENT_OPERATION == plx.OP_PANNING) {
+        plx.zoom.setFocus(mp.x, mp.y);
+        this.view.render();
+        //console.log('>> UPDATED MIDPOINT: ' + mp.x + ', ' + mp.y);
+        message('panning');
+    }
 
 
-
-    plx.zoom.setFocus(mp.x, mp.y);
-    plx.zoom.setScaleTouch(scale);
-
-    this.view.render();
-
-
-    this._last_scale    = scale;
-
-
-    //Notifications
-    console.debug('>> UPDATED midpoint',  mp.x, ', ', mp.y);
-    message('zooming :' + scale);
     plx.setCurrentCoordinates(mp.x, mp.y);
     this.notify(plx.EV_COORDS_UPDATED);
-};
+}
+;
 
 plx.ViewInteractor.prototype.onOneOfTwoTouchEnd = function (touchReleased, touchPending) {
-    this._scale = this._last_scale;
-    message('lifted one of two fingers. zoom:' + this._scale);
+    message('lifted one of two fingers. zoom:' + plx.zoom.scale);
 };
 
 plx.ViewInteractor.prototype.onDoubleTouchEnd = function (touchesReleased) {
-    this._scale = this._last_scale;
-    message('lifted two fingers. ending zoom :' + this._scale);
+    message('lifted two fingers. ending zoom :' + plx.zoom.scale);
 };
 

@@ -251,17 +251,12 @@ function setup_eraser_modal_dialog() {
 /*-----------------------------------------------------------------------------------------------
  MAIN TOOLBAR
  ------------------------------------------------------------------------------------------------*/
-var view, zoom;
 
-function init_test(){
-    zoom = plx.zoom;
-    view = VIEW;
-}
 
 function dozoom(x,y,scale){
-    zoom.setFocus(x,y);
-    zoom.scale = scale;
-    view.render();
+    plx.zoom.setFocus(x,y);
+    plx.zoom.setScaleTouch(scale);
+    VIEW.render();
 }
 
 function setup_toolbar() {
@@ -292,10 +287,18 @@ function setup_toolbar() {
     });
 
     $('#btn-zoom-id').click(function () {
-
-        init_test();
+        if (plx.CURRENT_OPERATION != plx.OP_ZOOM) {
+            plx.setCurrentOperation(plx.OP_ZOOM);
+            update_selected_tool(plx.OP_ZOOM);
+        }
+        else{
+            plx.setCurrentOperation(plx.OP_PANNING);
+            update_selected_tool(plx.OP_PANNING);
+        }
 
     });
+
+
 };
 
 /*-----------------------------------------------------------------------------------------------
@@ -312,6 +315,7 @@ function update_eraser_gui() {
 
 function update_selected_tool(last_used) {
     $('.btn-icon-active').removeClass('btn-icon-active');
+     $('#btn-zoom-id').html("<i class='fa fa-search'></i>");
 
     if (last_used == plx.OP_ANNOTATE) {
         $('#btn-brush-id').addClass('btn-icon-active');
@@ -324,6 +328,11 @@ function update_selected_tool(last_used) {
     }
     else if (last_used == plx.OP_ZOOM) {
         $('#btn-zoom-id').addClass('btn-icon-active');
+        $('#btn-zoom-id').html("<i class='fa fa-search'></i>");
+    }
+    else if (last_used == plx.OP_PANNING) {
+        $('#btn-zoom-id').addClass('btn-icon-active');
+        $('#btn-zoom-id').html("<i class='fa fa-arrows'></i>");
     }
     else if (last_used == 'undo') {
         $('#btn-undo-id').addClass('btn-icon-active');
@@ -578,7 +587,7 @@ function setup_labels() {
     LABELS = plx.setGlobalLabels(labels);
 
     BRUSH.setLabelID(LABELS[0].id);
-    update_brush_gui();
+    //update_brush_gui();
 };
 /*-----------------------------------------------------------------------------------------------
  MAIN

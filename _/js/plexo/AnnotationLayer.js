@@ -110,11 +110,6 @@ plx.AnnotationLayer.prototype.startAnnotation = function (x, y, view) {
     this.lastX = x;
     this.lastY = y;
 
-    //if (plx.zoom) {
-    //    var coords = plx.zoom.transformPoint(this.lastX, this.lastY);
-    //    this.lastX = coords[0]; //x
-    //    this.lastY = coords[1]; //y
-    //}
 
     if (this.data) {
         this.ctx.clearRect(0, 0, this.offcanvas.width, this.offcanvas.height);
@@ -129,11 +124,7 @@ plx.AnnotationLayer.prototype.updateAnnotation = function (curr_x, curr_y, view)
 
     var ctx = this.ctx;
 
-    //if (plx.zoom) {
-    //    var coords = plx.zoom.transformPoint(curr_x,curr_y);
-    //    curr_x = coords[0]; //x
-    //    curr_y = coords[1]; //y
-    //}
+
 
     var brush  = plx.BRUSH;
     var eraser = plx.ERASER;

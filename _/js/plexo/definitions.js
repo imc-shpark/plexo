@@ -15,6 +15,7 @@ plx.OP_DELETE       = 'plx-op-delete';
 plx.OP_EROSION      = 'plx-op-erosion';
 plx.OP_PAINT_BUCKET = 'plx-op-paint-bucket';
 plx.OP_ZOOM         = 'plx-op-zoom';
+plx.OP_PANNING      = 'plx-op-panning';
 plx.OP_NONE         = 'plx-op-none';
 
 plx.CURRENT_OPERATION = plx.OP_NONE;
