@@ -23,7 +23,7 @@ plx.Zoom.prototype.transformPoint = function (x, y) {
     return [newX, newY];
 };
 
-plx.Zoom.prototype.zoomTouch = function (scale) {
+plx.Zoom.prototype.setScaleTouch = function (scale) {
     if (scale < 1) {
         this.scale = 1
     }
