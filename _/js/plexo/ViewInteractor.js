@@ -108,6 +108,33 @@ plx.ViewInteractor.prototype.action_paintBucket_long_press = function (x, y, del
     this._long_press_timer = window.setTimeout(deferred_execution, delay);
 }
 
+plx.ViewInteractor.prototype.action_panning = function(x,y){
+    plx.zoom.setFocus(x, y);
+    this.view.render();
+    message('panning');
+};
+
+plx.ViewInteractor.prototype.action_zooming = function(scale, mouseOrTouch){
+
+    if (mouseOrTouch == 'mouse') {
+
+        plx.zoom.setScaleMouse(scale);
+        message('zoom (mouse): ' + plx.zoom.scale.toPrecision(3));
+        this.view.render();
+
+    }
+    else if (mouseOrTouch == 'touch'){
+
+        plx.zoom.setScaleTouch(scale);
+        this.view.render();
+        message('zoom (touch): ' + scale.toPrecision(3));
+
+    }
+    else{
+        message('Error: unknown type of zooming');
+    }
+}
+
 plx.ViewInteractor.prototype.onDoubleClick = function (ev) {
     ev.preventDefault();
     var coords        = this._getCanvasCoordinates(ev.clientX, ev.clientY);
@@ -152,10 +179,7 @@ plx.ViewInteractor.prototype.onMouseMove = function (ev) {
 
     if (ev.shiftKey) {
         clearTimeout(this._long_press_timer);
-        console.log('new focus ', x, y);
-        plx.zoom.setFocus(x, y);
-        this.view.render();
-
+        this.action_panning(x,y);
     }
 
     if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE || plx.CURRENT_OPERATION == plx.OP_DELETE) {
@@ -214,21 +238,15 @@ plx.ViewInteractor.prototype.onWheel = function (ev) {
         }
 
         message('slice: ' + slice);
-
         this.view.render();
-
         this.notify(plx.EV_SLICE_CHANGED, {'slice': slice}); //updates slider
         return;
     }
     else {
-
         if (plx.zoom.scale == 1) {
             plx.zoom.setFocus(plx.COORDINATES.X, plx.COORDINATES.Y);
         }
-
-        plx.zoom.zoomMouse(direction);
-        message('zooming :' + plx.zoom.scale.toPrecision(3));
-        this.view.render();
+        this.action_zooming(direction, 'mouse');
     }
     this.notify(plx.EV_COORDS_UPDATED);
 };
@@ -391,8 +409,14 @@ plx.ViewInteractor.prototype.onSingleTouchMove = function (touch) {
         clearTimeout(this._long_press_timer);
     }
 
-    if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE || plx.CURRENT_OPERATION == plx.OP_DELETE) {
-        this.aslice.updateAnnotation(x, y, this.view);
+    switch(plx.CURRENT_OPERATION){
+        case plx.OP_ANNOTATE:
+        case plx.OP_DELETE:
+            this.aslice.updateAnnotation(x, y, this.view);
+            break;
+        case plx.OP_PANNING:
+            this.action_panning(x, y);
+            break;
     }
 
     plx.setCurrentCoordinates(x, y);
@@ -408,12 +432,6 @@ plx.ViewInteractor.prototype.onSingleTouchEnd = function (touchReleased) {
 
     message('last touch ended');
 };
-
-//plx.ViewInteractor.prototype._getDistance = function (arr) {
-//    var x = Math.pow(arr[0] - arr[2], 2);
-//    var y = Math.pow(arr[1] - arr[3], 2);
-//    return Math.sqrt(x + y);
-//};
 
 plx.ViewInteractor.prototype._getDistanceScreen = function (touches) {
     var canvas = this.view.canvas;
@@ -454,10 +472,12 @@ plx.ViewInteractor.prototype.onDoubleTouchStart = function (touches) {
     plx.zoom.setFocus(this._midpoint.x, this._midpoint.y);
 
     //Notifications
-    console.log('>>> INITIAL FOCUS:' + this._midpoint.x + ', ' + this._midpoint.y);
-    message('zoom start. scale:' + this._scale);
+    //console.log('>>> INITIAL FOCUS:' + this._midpoint.x + ', ' + this._midpoint.y);
+
+    message('zoom start. scale:' + this._scale.toPrecision(3));
     plx.setCurrentCoordinates(this._midpoint.x, this._midpoint.y);
     this.notify(plx.EV_COORDS_UPDATED);
+    this.notify(plx.EV_OPERATION_CHANGED, {'operation': plx.OP_ZOOM});
 };
 
 plx.ViewInteractor.prototype.onDoubleTouchMove = function (touches) {
@@ -477,30 +497,17 @@ plx.ViewInteractor.prototype.onDoubleTouchMove = function (touches) {
     this._midpoint = this._getMidpoint(coords);
     var mp         = this._midpoint;
 
-    if (plx.CURRENT_OPERATION == plx.OP_ZOOM) {
-
-        plx.zoom.setScaleTouch(scale);
-        this.view.render();
-        message('zooming :' + scale);
-    }
-    else if (plx.CURRENT_OPERATION == plx.OP_PANNING) {
-        plx.zoom.setFocus(mp.x, mp.y);
-        this.view.render();
-        //console.log('>> UPDATED MIDPOINT: ' + mp.x + ', ' + mp.y);
-        message('panning');
-    }
-
+    this.action_zooming(scale, 'touch');
 
     plx.setCurrentCoordinates(mp.x, mp.y);
     this.notify(plx.EV_COORDS_UPDATED);
-}
-;
+};
 
 plx.ViewInteractor.prototype.onOneOfTwoTouchEnd = function (touchReleased, touchPending) {
-    message('lifted one of two fingers. zoom:' + plx.zoom.scale);
+    message('lifted one of two fingers. zoom:' + plx.zoom.scale.toPrecision(3));
 };
 
 plx.ViewInteractor.prototype.onDoubleTouchEnd = function (touchesReleased) {
-    message('lifted two fingers. ending zoom :' + plx.zoom.scale);
+    message('lifted two fingers. ending zoom :' + plx.zoom.scale.toPrecision(3));
 };
 

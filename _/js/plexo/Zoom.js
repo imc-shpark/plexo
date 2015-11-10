@@ -32,7 +32,7 @@ plx.Zoom.prototype.setScaleTouch = function (scale) {
     }
 };
 
-plx.Zoom.prototype.zoomMouse = function (delta) {
+plx.Zoom.prototype.setScaleMouse = function (delta) {
     if (this.delta + delta < 0 || this.delta + delta > 30) {
         if (this.delta + delta < 0) {
             this.scale = 1;

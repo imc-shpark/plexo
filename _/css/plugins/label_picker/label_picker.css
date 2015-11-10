@@ -1,0 +1,131 @@
+/*
+ * Very simple jQuery Color Picker
+ * https://github.com/tkrotoff/jquery-simplecolorpicker
+ *
+ * Copyright (C) 2012-2013 Tanguy Krotoff <tkrotoff@gmail.com>
+ *
+ * Licensed under the MIT license
+ */
+
+/**
+ * Inspired by Bootstrap Twitter.
+ * See https://github.com/twbs/bootstrap/blob/master/less/navbar.less
+ * See https://github.com/twbs/bootstrap/blob/master/less/dropdowns.less
+ */
+
+.labelpicker.picker {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1051; /* Above Bootstrap modal (@zindex-modal = 1050) */
+  display: none;
+  float: left;
+
+  min-width: 160px;
+  max-width: 283px; /* @popover-max-width = 276px + 7 */
+
+  padding: 5px 0 0 5px;
+  margin: 2px 0 0;
+  list-style: none;
+  background-color: #fff; /* @dropdown-bg */
+
+  border: 1px solid #ccc; /* @dropdown-fallback-border */
+  border: 1px solid rgba(0, 0, 0, .15); /* @dropdown-border */
+
+  -webkit-border-radius: 4px; /* @border-radius-base */
+     -moz-border-radius: 4px;
+          border-radius: 4px;
+
+  -webkit-box-shadow: 0 6px 12px rgba(0, 0, 0, .175);
+     -moz-box-shadow: 0 6px 12px rgba(0, 0, 0, .175);
+          box-shadow: 0 6px 12px rgba(0, 0, 0, .175);
+
+  -webkit-background-clip: padding-box;
+     -moz-background-clip: padding;
+          background-clip: padding-box;
+}
+
+.labelpicker.inline {
+  display: inline-block;
+  padding: 6px 0;
+}
+
+.labelpicker span {
+  margin: 0 5px 5px 0;
+}
+
+.labelpicker.icon{
+  display: inline-block;
+  cursor: pointer;
+  border: 1px solid transparent;
+  width:30pt;
+  height:15pt;
+  border-radius: 5px;
+  /*opacity: 0.5;*/
+}
+
+.labelpicker span.label{
+  display: inline-block;
+  font-size: 10pt;
+  border: none;
+  background: none;
+  vertical-align: -5pt;
+}
+
+.labelpicker .block{
+  display:block;
+}
+
+
+.labelpicker span.color {
+  display: inline-block;
+  cursor: pointer;
+  width:30pt;
+  height:30pt;
+  border-radius: 5px;
+  border:2px solid rgba(0, 0, 0, 0);
+}
+
+.labelpicker.icon:after,
+.labelpicker span.color:after {
+  content: '\00a0\00a0\00a0\00a0'; /* Spaces */
+}
+
+.labelpicker span.color[data-disabled]:hover {
+  cursor: not-allowed;
+  border: 1px solid transparent;
+}
+
+.labelpicker span.color:hover,
+.labelpicker span.color[data-selected],
+.labelpicker span.color[data-selected]:hover {
+  border:2px solid rgba(0, 0, 0, 0.47);
+}
+.labelpicker span.color[data-selected]:after {
+  color: #fff;
+}
+
+/* Vertical separator, replaces optgroup. */
+.labelpicker span.vr {
+  border-left: 1px solid #222; /* @gray-dark */
+}
+
+.vertical-scroller {
+  height: 200px;
+  width:100%;
+  overflow-x:hidden;
+  overflow-y:scroll;
+  border: 1px solid #ccc;
+  padding: 5px 15px 0 15px;
+}
+
+.labelpicker.fontawesome span.color[data-selected]:after {
+  -webkit-font-smoothing: antialiased;
+  content: '\f00c'; /* Ok/check mark */
+  font-family: "FontAwesome";
+  position: relative;
+  left: 12px;
+  top: 6px;
+  color: rgba(23, 23, 23, 0.34);
+  font-size: 13px;
+}

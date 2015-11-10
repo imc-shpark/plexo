@@ -248,9 +248,7 @@ function setup_eraser_modal_dialog() {
     });
 };
 
-/*-----------------------------------------------------------------------------------------------
- MAIN TOOLBAR
- ------------------------------------------------------------------------------------------------*/
+
 
 
 function dozoom(x,y,scale){
@@ -259,47 +257,7 @@ function dozoom(x,y,scale){
     VIEW.render();
 }
 
-function setup_toolbar() {
-    $('#btn-undo-id').click(function () {
 
-        if (!VIEW.undo() && gui.alert) {
-            gui.alert.showAlert('Undo', 'Nothing to undo', 'alert-info', 3000);
-        }
-        else {
-            update_selected_tool('undo');
-        }
-    });
-
-    $('#btn-redo-id').click(function () {
-
-        if (!VIEW.redo() && gui.alert) {
-            gui.alert.showAlert('Redo', 'Nothing to redo', 'alert-info', 2000);
-        }
-        else {
-            update_selected_tool('redo');
-        }
-    });
-
-    $('#btn-paint-bucket-id').click(function () {
-        plx.setCurrentOperation(plx.OP_PAINT_BUCKET);
-        update_selected_tool(plx.OP_PAINT_BUCKET);
-
-    });
-
-    $('#btn-zoom-id').click(function () {
-        if (plx.CURRENT_OPERATION != plx.OP_ZOOM) {
-            plx.setCurrentOperation(plx.OP_ZOOM);
-            update_selected_tool(plx.OP_ZOOM);
-        }
-        else{
-            plx.setCurrentOperation(plx.OP_PANNING);
-            update_selected_tool(plx.OP_PANNING);
-        }
-
-    });
-
-
-};
 
 /*-----------------------------------------------------------------------------------------------
  UPDATE GUI METHODS
@@ -458,21 +416,23 @@ function configure_modal_dialogs() {
 };
 
 /*-----------------------------------------------------------------------------------------------
- GUI OBJECTS
+ Coordinates Tracker
  ------------------------------------------------------------------------------------------------*/
 gui.CoordinatesTracker = function (view) {
     view.interactor.addObserver(this, plx.EV_COORDS_UPDATED);
 };
 
 gui.CoordinatesTracker.prototype.processNotification = function (data) {
-    document.getElementById('status-current-coordinates-id').innerHTML = 'x:' + plx.COORDINATES.X + ', y:' + plx.COORDINATES.Y;
+    document.getElementById('status-current-coordinates-id').innerHTML = 'x:' + plx.COORDINATES.X.toPrecision(3) + ', y:' + plx.COORDINATES.Y.toPrecision(3);
 };
-
-gui.AlertWidget = function (view) {
+/*-----------------------------------------------------------------------------------------------
+ Alert Controller
+ ------------------------------------------------------------------------------------------------*/
+gui.AlertController = function (view) {
     view.interactor.addObserver(this, 'alert-event');
 };
 
-gui.AlertWidget.prototype.showAlert = function (title, message, alert_type, delay) {
+gui.AlertController.prototype.showAlert = function (title, message, alert_type, delay) {
 
     var alert = $('#alert-message-id');
     $(alert).removeAttr('class').attr('class', 'alert');
@@ -513,11 +473,14 @@ gui.AlertWidget.prototype.showAlert = function (title, message, alert_type, dela
     });
 };
 
-gui.AlertWidget.prototype.processNotification = function (data) {
+gui.AlertController.prototype.processNotification = function (data) {
     this.showAlert(data.title, data.message, data.type, 3000);
 };
 
-gui.SliceTracker = function (view) {
+/*-----------------------------------------------------------------------------------------------
+ Slice Controller
+ ------------------------------------------------------------------------------------------------*/
+gui.SliceController = function (view) {
     this.slider = document.getElementById('dataset-slider-id');
 
     noUiSlider.create(this.slider, {
@@ -545,10 +508,63 @@ gui.SliceTracker = function (view) {
     view.interactor.addObserver(this, plx.EV_SLICE_CHANGED);
 };
 
-gui.SliceTracker.prototype.processNotification = function (data) {
+gui.SliceController.prototype.processNotification = function (data) {
     this.slider.noUiSlider.set(data.slice);
 };
 
+/*-----------------------------------------------------------------------------------------------
+ Toolbar Controller
+ ------------------------------------------------------------------------------------------------*/
+gui.ToolbarController = function(view){
+    this.view  = view;
+    view.interactor.addObserver(this);
+    this._setup();
+};
+
+gui.ToolbarController.prototype._setup = function(){
+
+        $('#btn-undo-id').click(function () {
+
+            if (!VIEW.undo() && gui.alert) {
+                gui.alert.showAlert('Undo', 'Nothing to undo', 'alert-info', 3000);
+            }
+            else {
+                update_selected_tool('undo');
+            }
+        });
+
+        $('#btn-redo-id').click(function () {
+
+            if (!VIEW.redo() && gui.alert) {
+                gui.alert.showAlert('Redo', 'Nothing to redo', 'alert-info', 2000);
+            }
+            else {
+                update_selected_tool('redo');
+            }
+        });
+
+        $('#btn-paint-bucket-id').click(function () {
+            plx.setCurrentOperation(plx.OP_PAINT_BUCKET);
+            update_selected_tool(plx.OP_PAINT_BUCKET);
+
+        });
+
+        $('#btn-zoom-id').click(function () {
+            if (plx.CURRENT_OPERATION != plx.OP_ZOOM) {
+                plx.setCurrentOperation(plx.OP_ZOOM);
+                update_selected_tool(plx.OP_ZOOM);
+            }
+            else{
+                plx.setCurrentOperation(plx.OP_PANNING);
+                update_selected_tool(plx.OP_PANNING);
+            }
+
+        });
+};
+
+gui.ToolbarController.prototype.processNotification = function(data){
+
+};
 /*-----------------------------------------------------------------------------------------------
  DATA GATHERING METHODS
  ------------------------------------------------------------------------------------------------*/
@@ -607,8 +623,9 @@ function initPlexo() {
     VIEW.load(dataset, load_dataset_callback);
 
     gui.ctracker      = new gui.CoordinatesTracker(VIEW);
-    gui.alert         = new gui.AlertWidget(VIEW);
-    gui.slice_tracker = new gui.SliceTracker(VIEW);
+    gui.alert         = new gui.AlertController(VIEW);
+    gui.slice_tracker = new gui.SliceController(VIEW);
+    gui.toolbar       = new gui.ToolbarController(VIEW);
 };
 
 /*-----------------------------------------------------------------------------------------------

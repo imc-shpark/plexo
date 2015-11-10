@@ -16,6 +16,7 @@
 
 	<link href="_/css/plugins/bs_checkbox/awesome-bootstrap-checkbox.css" rel="stylesheet">
 	<link href="_/css/plugins/simple_color_picker/jquery.simplecolorpicker.plexo.css" rel="stylesheet">
+	<link href="_/css/plugins/label_picker/label_picker.css" rel="stylesheet">
 
 	<link href="_/css/plugins/no_ui_slider/nouislider.pips.plexo.css" rel="stylesheet">
 	<link href="_/css/plugins/no_ui_slider/nouislider.tooltips.plexo.css" rel="stylesheet">
@@ -81,10 +82,21 @@
 		<div class="row footer fixed plexo-footer">
 			<div class="row clearfix">
 				<div class="col-xs-12 col-sm-8 col-md-6 col-lg-6 no-padding">
-                    <button id='btn-labels-id' class="btn btn-icon" href="#"><i class="fa fa-tag"></i></button>
-					<button id='btn-brush-id' class="btn btn-colored-icon" href="#" data-toggle="modal" data-target="#brush-options-modal-id"><i class="fa fa-paint-brush"></i></button>
+
+					<button id='btn-labels-id' class="btn btn-icon" href="#"><i class="fa fa-tag"></i></button>
+
+					<button id='btn-brush-id' class="btn btn-colored-icon" href="#"
+					        data-toggle="modal" data-target="#brush-options-modal-id">
+						<i class="fa fa-paint-brush"></i>
+					</button>
+
 					<button id='btn-paint-bucket-id' class="btn  btn-icon btn-paint-bucket" href="#"><i class="icon-bucket"></i></button>
-					<button id='btn-eraser-id' class="btn  btn-icon" href="#" data-toggle="modal" data-target="#eraser-options-modal-id"><i class="fa fa-eraser"></i></button>
+
+					<button id='btn-eraser-id' class="btn  btn-icon" href="#"
+					        data-toggle="modal" data-target="#eraser-options-modal-id">
+						<i class="fa fa-eraser"></i>
+					</button>
+
 					<span class="inline">|</span>
                     <button id='btn-zoom-id' class="btn  btn-icon" href="#" ><i class="fa fa-search"></i></button>
               		<span class="inline">|</span>
@@ -212,6 +224,32 @@
 	<!-- modal dialog-->
 </div>
 <!-- modal eraser-options  -->
+<div id="label-propagation-modal-id" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="">
+	<div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h3 class="modal-title">Propagate Labels</h3>
+			</div><!-- modal header -->
+			<div class="modal-body">
+				<div class="row">
+					<div class="col-xs-12">
+						<h4>Select the label(s) to propagate:</h4>
+						<div class="vertical-scroller">
+							<select id="propagate-label-selector-id"></select>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+				<button id='btn-ok-propagate-id' type="button" class="btn btn-success" data-dismiss="modal">OK</button>
+			</div>
+		</div>
+	</div>
+</div>
 <div id='alert-container-id'>
 	<div id='alert-message-id' class="alert alert-info">
 		message
@@ -232,14 +270,15 @@
 <script src="_/js/plugins/no_ui_slider/wNumb.js"></script>
 <script src="_/js/plugins/no_ui_slider/nouislider.js"></script>
 <script src="_/js/plugins/simple_color_picker/jquery.simplecolorpicker.js"></script>
-
+<script src="_/js/plugins/label_picker/label_picker.js"></script>
 
 <script src="_/plexo.lib.js"></script>
-<script src="_/gui.js"></script>
+<script src="_/gui.lib.js"></script>
  <!--<script src="http://jsconsole.com/remote.js?D50BBFD8-2CD5-4E60-ADBD-7CD75B4A17E8"></script>-->
 <!--<script src="http://jsconsole.com/remote.js?FAE031CD-74A0-46D3-AE36-757BAB262BEA"></script>-->
 <script>
 	initPlexo();
+	$('#label-propagation-modal-id').modal('show');
 </script>
 </body>
 </html>
