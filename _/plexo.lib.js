@@ -58,10 +58,33 @@ plx.setCurrentCoordinates = function (x, y) {
  ------------------------------------------------------------------------------------------------*/
 plx.EV_SLICE_CHANGED  = 'plx-ev-slice-changed';
 plx.EV_COORDS_UPDATED = 'plx-ev-coords-updated';
+plx.EV_OPERATION_CHANGED = 'plx-ev-op-changed';
 
 /*-----------------------------------------------------------------------------------------------
   Utilities
  ------------------------------------------------------------------------------------------------*/
+
+plx.hex2rgb = function (hex) {
+    hex   = hex.replace('#', '');
+    var r = parseInt(hex.substring(0, 2), 16);
+    var g = parseInt(hex.substring(2, 4), 16);
+    var b = parseInt(hex.substring(4, 6), 16);
+    return {'r': r, 'g': g, 'b': b};
+}
+
+plx.rgb2hex = function (R, G, B) {
+    function toHex(n) {
+        n = parseInt(n, 10);
+        if (isNaN(n)) {
+            return "00";
+        }
+        n = Math.max(0, Math.min(n, 255));
+        return "0123456789ABCDEF".charAt((n - n % 16) / 16)
+            + "0123456789ABCDEF".charAt(n % 16);
+    }
+    return '#' + toHex(R) + toHex(G) + toHex(B);
+};
+
 
 function message(text) {
     document.getElementById('status-message-id').innerHTML = text;
@@ -82,53 +105,63 @@ window.addEventListener('touchstart', function setHasTouch() {
 /*-----------------------------------------------------------------------------------------------
  Labels
  ------------------------------------------------------------------------------------------------*/
-plx.LabelSet = {};
 
-plx.LabelSet.getLabelByIndex = function (label_index) {
-    if (label_index > 0 && label_index <= plx.LABELS.length) {
-        return plx.LABELS[label_index - 1];
+plx.Label = function(id, name, color){
+    this.id = id;
+    this.name = name;
+    this.color = color;
+    this.setColor(color);
+};
+
+plx.Label.prototype.setColor = function(color){
+    var rgb = plx.hex2rgb(color);
+    this.r = rgb.r;
+    this.g = rgb.g;
+    this.b = rgb.b;
+};
+
+
+plx.LabelSet = function(labels){
+    this.labels = labels;
+};
+
+plx.LabelSet.prototype.getLabelByIndex = function (label_index) {
+
+    if (label_index > 0 && label_index <= this.labels.length) {
+        return this.labels[label_index - 1];
     }
     else {
         return undefined;
     }
 };
 
-plx.LabelSet.getLabelByID = function (label_id) {
-    var N = plx.LABELS.length;
+plx.LabelSet.prototype.getLabelByID = function (label_id) {
+    var N = this.labels.length;
     for (var i = 0; i < N; i += 1) {
-        if (plx.LABELS[i].id == label_id) {
-            return plx.LABELS[i];
+        if (this.labels[i].id == label_id) {
+            return this.labels[i];
         }
     }
     return undefined;
 };
 
-plx.setGlobalLabels = function (labels) {
-    plx.LABELS = labels;
-    return plx.LABELS;
+plx.LabelSet.prototype.getLabels = function(){
+    return this.labels;
 };
 
-plx.hex2rgb = function (hex) {
-    hex   = hex.replace('#', '');
-    var r = parseInt(hex.substring(0, 2), 16);
-    var g = parseInt(hex.substring(2, 4), 16);
-    var b = parseInt(hex.substring(4, 6), 16);
-    return {'r': r, 'g': g, 'b': b};
-}
+plx.LabelSet.prototype.getLabelByRGBColor = function(r,g,b){
+    var N = this.labels.length;
 
-plx.rgb2hex = function (R, G, B) {
-    function toHex(n) {
-        n = parseInt(n, 10);
-        if (isNaN(n)) {
-            return "00";
+    for (var i=0; i<N; i++){
+        var label = this.labels[i];
+
+        if (label.r == r && label.g == g && label.b == b){
+            return label;
         }
-        n = Math.max(0, Math.min(n, 255));
-        return "0123456789ABCDEF".charAt((n - n % 16) / 16)
-            + "0123456789ABCDEF".charAt(n % 16);
     }
-
-    return '#' + toHex(R) + toHex(G) + toHex(B);
+    return undefined;
 };
+
 
 
 /*-----------------------------------------------------------------------------------------------
@@ -165,13 +198,13 @@ plx.Brush.prototype.setOpacity = function (opacity) {
 
 plx.Brush.prototype.setLabelID = function (label_id) {
     this.label_id = label_id;
-    var label     = plx.LabelSet.getLabelByID(label_id);
+    var label     = plx.LABELS.getLabelByID(label_id);
     this.setColor(label.color);
     this.label_id = label.id;
 };
 
 plx.Brush.prototype.setLabelByIndex = function (label_index) {
-    var label     = plx.LabelSet.getLabelByIndex(label_index);
+    var label     = plx.LABELS.getLabelByIndex(label_index);
     this.setColor(label.color);
     this.label_id = label.id;
 };
@@ -263,6 +296,11 @@ plx.Slice.prototype.updateLayer = function (view) {
     if (plx.zoom) {
         plx.zoom.apply(ctx);
     }
+
+    ctx.imageSmoothingEnabled = false;
+    ctx.mozImageSmoothingEnabled = false;
+    ctx.webkitImageSmoothingEnabled = false;
+    ctx.msImageSmoothingEnabled = false;
 
     ctx.drawImage(this.image, 0, 0, width, height);
 
@@ -436,6 +474,11 @@ plx.AnnotationLayer.prototype.startAnnotation = function (x, y, view) {
     this.lastX = x;
     this.lastY = y;
 
+    this.ctx.imageSmoothingEnabled = false;
+    this.ctx.mozImageSmoothingEnabled = false;
+    this.ctx.webkitImageSmoothingEnabled = false;
+    this.ctx.msImageSmoothingEnabled = false;
+
 
     if (this.data) {
         this.ctx.clearRect(0, 0, this.offcanvas.width, this.offcanvas.height);
@@ -503,21 +546,21 @@ plx.AnnotationLayer.prototype.updateAnnotation = function (curr_x, curr_y, view)
         for (var x = x1; x < x2; x += 1) {
             if (brush.type == 'square') {
                 if (steep) {
-                    ctx.fillRect(y - brush.size, x - brush.size, bsize2, bsize2);
+                    ctx.fillRect(y - brush.size+0.5, x - brush.size+0.5, bsize2, bsize2);
                 }
                 else {
-                    ctx.fillRect(x - brush.size, y - brush.size, bsize2, bsize2);
+                    ctx.fillRect(x - brush.size+0.5, y - brush.size+0.5, bsize2, bsize2);
                 }
             }
             else {
                 if (steep) {
                     ctx.beginPath();
-                    ctx.arc(y, x, brush.size, 0, plx.PI2);
+                    ctx.arc(y+0.5, x+0.5, brush.size, 0, plx.PI2);
                     ctx.fill();
                 }
                 else {
                     ctx.beginPath();
-                    ctx.arc(x, y, brush.size, 0, plx.PI2);
+                    ctx.arc(x+0.5, y+0.5, brush.size, 0, plx.PI2);
                     ctx.fill();
                 }
             }
@@ -652,6 +695,11 @@ plx.PaintBucket.prototype.updateAnnotationLayer = function (view) {
 
 plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
 
+    this.ctx.imageSmoothingEnabled = false;
+    this.ctx.mozImageSmoothingEnabled = false;
+    this.ctx.webkitImageSmoothingEnabled = false;
+    this.ctx.msImageSmoothingEnabled = false;
+
     var imdata = this.ctx.getImageData(0, 0, this.sizeX, this.sizeY);
     var width  = this.sizeX, height = this.sizeY;
 
@@ -694,11 +742,48 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
         }
     };
 
-    function test(x, y) {
+    function getColor(x,y){
         var pos = (y * width) + x;
-        return (imdata.data[pos * 4] == ori.r &&
-        imdata.data[pos * 4 + 1] == ori.g &&
-        imdata.data[pos * 4 + 2] == ori.b);
+        return [
+            imdata.data[pos * 4],
+        imdata.data[pos * 4 + 1],
+        imdata.data[pos * 4 + 2]
+        ];
+    }
+
+    var bucket = this;
+
+
+
+    function test(x, y) { //check if the color is not any of the labels or zero
+        var pos = (y * width) + x;
+
+        var r = imdata.data[pos * 4];
+        var g = imdata.data[pos * 4 + 1];
+        var b = imdata.data[pos * 4 + 2];
+
+        if (r == ori.r && g == ori.g && b == ori.b){
+            return true;  //Empty, good to fill
+        }
+        else{
+            /*var label = plx.LABELS.getLabelByRGBColor(r,g,b);
+            if (label === undefined){
+                getColor(x,y);
+                //this voxel does not contain a label, it must be an artifact
+                bucket.debug(imdata);
+                return true;
+            }
+            else {
+                getColor(x,y);
+                bucket.debug(imdata);
+                return false; //the voxel contains a label. stop.
+            }*/
+            return false;
+        }
+
+
+
+
 
     };
 
@@ -790,13 +875,21 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
 
         if (y < height - 1) {
             addNextLine(y + 1, !up, true);
+
         }
         if (y > 0) {
             addNextLine(y - 1, !down, false);
+
         }
     }
 
     this.ctx.putImageData(imdata, 0, 0);
+};
+
+plx.PaintBucket.prototype.debug = function(imdata){
+    this.ctx.putImageData(imdata, 0, 0);
+    this.updateAnnotationLayer(VIEW);
+    var x = 0;
 };
 
 
@@ -1263,10 +1356,7 @@ plx.ViewInteractor.prototype.onMouseMove = function (ev) {
 
     if (ev.shiftKey) {
         clearTimeout(this._long_press_timer);
-        console.log('new focus ', x, y);
-        plx.zoom.setFocus(x, y);
-        this.view.render();
-
+        this.action_panning(x,y);
     }
 
     if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE || plx.CURRENT_OPERATION == plx.OP_DELETE) {
@@ -1564,6 +1654,7 @@ plx.ViewInteractor.prototype.onDoubleTouchStart = function (touches) {
     message('zoom start. scale:' + this._scale.toPrecision(3));
     plx.setCurrentCoordinates(this._midpoint.x, this._midpoint.y);
     this.notify(plx.EV_COORDS_UPDATED);
+    this.notify(plx.EV_OPERATION_CHANGED, {'operation': plx.OP_ZOOM});
 };
 
 plx.ViewInteractor.prototype.onDoubleTouchMove = function (touches) {

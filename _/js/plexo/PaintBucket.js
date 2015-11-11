@@ -47,6 +47,11 @@ plx.PaintBucket.prototype.updateAnnotationLayer = function (view) {
 
 plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
 
+    this.ctx.imageSmoothingEnabled = false;
+    this.ctx.mozImageSmoothingEnabled = false;
+    this.ctx.webkitImageSmoothingEnabled = false;
+    this.ctx.msImageSmoothingEnabled = false;
+
     var imdata = this.ctx.getImageData(0, 0, this.sizeX, this.sizeY);
     var width  = this.sizeX, height = this.sizeY;
 
@@ -89,11 +94,48 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
         }
     };
 
-    function test(x, y) {
+    function getColor(x,y){
         var pos = (y * width) + x;
-        return (imdata.data[pos * 4] == ori.r &&
-        imdata.data[pos * 4 + 1] == ori.g &&
-        imdata.data[pos * 4 + 2] == ori.b);
+        return [
+            imdata.data[pos * 4],
+        imdata.data[pos * 4 + 1],
+        imdata.data[pos * 4 + 2]
+        ];
+    }
+
+    var bucket = this;
+
+
+
+    function test(x, y) { //check if the color is not any of the labels or zero
+        var pos = (y * width) + x;
+
+        var r = imdata.data[pos * 4];
+        var g = imdata.data[pos * 4 + 1];
+        var b = imdata.data[pos * 4 + 2];
+
+        if (r == ori.r && g == ori.g && b == ori.b){
+            return true;  //Empty, good to fill
+        }
+        else{
+            /*var label = plx.LABELS.getLabelByRGBColor(r,g,b);
+            if (label === undefined){
+                getColor(x,y);
+                //this voxel does not contain a label, it must be an artifact
+                bucket.debug(imdata);
+                return true;
+            }
+            else {
+                getColor(x,y);
+                bucket.debug(imdata);
+                return false; //the voxel contains a label. stop.
+            }*/
+            return false;
+        }
+
+
+
+
 
     };
 
@@ -185,11 +227,19 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
 
         if (y < height - 1) {
             addNextLine(y + 1, !up, true);
+
         }
         if (y > 0) {
             addNextLine(y - 1, !down, false);
+
         }
     }
 
     this.ctx.putImageData(imdata, 0, 0);
+};
+
+plx.PaintBucket.prototype.debug = function(imdata){
+    this.ctx.putImageData(imdata, 0, 0);
+    this.updateAnnotationLayer(VIEW);
+    var x = 0;
 };

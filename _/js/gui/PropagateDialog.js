@@ -33,7 +33,7 @@ gui.PropagateDialog.prototype.update_picker = function(){
     var selector = this.label_picker;
     selector.labelpicker('destroy');
     selector.html('');
-    $.each(labels, function () { selector.append($("<option />", {value: this.color, text: this.id})); });
+    $.each(labels, function () { selector.append($("<option />", {value: this.color, text: this.name})); });
 
 
     this.label_picker.labelpicker({'theme':'fontawesome','list':true, 'multiple':true, 'noselected':true});

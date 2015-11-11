@@ -32,13 +32,13 @@ plx.Brush.prototype.setOpacity = function (opacity) {
 
 plx.Brush.prototype.setLabelID = function (label_id) {
     this.label_id = label_id;
-    var label     = plx.LabelSet.getLabelByID(label_id);
+    var label     = plx.LABELS.getLabelByID(label_id);
     this.setColor(label.color);
     this.label_id = label.id;
 };
 
 plx.Brush.prototype.setLabelByIndex = function (label_index) {
-    var label     = plx.LabelSet.getLabelByIndex(label_index);
+    var label     = plx.LABELS.getLabelByIndex(label_index);
     this.setColor(label.color);
     this.label_id = label.id;
 };

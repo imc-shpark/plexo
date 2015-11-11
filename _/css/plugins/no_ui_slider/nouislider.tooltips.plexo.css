@@ -41,3 +41,13 @@
     z-index: -1;
 
 }
+
+@media only screen and (max-width: 767px) {
+    .noUi-pips{
+        display:none;
+    }
+
+    .noUi-target{
+        margin-top:10px;
+    }
+}

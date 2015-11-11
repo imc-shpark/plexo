@@ -211,7 +211,10 @@ gui.ToolbarController.prototype.processNotification = function (data) {
 
 gui.ToolbarController.prototype.update_brush = function () {
     this.btn_brush.css('color', BRUSH.color + ' !important');
-    $('#status-current-label-id').html(BRUSH.label_id + ' [' + BRUSH.size + ', ' + BRUSH.type + ', ' + BRUSH.getHexColor() + ']');
+    var label = plx.LABELS.getLabelByID(BRUSH.label_id);
+    $('#status-current-label-id').html(label.id +':'
+        +label.name
+        +'  (' + BRUSH.size + ', ' + BRUSH.type + ', ' + BRUSH.getHexColor() + ')');
 };
 
 gui.ToolbarController.prototype.update_eraser = function () {

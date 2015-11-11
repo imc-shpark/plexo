@@ -119,6 +119,8 @@
   padding: 5px 15px 0 15px;
 }
 
+
+
 .labelpicker.fontawesome span.color[data-selected]:after {
   -webkit-font-smoothing: antialiased;
   content: '\f00c'; /* Ok/check mark */

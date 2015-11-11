@@ -65,6 +65,11 @@ plx.Slice.prototype.updateLayer = function (view) {
         plx.zoom.apply(ctx);
     }
 
+    ctx.imageSmoothingEnabled = false;
+    ctx.mozImageSmoothingEnabled = false;
+    ctx.webkitImageSmoothingEnabled = false;
+    ctx.msImageSmoothingEnabled = false;
+
     ctx.drawImage(this.image, 0, 0, width, height);
 
 

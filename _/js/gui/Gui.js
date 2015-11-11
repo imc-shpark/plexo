@@ -17,7 +17,7 @@ function load_dataset_callback(dataset) {
     }
 };
 
-function setup_labels() {
+function setup_labels () {
 
     var palette = [
         "#ac725e", "#d06b64", "#f83a22", "#fa573c", "#ff7537", "#ffad46", "#42d692",
@@ -26,17 +26,20 @@ function setup_labels() {
         "#f691b2", "#cd74e6", "#a47ae2"
     ];
 
-    var num_labels = 24,
-        labels     = [];
+    var num_labels = palette.length;
+    var labels     = [];
 
     for (var i = 0; i < num_labels; i += 1) {
-        labels.push({'id': 'label-' + (i + 1), 'color': palette[i]});
+        var label = new plx.Label((i+1), 'label-'+(i+1), palette[i]);
+        labels.push(label);
     }
 
-    LABELS = plx.setGlobalLabels(labels);
+    plx.LABELS = new plx.LabelSet(labels);
+
+    LABELS = plx.LABELS.getLabels();
 
     BRUSH.setLabelID(LABELS[0].id);
-    //update_brush_gui();
+
 };
 
 /*-----------------------------------------------------------------------------------------------
@@ -48,7 +51,6 @@ function initPlexo() {
     setup_keyboard();
 
     dataset = new plx.Dataset('data/ds_us_1', init_slice, end_slice, step_slice);
-
     VIEW = new plx.View('plexo-canvas-id');
     VIEW.load(dataset, load_dataset_callback);
 

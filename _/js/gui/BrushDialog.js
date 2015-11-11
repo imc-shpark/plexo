@@ -51,7 +51,7 @@ gui.BrushDialog.prototype._setup_controls = function () {
         start   : 0.5,
         step    : 0.05,
         range   : {
-            'min': [0.5],
+            'min': [0.1],
             'max': [1]
         },
         connect : 'lower',

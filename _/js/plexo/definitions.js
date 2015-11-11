@@ -41,6 +41,28 @@ plx.EV_OPERATION_CHANGED = 'plx-ev-op-changed';
   Utilities
  ------------------------------------------------------------------------------------------------*/
 
+plx.hex2rgb = function (hex) {
+    hex   = hex.replace('#', '');
+    var r = parseInt(hex.substring(0, 2), 16);
+    var g = parseInt(hex.substring(2, 4), 16);
+    var b = parseInt(hex.substring(4, 6), 16);
+    return {'r': r, 'g': g, 'b': b};
+}
+
+plx.rgb2hex = function (R, G, B) {
+    function toHex(n) {
+        n = parseInt(n, 10);
+        if (isNaN(n)) {
+            return "00";
+        }
+        n = Math.max(0, Math.min(n, 255));
+        return "0123456789ABCDEF".charAt((n - n % 16) / 16)
+            + "0123456789ABCDEF".charAt(n % 16);
+    }
+    return '#' + toHex(R) + toHex(G) + toHex(B);
+};
+
+
 function message(text) {
     document.getElementById('status-message-id').innerHTML = text;
 };

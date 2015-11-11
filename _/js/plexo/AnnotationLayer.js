@@ -110,6 +110,11 @@ plx.AnnotationLayer.prototype.startAnnotation = function (x, y, view) {
     this.lastX = x;
     this.lastY = y;
 
+    this.ctx.imageSmoothingEnabled = false;
+    this.ctx.mozImageSmoothingEnabled = false;
+    this.ctx.webkitImageSmoothingEnabled = false;
+    this.ctx.msImageSmoothingEnabled = false;
+
 
     if (this.data) {
         this.ctx.clearRect(0, 0, this.offcanvas.width, this.offcanvas.height);
@@ -177,21 +182,21 @@ plx.AnnotationLayer.prototype.updateAnnotation = function (curr_x, curr_y, view)
         for (var x = x1; x < x2; x += 1) {
             if (brush.type == 'square') {
                 if (steep) {
-                    ctx.fillRect(y - brush.size, x - brush.size, bsize2, bsize2);
+                    ctx.fillRect(y - brush.size+0.5, x - brush.size+0.5, bsize2, bsize2);
                 }
                 else {
-                    ctx.fillRect(x - brush.size, y - brush.size, bsize2, bsize2);
+                    ctx.fillRect(x - brush.size+0.5, y - brush.size+0.5, bsize2, bsize2);
                 }
             }
             else {
                 if (steep) {
                     ctx.beginPath();
-                    ctx.arc(y, x, brush.size, 0, plx.PI2);
+                    ctx.arc(y+0.5, x+0.5, brush.size, 0, plx.PI2);
                     ctx.fill();
                 }
                 else {
                     ctx.beginPath();
-                    ctx.arc(x, y, brush.size, 0, plx.PI2);
+                    ctx.arc(x+0.5, y+0.5, brush.size, 0, plx.PI2);
                     ctx.fill();
                 }
             }

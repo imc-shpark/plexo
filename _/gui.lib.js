@@ -108,7 +108,7 @@ gui.BrushDialog.prototype._setup_controls = function () {
         start   : 0.5,
         step    : 0.05,
         range   : {
-            'min': [0.5],
+            'min': [0.1],
             'max': [1]
         },
         connect : 'lower',
@@ -377,7 +377,7 @@ gui.PropagateDialog.prototype.update_picker = function(){
     var selector = this.label_picker;
     selector.labelpicker('destroy');
     selector.html('');
-    $.each(labels, function () { selector.append($("<option />", {value: this.color, text: this.id})); });
+    $.each(labels, function () { selector.append($("<option />", {value: this.color, text: this.name})); });
 
 
     this.label_picker.labelpicker({'theme':'fontawesome','list':true, 'multiple':true, 'noselected':true});
@@ -778,7 +778,10 @@ gui.ToolbarController.prototype.processNotification = function (data) {
 
 gui.ToolbarController.prototype.update_brush = function () {
     this.btn_brush.css('color', BRUSH.color + ' !important');
-    $('#status-current-label-id').html(BRUSH.label_id + ' [' + BRUSH.size + ', ' + BRUSH.type + ', ' + BRUSH.getHexColor() + ']');
+    var label = plx.LABELS.getLabelByID(BRUSH.label_id);
+    $('#status-current-label-id').html(label.id +':'
+        +label.name
+        +'  (' + BRUSH.size + ', ' + BRUSH.type + ', ' + BRUSH.getHexColor() + ')');
 };
 
 gui.ToolbarController.prototype.update_eraser = function () {
@@ -805,7 +808,7 @@ function load_dataset_callback(dataset) {
     }
 };
 
-function setup_labels() {
+function setup_labels () {
 
     var palette = [
         "#ac725e", "#d06b64", "#f83a22", "#fa573c", "#ff7537", "#ffad46", "#42d692",
@@ -814,17 +817,20 @@ function setup_labels() {
         "#f691b2", "#cd74e6", "#a47ae2"
     ];
 
-    var num_labels = 24,
-        labels     = [];
+    var num_labels = palette.length;
+    var labels     = [];
 
     for (var i = 0; i < num_labels; i += 1) {
-        labels.push({'id': 'label-' + (i + 1), 'color': palette[i]});
+        var label = new plx.Label((i+1), 'label-'+(i+1), palette[i]);
+        labels.push(label);
     }
 
-    LABELS = plx.setGlobalLabels(labels);
+    plx.LABELS = new plx.LabelSet(labels);
+
+    LABELS = plx.LABELS.getLabels();
 
     BRUSH.setLabelID(LABELS[0].id);
-    //update_brush_gui();
+
 };
 
 /*-----------------------------------------------------------------------------------------------
@@ -836,7 +842,6 @@ function initPlexo() {
     setup_keyboard();
 
     dataset = new plx.Dataset('data/ds_us_1', init_slice, end_slice, step_slice);
-
     VIEW = new plx.View('plexo-canvas-id');
     VIEW.load(dataset, load_dataset_callback);
 
