@@ -224,3 +224,9 @@ border: 1px solid #ccc;
 .wrapper-dataset-slider{
     padding: 0px 20px 0px 6px;
 }
+
+
+.thumb{
+    background-color: #080808;
+    border: 1px solid #ccc;
+}

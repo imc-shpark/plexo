@@ -61,6 +61,7 @@ function initPlexo() {
     gui.brush_dialog     = new gui.BrushDialog(VIEW);
     gui.eraser_dialog    = new gui.EraserDialog(VIEW);
     gui.propagate_dialog = new gui.PropagateDialog(VIEW);
+    gui.download_dialog  = new gui.DownloadAnnotationsDialog(VIEW);
 };
 
 /*-----------------------------------------------------------------------------------------------

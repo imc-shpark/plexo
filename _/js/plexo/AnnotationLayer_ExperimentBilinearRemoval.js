@@ -6,26 +6,21 @@
  */
 plx.AnnotationLayer = function (slice_id) {
 
-    this.slice_id     = slice_id;
-    this.canvas       = document.createElement('canvas');
-    this.ctx          = this.canvas.getContext('2d');
-    this.imageData    = undefined;
-    this.lastX        = undefined;
-    this.lastY        = undefined;
-    this.undo_history = [];
-    this.redo_history = [];
-    this.view         = undefined;
-};
+    this.slice_id          = slice_id;
 
-//Constants
-plx.AnnotationLayer.LABEL_DISTANCE_TOLERANCE = 20;
+    this.canvas = document.createElement('canvas');
+    this.ctx    = this.canvas.getContext('2d');
 
-/**
- * Sets the reference of the view where this annotation layer will be displayed
- * @param view
- */
-plx.AnnotationLayer.prototype.setView = function (view) {
-    this.view = view;
+    this.stroke_canvas     = document.createElement('canvas');
+    this.stroke_ctx        = this.stroke_canvas.getContext('2d');
+
+    this.imageData         = undefined;
+
+    this.lastX             = undefined;
+    this.lastY             = undefined;
+
+    this.undo_history      = new Array();
+    this.redo_history      = new Array();
 };
 
 /**
@@ -66,6 +61,7 @@ plx.AnnotationLayer.prototype.clearAnnotations = function () {
  */
 plx.AnnotationLayer.prototype.saveUndoStep = function () {
     this.undo_history.push(this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height));
+    //console.debug('step saved. ' + this.undo_history.length + ' steps to undo');
 };
 
 /**
@@ -113,12 +109,8 @@ plx.AnnotationLayer.prototype.redo = function () {
  * @param y coordinate y
  * @param view corresponding view
  */
-plx.AnnotationLayer.prototype.startAnnotation = function (x, y) {
+plx.AnnotationLayer.prototype.startAnnotation = function (x, y, view) {
 
-    if (this.view === undefined) {
-        throw 'Annotation cannot start, the view has not been set';
-    }
-    var view   = this.view;
     var brush  = plx.BRUSH;
     var eraser = plx.ERASER;
 
@@ -128,7 +120,11 @@ plx.AnnotationLayer.prototype.startAnnotation = function (x, y) {
     this.canvas.width  = view.canvas.width;
     this.canvas.height = view.canvas.height;
 
+    this.stroke_canvas.width = view.canvas.width;
+    this.stroke_canvas.height = view.canvas.height;
     /*---------------------------------------------*/
+
+    //this.ctx =this.canvas.getContext("2d");
 
     switch (plx.CURRENT_OPERATION) {
         case plx.OP_ANNOTATE:
@@ -137,6 +133,12 @@ plx.AnnotationLayer.prototype.startAnnotation = function (x, y) {
             this.ctx.lineJoin    = brush.type;
             this.ctx.lineCap     = brush.type;
             this.ctx.lineWidth   = brush.size;
+
+            this.stroke_ctx.strokeStyle = plx.BRUSH.color;
+            this.stroke_ctx.fillStyle   = plx.BRUSH.color;
+            this.stroke_ctx.lineJoin    = brush.type;
+            this.stroke_ctx.lineCap     = brush.type;
+            this.stroke_ctx.lineWidth   = brush.size;
 
             break;
 
@@ -147,25 +149,33 @@ plx.AnnotationLayer.prototype.startAnnotation = function (x, y) {
             this.ctx.lineCap     = eraser.type;
             this.ctx.lineWidth   = eraser.size;
             break;
+
+        //case plx.OP_EROSION:
+        //    break;
     }
 
     this.lastX = x;
     this.lastY = y;
 
     plx.smoothingEnabled(this.ctx, false);
+    plx.smoothingEnabled(this.stroke_ctx, false);
 
     if (this.imageData) {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.putImageData(this.imageData, 0, 0); //adds the current annotations to the annotation context
     }
 
+    this.stroke_ctx.clearRect(0,0,this.stroke_canvas.width, this.stroke_canvas.height); //unnecessary since we assigned
+                                                                                        //dimensions before in this method but, just to be sure...
+
     this.redo_history = [];
 };
 
-plx.AnnotationLayer.prototype.updateAnnotation = function (curr_x, curr_y) {
+plx.AnnotationLayer.prototype.updateAnnotation = function (curr_x, curr_y, view) {
 
-    var ctx    = this.ctx;
-    var view   = this.view;
+    var ctx = this.ctx;
+    var stroke_ctx = this.stroke_ctx;
+
     var brush  = plx.BRUSH;
     var eraser = plx.ERASER;
     var mouseX = curr_x;
@@ -204,23 +214,32 @@ plx.AnnotationLayer.prototype.updateAnnotation = function (curr_x, curr_y) {
         yStep = 1;
     }
 
+
     if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE) {
         for (var x = x1; x < x2; x += 1) {
             if (brush.type == 'square') {
                 if (steep) {
                     ctx.fillRect(y - brush.size, x - brush.size, bsize2, bsize2);
+                    stroke_ctx.fillRect(y - brush.size, x - brush.size, bsize2, bsize2);
                 }
                 else {
                     ctx.fillRect(x - brush.size, y - brush.size, bsize2, bsize2);
+                    stroke_ctx.fillRect(x - brush.size, y - brush.size, bsize2, bsize2);
                 }
             }
             else {
                 if (steep) {
+                    stroke_ctx.beginPath();
+                    stroke_ctx.arc(y, x, brush.size, 0, plx.PI2);
+                    stroke_ctx.fill();
                     ctx.beginPath();
                     ctx.arc(y, x, brush.size, 0, plx.PI2);
                     ctx.fill();
                 }
                 else {
+                    stroke_ctx.beginPath();
+                    stroke_ctx.arc(x, y, brush.size, 0, plx.PI2);
+                    stroke_ctx.fill();
                     ctx.beginPath();
                     ctx.arc(x, y, brush.size, 0, plx.PI2);
                     ctx.fill();
@@ -263,21 +282,45 @@ plx.AnnotationLayer.prototype.updateAnnotation = function (curr_x, curr_y) {
     view.ctx.drawImage(this.canvas, 0, 0, width, height);
 };
 
-plx.AnnotationLayer.prototype.saveAnnotation = function () {
+plx.AnnotationLayer.prototype.stopAnnotation = function () {
 
-    this.processPixels();
+    var strokeImageData = this.stroke_ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
 
+    //here process data so the bilinear interpolation goes away.
+    this.removeBilinearInterpolation(strokeImageData);
+
+    this.stroke_ctx.putImageData(strokeImageData,0,0);
+
+    //combine stroke_canvas image with current annotation canvas image before saving here.
+    this.ctx.drawImage(this.stroke_canvas,0,0, this.stroke_canvas.width, this.stroke_canvas.height);
+
+    var annotationImageData = this.ctx.getImageData(0,0, this.canvas.width, this.canvas.height);
+    this.imageData = annotationImageData;
 
     this.saveUndoStep();
-    this.view.render();
+
 };
 
-plx.AnnotationLayer.prototype.updateLayer = function (view) {
+plx.AnnotationLayer.prototype.removeBilinearInterpolation = function (strokeImageData) {
 
-    if (view !== this.view) {
-        throw 'Assertion error: the annotation layer is not assigned to the current view being rendered';
+    var data = strokeImageData.data;
+
+    var N    = data.length;
+
+    for (var i = 0; i < N; i += 4) {
+        var r = data[i];
+        var g = data[i + 1];
+        var b = data[i + 2];
+        if (r == g && g == b & b == 0) {
+            continue;
+        }
+        data[i] =  255-plx.BRUSH.r;
+        data[i+1] = 255-plx.BRUSH.g;
+        data[i+2] = 255-plx.BRUSH.b;
     }
+}
 
+plx.AnnotationLayer.prototype.updateLayer = function (view) {
     var view_ctx = view.ctx;
     var off_ctx  = this.ctx;
 
@@ -292,126 +335,6 @@ plx.AnnotationLayer.prototype.updateLayer = function (view) {
         plx.smoothingEnabled(view_ctx, false);
         view_ctx.drawImage(this.canvas, 0, 0, view.canvas.width, view.canvas.height);
 
-    }
-};
-
-plx.AnnotationLayer.prototype._getPixelPopulation = function () {
-
-    //assertion: this.imageData has been set
-    if (this.imageData == undefined) {
-        return {};
-    }
-
-    var data = this.imageData.data;
-
-    var dict = {};
-
-    for (var i = 0, N = data.length; i < N; i += 4) {
-
-        var r = data[i], g = data[i + 1], b = data[i + 2];
-
-        if (r == g && g == b & b == 0) {
-            continue;
-        }
-        var hex = plx.rgb2hex(r, g, b);
-        if (dict[hex] == undefined) {
-            dict[hex] = 1;
-        }
-        else {
-            dict[hex]++;
-        }
-    }
-
-    return dict;
-};
-
-plx.AnnotationLayer.prototype.getUsedLabels = function () {
-
-    var dict   = this._getPixelPopulation();
-    var colors = Object.keys(dict);
-
-    if (colors.length == 0) {
-        return [];
-    }
-
-    var labels       = plx.LABELS.labels;
-    var MAX_DISTANCE = plx.AnnotationLayer.LABEL_DISTANCE_TOLERANCE;
-    var used         = [];
-
-    function distanceToLabel(label) {
-
-        var minDistance = 255 * 3; //maximum possible distance
-
-        for (var i = 0, N = colors.length; i < N; i++) {
-            var color    = plx.hex2rgb(colors[i]);
-            var distance = Math.abs(color.r - label.r) + Math.abs(color.g - label.g) + Math.abs(color.b - label.b);
-            if (distance < minDistance) {
-                minDistance = distance;
-            }
-        }
-        //console.log('minimum distance to label ' + label.id + ' (' + label.color + ') :' + minDistance);
-        return minDistance;
-    }
-
-    for (var i = 0, N = labels.length; i < N; i++) {
-        var label = labels[i];
-        if (distanceToLabel(label) <= MAX_DISTANCE) {
-            used.push(label);
-        }
-    }
-    return used;
-};
-
-/**
- * Removes the smoothing due to the bilinear interpolation
- * caused by ctx.fillRect ctx.arc and ctx.fill (problem inherent to html canvas)
- *
- * This method UPDATES the current ImageData object of the annotation layer.
- *
- */
-plx.AnnotationLayer.prototype.processPixels = function () {
-
-    this.imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
-
-    var labels = this.getUsedLabels();
-    var data   = this.imageData.data;
-
-    var dict = {};
-
-    for (var i = 0, N = data.length; i < N; i += 4) {
-
-        var r = data[i], g = data[i + 1], b = data[i + 2];
-
-        if (r == g && g == b & b == 0) {
-            continue;
-        }
-
-        data[i + 3] = 255; //no alpha
-
-        //assign pixel to closest label
-
-        var lastDistance = 255 * 3;
-        var index        = 0;
-        for (var j = 0, M = labels.length; j < M; j++) {
-            var label    = labels[j];
-            var distance = Math.abs(label.r - r) + Math.abs(label.g - g) + Math.abs(label.b - b);
-
-            if (distance < lastDistance) {
-                index        = j;
-                lastDistance = distance;
-            }
-        }
-
-        var selected = labels[index];
-
-        data[i]     = selected.r;
-        data[i + 1] = selected.g;
-        data[i + 2] = selected.b;
 
     }
-
-    //console.log('used labels: ', labels);
-
-    plx.smoothingEnabled(this.ctx, false);
-    this.ctx.putImageData(this.imageData, 0, 0); //updates the data in the canvas.
 };

@@ -16,7 +16,6 @@ plx.View = function (canvas_id) {
     this.renderer           = new plx.Renderer(this);
     this.current_slice      = undefined;
     this.current_annotation = undefined;
-    //this.fullscreen             = false;
 };
 
 plx.View.prototype.resizeTo = function (width, height) {
@@ -36,7 +35,7 @@ plx.View.prototype.render = function () {
 plx.View.prototype.showSlice = function (slice) {
     this.current_slice = slice;
     this.getCurrentAnnotationLayer();
-    if (slice.stack == undefined) {
+    if (slice.stack === undefined) {
         this.renderer.addLayer(slice.uri, plx.Renderer.BACKGROUND_LAYER, this.current_slice);
         this.renderer.addLayer(slice.uri, plx.Renderer.ANNOTATION_LAYER, this.current_annotation);
         slice.stack = 'built';
@@ -96,9 +95,7 @@ plx.View.prototype.showPreviousSlice = function () {
     }
     return index;
 };
-//plx.View.prototype.showCurrentAnnotationSlice = function () {
-//    this.currentAnnotationLayer.draw(this);
-//}
+
 plx.View.prototype.getAnnotationLayer = function (slice_uri) {
     if (this.aset == undefined) { //@TODO: review hard code
         this.aset = new plx.AnnotationSet('spine_phantom_1', 'dcantor', '1', 'labels_spine');
@@ -115,20 +112,25 @@ plx.View.prototype.getCurrentAnnotationLayer = function () {
     }
     /*--------------------------------------------------------------------------------------*/
     this.current_annotation = this.aset.getAnnotation(this.current_slice.uri);
+    this.current_annotation.setView(this);
     return this.current_annotation;
 };
 
 plx.View.prototype.undo = function () {
     var alayer      = this.current_annotation;
     var successFlag = alayer.undo();
-    this.render();
+    if (successFlag) {
+        this.render();
+    }
     return successFlag; //false if nothing to undo
 };
 
 plx.View.prototype.redo = function () {
     var alayer      = this.current_annotation;
     var successFlag = alayer.redo();
-    this.render();
+    if (successFlag){
+        this.render();
+    }
     return successFlag;  //false if nothing to redo
 };
 

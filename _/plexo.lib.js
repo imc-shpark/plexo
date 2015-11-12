@@ -56,12 +56,12 @@ plx.setCurrentCoordinates = function (x, y) {
 /*-----------------------------------------------------------------------------------------------
  EVENTS
  ------------------------------------------------------------------------------------------------*/
-plx.EV_SLICE_CHANGED  = 'plx-ev-slice-changed';
-plx.EV_COORDS_UPDATED = 'plx-ev-coords-updated';
+plx.EV_SLICE_CHANGED     = 'plx-ev-slice-changed';
+plx.EV_COORDS_UPDATED    = 'plx-ev-coords-updated';
 plx.EV_OPERATION_CHANGED = 'plx-ev-op-changed';
 
 /*-----------------------------------------------------------------------------------------------
-  Utilities
+ Utilities
  ------------------------------------------------------------------------------------------------*/
 
 plx.hex2rgb = function (hex) {
@@ -82,9 +82,16 @@ plx.rgb2hex = function (R, G, B) {
         return "0123456789ABCDEF".charAt((n - n % 16) / 16)
             + "0123456789ABCDEF".charAt(n % 16);
     }
+
     return '#' + toHex(R) + toHex(G) + toHex(B);
 };
 
+plx.smoothingEnabled = function (ctx, flag) {
+    ctx.imageSmoothingEnabled       = flag;
+    ctx.mozImageSmoothingEnabled    = flag;
+    ctx.webkitImageSmoothingEnabled = flag;
+    ctx.msImageSmoothingEnabled     = flag;
+}
 
 function message(text) {
     document.getElementById('status-message-id').innerHTML = text;
@@ -277,17 +284,19 @@ plx.Slice.prototype.updateLayer = function (view) {
     var ctx = view.ctx;
 
     /*----------------------------------------------------------*/
-    // ALL CANVAS OPERATIONS MUST OCCUR IN ORIGINAL COORDINATES.
+    // ALL CANVAS OPERATIONS OCCUR IN ORIGINAL IMAGE COORDINATES
     // Regardless of the current scaling of the canvas through CSS
+    //
     // Canvas style      width and height -> determine appearance on screen
+    //
+    // WHEREAS:
     // Canvas properties width and height -> determine buffer operations
     /*----------------------------------------------------------*/
     var width  = this.image.width;
     var height = this.image.height;
 
-    view.canvas.width  = width;  //this will reset the transforms
+    view.canvas.width  = width;  //this resets the canvas state (content, transform, styles, etc).
     view.canvas.height = height;
-    /*---------------------------------------------*/
 
 
     ctx.globalAlpha = 1;
@@ -297,24 +306,24 @@ plx.Slice.prototype.updateLayer = function (view) {
         plx.zoom.apply(ctx);
     }
 
-    ctx.imageSmoothingEnabled = false;
-    ctx.mozImageSmoothingEnabled = false;
-    ctx.webkitImageSmoothingEnabled = false;
-    ctx.msImageSmoothingEnabled = false;
 
+    plx.smoothingEnabled(ctx, false);
     ctx.drawImage(this.image, 0, 0, width, height);
+    //this._debugZooom(ctx);
 
-
-    //var p1 = [150,150];
-    //var p2 = [300,300];
-    //ctx.fillStyle = '#FF0000';
-    //ctx.beginPath();
-    //ctx.arc(p1[0], p1[1], 5, 0, plx.PI2);
-    //ctx.fill();
-    //ctx.beginPath();
-    //ctx.arc(p2[0], p2[1], 5, 0, plx.PI2);
-    //ctx.fill();
 };
+
+//plx.Slice.prototype._debugZoom = function(ctx){
+//    var p1 = [150,150];
+//    var p2 = [300,300];
+//    ctx.fillStyle = '#FF0000';
+//    ctx.beginPath();
+//    ctx.arc(p1[0], p1[1], 5, 0, plx.PI2);
+//    ctx.fill();
+//    ctx.beginPath();
+//    ctx.arc(p2[0], p2[1], 5, 0, plx.PI2);
+//    ctx.fill();
+//};
 
 
 /*-----------------------------------------------------------------------------------------------
@@ -369,89 +378,130 @@ plx.Dataset.prototype.hasLoaded = function () {
  * Represents the annotated slice. There can only be one at a time per slice.
  */
 plx.AnnotationLayer = function (slice_id) {
+
     this.slice_id     = slice_id;
-    this.offcanvas    = document.createElement("canvas");
-    this.ctx          = this.offcanvas.getContext("2d");
-    this.data         = undefined;
+    this.canvas       = document.createElement('canvas');
+    this.ctx          = this.canvas.getContext('2d');
+    this.imageData    = undefined;
     this.lastX        = undefined;
     this.lastY        = undefined;
-    this.undo_history = new Array();
-    this.redo_history = new Array();
+    this.undo_history = [];
+    this.redo_history = [];
+    this.view         = undefined;
 };
 
+//Constants
+plx.AnnotationLayer.LABEL_DISTANCE_TOLERANCE = 20;
+
+/**
+ * Sets the reference of the view where this annotation layer will be displayed
+ * @param view
+ */
+plx.AnnotationLayer.prototype.setView = function (view) {
+    this.view = view;
+};
+
+/**
+ * Checks if this annotation layer is empty
+ * @returns true or false
+ */
 plx.AnnotationLayer.prototype.isEmpty = function () {
-    if (this.data == undefined) {
+    if (this.imageData == undefined) {
         //we have never annotated here
         return true;
     }
-    var imdata = this.data.data;
-    var maxR   = 0, maxG = 0, maxB = 0, N = imdata.length;
+    var data = this.imageData.data;
+    var maxR = 0, maxG = 0, maxB = 0, N = data.length;
     for (var i = 0; i < N; i += 4) {
-        if (imdata[i] > maxR) {maxR = imdata[i];}
-        if (imdata[i + 1] > maxG) {maxG = imdata[i + 1];}
-        if (imdata[i + 2] > maxB) {maxB = imdata[i + 2];}
+        if (data[i] > maxR) {maxR = data[i];}
+        if (data[i + 1] > maxG) {maxG = data[i + 1];}
+        if (data[i + 2] > maxB) {maxB = data[i + 2];}
     }
     return (maxR == maxG && maxG == maxB & maxR == 0); //nothing ?
 };
 
+/**
+ * Clears this annotation layer. The Undo/Redo history is cleared too.
+ */
 plx.AnnotationLayer.prototype.clearAnnotations = function () {
-    if (this.data == undefined) {
+    if (this.imageData == undefined) {
         return;
     } //nothing here to clear
 
-    this.ctx.clearRect(0, 0, this.offcanvas.width, this.offcanvas.height);
-    this.data         = undefined;
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.imageData    = undefined;
     this.undo_history = [];
     this.redo_history = [];
 };
 
+/**
+ * Creates a new undo step with the current content of the annotation context
+ */
 plx.AnnotationLayer.prototype.saveUndoStep = function () {
-    this.undo_history.push(this.ctx.getImageData(0, 0, this.offcanvas.width, this.offcanvas.height));
-    //console.debug('step saved. ' + this.undo_history.length + ' steps to undo');
+    this.undo_history.push(this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height));
 };
 
+/**
+ * Sets the contents of the annotation layer to one step before in history
+ * @returns {boolean}
+ */
 plx.AnnotationLayer.prototype.undo = function () {
     if (this.undo_history.length == 0) {
         console.warn(this.slice_id + ' nothing to undo here');
         return false;
     }
-    var currentStep  = this.undo_history.pop();
+    var currentStep = this.undo_history.pop();
     this.redo_history.push(currentStep);
+
     var previousStep = this.undo_history[this.undo_history.length - 1];
-    this.data        = previousStep;
-    if (this.data == undefined) {
-        this.ctx.clearRect(0, 0, this.offcanvas.width, this.offcanvas.height);
-        this.data = this.ctx.getImageData(0, 0, this.offcanvas.width, this.offcanvas.height);
+    this.imageData   = previousStep;
+    if (this.imageData == undefined) {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
     }
-    this.ctx.putImageData(this.data, 0, 0);
+    this.ctx.putImageData(this.imageData, 0, 0);
     return true;
-    //console.debug('undo. ' + this.undo_history.length + ' steps to undo. ' + this.redo_history.length + ' steps to redo.');
 };
 
+/**
+ * Sets the contents of the annotation layer to one step further in history
+ * @returns {boolean}
+ */
 plx.AnnotationLayer.prototype.redo = function () {
+
     if (this.redo_history.length == 0) {
         console.warn(this.slice_id + ' nothing to redo here');
         return false;
     }
-    this.data = this.redo_history.pop();
-    this.undo_history.push(this.data);
-    this.ctx.putImageData(this.data, 0, 0);
-    //console.debug('redo. ' + this.undo_history.length + ' steps to undo. ' + this.redo_history.length + ' steps to redo.');
+
+    this.imageData = this.redo_history.pop();
+    this.undo_history.push(this.imageData);
+    this.ctx.putImageData(this.imageData, 0, 0);
     return true;
 };
 
-plx.AnnotationLayer.prototype.startAnnotation = function (x, y, view) {
+/**
+ * Starts annotating
+ * @param x coordinate x
+ * @param y coordinate y
+ * @param view corresponding view
+ */
+plx.AnnotationLayer.prototype.startAnnotation = function (x, y) {
+
+    if (this.view === undefined) {
+        throw 'Annotation cannot start, the view has not been set';
+    }
+    var view   = this.view;
     var brush  = plx.BRUSH;
     var eraser = plx.ERASER;
 
     /*---------------------------------------------*/
     // Propagate coordinates from background layer (image)
     /*---------------------------------------------*/
-    this.offcanvas.width  = view.canvas.width;
-    this.offcanvas.height = view.canvas.height;
-    /*---------------------------------------------*/
+    this.canvas.width  = view.canvas.width;
+    this.canvas.height = view.canvas.height;
 
-    //this.ctx = this.offcanvas.getContext("2d");
+    /*---------------------------------------------*/
 
     switch (plx.CURRENT_OPERATION) {
         case plx.OP_ANNOTATE:
@@ -460,7 +510,9 @@ plx.AnnotationLayer.prototype.startAnnotation = function (x, y, view) {
             this.ctx.lineJoin    = brush.type;
             this.ctx.lineCap     = brush.type;
             this.ctx.lineWidth   = brush.size;
+
             break;
+
         case plx.OP_DELETE:
             this.ctx.strokeStyle = 'rgba(0,0,0,1)';
             this.ctx.fillStyle   = 'rgba(0,0,0,1)';
@@ -468,33 +520,25 @@ plx.AnnotationLayer.prototype.startAnnotation = function (x, y, view) {
             this.ctx.lineCap     = eraser.type;
             this.ctx.lineWidth   = eraser.size;
             break;
-        case plx.OP_EROSION:
-            break;
     }
+
     this.lastX = x;
     this.lastY = y;
 
-    this.ctx.imageSmoothingEnabled = false;
-    this.ctx.mozImageSmoothingEnabled = false;
-    this.ctx.webkitImageSmoothingEnabled = false;
-    this.ctx.msImageSmoothingEnabled = false;
+    plx.smoothingEnabled(this.ctx, false);
 
-
-    if (this.data) {
-        this.ctx.clearRect(0, 0, this.offcanvas.width, this.offcanvas.height);
-        this.ctx.putImageData(this.data, 0, 0);
+    if (this.imageData) {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.putImageData(this.imageData, 0, 0); //adds the current annotations to the annotation context
     }
 
     this.redo_history = [];
-    //console.debug('new operation. ' + plx.CURRENT_OPERATION + '. ' + this.undo_history.length + ' steps to undo. ' + this.redo_history.length + ' steps to redo.');
 };
 
-plx.AnnotationLayer.prototype.updateAnnotation = function (curr_x, curr_y, view) {
+plx.AnnotationLayer.prototype.updateAnnotation = function (curr_x, curr_y) {
 
-    var ctx = this.ctx;
-
-
-
+    var ctx    = this.ctx;
+    var view   = this.view;
     var brush  = plx.BRUSH;
     var eraser = plx.ERASER;
     var mouseX = curr_x;
@@ -504,17 +548,9 @@ plx.AnnotationLayer.prototype.updateAnnotation = function (curr_x, curr_y, view)
     var x2     = this.lastX;
     var y2     = this.lastY;
     var steep  = (Math.abs(y2 - y1) > Math.abs(x2 - x1));
-    //var imdata = ctx.getImageData(0, 0, this.offcanvas.width, this.offcanvas.height);
+    var bsize2 = brush.size * 2;
+    var esize2 = eraser.size * 2;
 
-    function cneighbours(x, y, radio) {
-        var pos = [];
-        for (var i = -radio; i < radio; i++) {
-            for (var j = -radio; j < radio; j++) {
-                pos.push(4 * (y * width + x));
-            }
-        }
-        return pos;
-    };
     if (steep) {
         var x = x1;
         x1    = y1;
@@ -540,27 +576,26 @@ plx.AnnotationLayer.prototype.updateAnnotation = function (curr_x, curr_y, view)
     if (y1 < y2) {
         yStep = 1;
     }
-    var bsize2 = brush.size * 2;
-    var esize2 = eraser.size * 2;
+
     if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE) {
         for (var x = x1; x < x2; x += 1) {
             if (brush.type == 'square') {
                 if (steep) {
-                    ctx.fillRect(y - brush.size+0.5, x - brush.size+0.5, bsize2, bsize2);
+                    ctx.fillRect(y - brush.size, x - brush.size, bsize2, bsize2);
                 }
                 else {
-                    ctx.fillRect(x - brush.size+0.5, y - brush.size+0.5, bsize2, bsize2);
+                    ctx.fillRect(x - brush.size, y - brush.size, bsize2, bsize2);
                 }
             }
             else {
                 if (steep) {
                     ctx.beginPath();
-                    ctx.arc(y+0.5, x+0.5, brush.size, 0, plx.PI2);
+                    ctx.arc(y, x, brush.size, 0, plx.PI2);
                     ctx.fill();
                 }
                 else {
                     ctx.beginPath();
-                    ctx.arc(x+0.5, y+0.5, brush.size, 0, plx.PI2);
+                    ctx.arc(x, y, brush.size, 0, plx.PI2);
                     ctx.fill();
                 }
             }
@@ -586,65 +621,173 @@ plx.AnnotationLayer.prototype.updateAnnotation = function (curr_x, curr_y, view)
             }
         }
     }
-    /*else if (plx.CURRENT_OPERATION == plx.OP_EROSION) {
-     for (var x = x1; x < x2; x += 1) {
-     var vecindad = [];
-     if (steep) {
-     vecindad = cneighbours(x, y, 5);
-     //pos = (x * width + y) * 4;
-     }
-     else {
-     //pos = (y * width + x) * 4;
-     vecindad = cneighbours(y, x, 5);
-     }
-     for (var i = 0; i < vecindad.length; i++) {
-     var pos = vecindad[i];
-     var r   = imdata.data[pos];
-     var g   = imdata.data[pos + 1];
-     var b   = imdata.data[pos + 2];
-     if (r > 0 || g > 0 || b > 0) {
-     imdata.data[pos] = 255;
-     }
-     }
-     error += de;
-     if (error >= 0.5) {
-     y += yStep;
-     error -= 1.0;
-     }
-     }
-     this.ctx.putImageData(imdata, 0, 0);
-     }*/
+
     this.lastX = mouseX;
     this.lastY = mouseY;
 
-    var width  = this.offcanvas.width;
-    var height = this.offcanvas.height;
+    var width  = this.canvas.width;
+    var height = this.canvas.height;
 
     view.ctx.globalAlpha = 1;
     view.ctx.clearRect(0, 0, width, height);
     view.ctx.drawImage(view.current_slice.image, 0, 0, width, height);
+
     view.ctx.globalAlpha = plx.BRUSH.opacity;
-    view.ctx.drawImage(this.offcanvas, 0, 0, width, height);
+    view.ctx.drawImage(this.canvas, 0, 0, width, height);
 };
 
-plx.AnnotationLayer.prototype.stopAnnotation = function () {
-    this.data = this.ctx.getImageData(0, 0, this.offcanvas.width, this.offcanvas.height);
+plx.AnnotationLayer.prototype.saveAnnotation = function () {
+
+    this.processPixels();
+
+
     this.saveUndoStep();
+    this.view.render();
 };
 
 plx.AnnotationLayer.prototype.updateLayer = function (view) {
+
+    if (view !== this.view) {
+        throw 'Assertion error: the annotation layer is not assigned to the current view being rendered';
+    }
+
     var view_ctx = view.ctx;
     var off_ctx  = this.ctx;
 
-    off_ctx.clearRect(0, 0, this.offcanvas.width, this.offcanvas.height);
+    off_ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    if (this.data) {
-        off_ctx.putImageData(this.data, 0, 0);
+    if (this.imageData) {
+
+        plx.smoothingEnabled(off_ctx, false);
+        off_ctx.putImageData(this.imageData, 0, 0);
+
         view_ctx.globalAlpha = plx.BRUSH.opacity;
-        view_ctx.drawImage(this.offcanvas, 0, 0, view.canvas.width, view.canvas.height);
+        plx.smoothingEnabled(view_ctx, false);
+        view_ctx.drawImage(this.canvas, 0, 0, view.canvas.width, view.canvas.height);
+
     }
 };
 
+plx.AnnotationLayer.prototype._getPixelPopulation = function () {
+
+    //assertion: this.imageData has been set
+    if (this.imageData == undefined) {
+        return {};
+    }
+
+    var data = this.imageData.data;
+
+    var dict = {};
+
+    for (var i = 0, N = data.length; i < N; i += 4) {
+
+        var r = data[i], g = data[i + 1], b = data[i + 2];
+
+        if (r == g && g == b & b == 0) {
+            continue;
+        }
+        var hex = plx.rgb2hex(r, g, b);
+        if (dict[hex] == undefined) {
+            dict[hex] = 1;
+        }
+        else {
+            dict[hex]++;
+        }
+    }
+
+    return dict;
+};
+
+plx.AnnotationLayer.prototype.getUsedLabels = function () {
+
+    var dict   = this._getPixelPopulation();
+    var colors = Object.keys(dict);
+
+    if (colors.length == 0) {
+        return [];
+    }
+
+    var labels       = plx.LABELS.labels;
+    var MAX_DISTANCE = plx.AnnotationLayer.LABEL_DISTANCE_TOLERANCE;
+    var used         = [];
+
+    function distanceToLabel(label) {
+
+        var minDistance = 255 * 3; //maximum possible distance
+
+        for (var i = 0, N = colors.length; i < N; i++) {
+            var color    = plx.hex2rgb(colors[i]);
+            var distance = Math.abs(color.r - label.r) + Math.abs(color.g - label.g) + Math.abs(color.b - label.b);
+            if (distance < minDistance) {
+                minDistance = distance;
+            }
+        }
+        //console.log('minimum distance to label ' + label.id + ' (' + label.color + ') :' + minDistance);
+        return minDistance;
+    }
+
+    for (var i = 0, N = labels.length; i < N; i++) {
+        var label = labels[i];
+        if (distanceToLabel(label) <= MAX_DISTANCE) {
+            used.push(label);
+        }
+    }
+    return used;
+};
+
+/**
+ * Removes the smoothing due to the bilinear interpolation
+ * caused by ctx.fillRect ctx.arc and ctx.fill (problem inherent to html canvas)
+ *
+ * This method UPDATES the current ImageData object of the annotation layer.
+ *
+ */
+plx.AnnotationLayer.prototype.processPixels = function () {
+
+    this.imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+
+    var labels = this.getUsedLabels();
+    var data   = this.imageData.data;
+
+    var dict = {};
+
+    for (var i = 0, N = data.length; i < N; i += 4) {
+
+        var r = data[i], g = data[i + 1], b = data[i + 2];
+
+        if (r == g && g == b & b == 0) {
+            continue;
+        }
+
+        data[i + 3] = 255; //no alpha
+
+        //assign pixel to closest label
+
+        var lastDistance = 255 * 3;
+        var index        = 0;
+        for (var j = 0, M = labels.length; j < M; j++) {
+            var label    = labels[j];
+            var distance = Math.abs(label.r - r) + Math.abs(label.g - g) + Math.abs(label.b - b);
+
+            if (distance < lastDistance) {
+                index        = j;
+                lastDistance = distance;
+            }
+        }
+
+        var selected = labels[index];
+
+        data[i]     = selected.r;
+        data[i + 1] = selected.g;
+        data[i + 2] = selected.b;
+
+    }
+
+    //console.log('used labels: ', labels);
+
+    plx.smoothingEnabled(this.ctx, false);
+    this.ctx.putImageData(this.imageData, 0, 0); //updates the data in the canvas.
+};
 
 /*-----------------------------------------------------------------------------------------------
  Paint Bucket
@@ -653,8 +796,8 @@ plx.PaintBucket = function (annotation_layer) {
 
     //Info of the annotation layer
     this.annotation = annotation_layer;
-    this.sizeX      = annotation_layer.offcanvas.width;
-    this.sizeY      = annotation_layer.offcanvas.height;
+    this.sizeX      = annotation_layer.canvas.width;
+    this.sizeY      = annotation_layer.canvas.height;
 
     // create a local canvas and context
     this.buffer        = document.createElement("canvas");
@@ -662,69 +805,57 @@ plx.PaintBucket = function (annotation_layer) {
     this.buffer.height = this.sizeY;
 
     this.ctx = this.buffer.getContext("2d");
+
+
     this.ctx.clearRect(0, 0, this.sizeX, this.sizeY);
 
-    if (annotation_layer.data) {
-        this.ctx.putImageData(annotation_layer.data, 0, 0); //copy the annotation data to the local context
+    if (annotation_layer.imageData) {
+        plx.smoothingEnabled(this.ctx, false);
+        this.ctx.putImageData(annotation_layer.imageData, 0, 0); //copy the annotation data to the local context
     }
-};
-
-plx.PaintBucket.prototype.updateAnnotationLayer = function (view) {
-
-    //clear layer
-    var annotation_ctx = this.annotation.ctx;
-    annotation_ctx.clearRect(0, 0, this.annotation.offcanvas.width, this.annotation.offcanvas.height);
-
-    //initalize with previous data
-    //if (this.annotation.data) {
-    //    annotation_ctx.putImageData(this.annotation.data, 0, 0);
-    //}
-
-    //add current buffer
-    //annotation_ctx.drawImage(this.buffer, 0, 0, this.sizeX, this.sizeY);
-    var data = this.ctx.getImageData(0, 0, this.sizeX, this.sizeY);
-    annotation_ctx.putImageData(data, 0, 0);
-
-    //update data object
-    this.annotation.data = annotation_ctx.getImageData(0, 0, this.annotation.offcanvas.width, this.annotation.offcanvas.height);
-    //saveStep
-    this.annotation.saveUndoStep();
-
-    view.render();
 };
 
 plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
 
-    this.ctx.imageSmoothingEnabled = false;
-    this.ctx.mozImageSmoothingEnabled = false;
-    this.ctx.webkitImageSmoothingEnabled = false;
-    this.ctx.msImageSmoothingEnabled = false;
+    var imdata       = this.ctx.getImageData(0, 0, this.sizeX, this.sizeY),
+        bucket       = this,
 
-    var imdata = this.ctx.getImageData(0, 0, this.sizeX, this.sizeY);
-    var width  = this.sizeX, height = this.sizeY;
+        width        = this.sizeX,
+        height       = this.sizeY,
+        startX       = x,
+        startY       = y,
 
-    var posOri = (y * width) + x;
-    var ori    = {
-        'r': imdata.data[posOri * 4],
-        'g': imdata.data[posOri * 4 + 1],
-        'b': imdata.data[posOri * 4 + 2]
-    };
+        posOri       = (y * width) + x,
 
-    var origin_color = plx.rgb2hex(ori.r, ori.g, ori.b);
+        ori          = {
+            'r': imdata.data[posOri * 4],
+            'g': imdata.data[posOri * 4 + 1],
+            'b': imdata.data[posOri * 4 + 2]
+        },
+
+        origin_color = plx.rgb2hex(ori.r, ori.g, ori.b),
+        rep = plx.hex2rgb(replacement_color),
+
+
+        maxProcessed = 50000, //hard stop
+        countProcessed = 0;
+
+    console.debug('paint bucket. origin color:', origin_color, ' replacement color:', replacement_color);
 
     /*if (origin_color == replacement_color && plx.CURRENT_OPERATION != plx.OP_DELETE){
      console.debug('same color, nothing to fill here');
      return;
      }*/
 
-    var rep = plx.hex2rgb(replacement_color);
 
-    console.debug('paint bucket. origin color:', origin_color, ' replacement color:', replacement_color);
-
-    var queue = [[x, x, y, null, true, true]];
-
-    var maxProcessed = 50000; //hard stop
-    var countProcessed = 0;
+    function getColor(x, y) {
+        var pos = (y * width) + x;
+        return [
+            imdata.data[pos * 4],
+            imdata.data[pos * 4 + 1],
+            imdata.data[pos * 4 + 2]
+        ];
+    }
 
     function paint(x, y) {
         var pos = (y * width) + x;
@@ -742,19 +873,6 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
         }
     };
 
-    function getColor(x,y){
-        var pos = (y * width) + x;
-        return [
-            imdata.data[pos * 4],
-        imdata.data[pos * 4 + 1],
-        imdata.data[pos * 4 + 2]
-        ];
-    }
-
-    var bucket = this;
-
-
-
     function test(x, y) { //check if the color is not any of the labels or zero
         var pos = (y * width) + x;
 
@@ -762,29 +880,12 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
         var g = imdata.data[pos * 4 + 1];
         var b = imdata.data[pos * 4 + 2];
 
-        if (r == ori.r && g == ori.g && b == ori.b){
+        if ((Math.abs(r-ori.r) +  Math.abs(g-ori.g) +  Math.abs(b -ori.b) ) <= 10) { //tolerance :10
             return true;  //Empty, good to fill
         }
-        else{
-            /*var label = plx.LABELS.getLabelByRGBColor(r,g,b);
-            if (label === undefined){
-                getColor(x,y);
-                //this voxel does not contain a label, it must be an artifact
-                bucket.debug(imdata);
-                return true;
-            }
-            else {
-                getColor(x,y);
-                bucket.debug(imdata);
-                return false; //the voxel contains a label. stop.
-            }*/
-            return false;
+        else {
+           return false;
         }
-
-
-
-
-
     };
 
     var queue = [{'xMin': x, 'xMax': x, 'y': y, 'direction': null, 'extendLeft': true, 'extendRight': true}];
@@ -794,11 +895,9 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
     var diagonal = true;
 
     while (queue.length) {
-
         var item = queue.pop();
 
         countProcessed++;
-
         if (countProcessed == maxProcessed) {
             console.info('processed ' + maxProcessed);
             console.info('stopping now');
@@ -807,29 +906,28 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
 
         var down = item.direction === true;
         var up   = item.direction === false;
-
-        // extendLeft
         var minX = item.xMin;
         var y    = item.y;
 
-        if (item.extendLeft) {
+        if (item.extendLeft) { // extendLeft
             while (minX >= 0 && test(minX - 1, y)) {
                 minX--;
                 paint(minX, y);
             }
+
         }
 
         var maxX = item.xMax;
-        // extendRight
-        if (item.extendRight) {
+
+        if (item.extendRight) { // extendRight
             while (maxX <= width - 1 && test(maxX + 1, y)) {
                 maxX++;
                 paint(maxX, y);
             }
+
         }
 
-        if (diagonal) {
-            // extend range looked at for next lines
+        if (diagonal) {             // extend range looked at for next lines
             if (minX >= 0) {
                 minX--;
             }
@@ -837,8 +935,7 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
                 maxX++;
             }
         }
-        else {
-            // extend range ignored from previous line
+        else { // extend range ignored from previous line
             item.xMin--;
             item.xMax++;
         }
@@ -875,30 +972,46 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
 
         if (y < height - 1) {
             addNextLine(y + 1, !up, true);
-
         }
         if (y > 0) {
             addNextLine(y - 1, !down, false);
-
         }
     }
 
-    this.ctx.putImageData(imdata, 0, 0);
+
+
+    this._updateAnnotation(imdata);
 };
 
-plx.PaintBucket.prototype.debug = function(imdata){
+
+plx.PaintBucket.prototype._updateAnnotation = function (imdata) {
+
     this.ctx.putImageData(imdata, 0, 0);
-    this.updateAnnotationLayer(VIEW);
-    var x = 0;
+
+    //clear layer
+    var annotation_ctx = this.annotation.ctx;
+    annotation_ctx.clearRect(0, 0, this.annotation.canvas.width, this.annotation.canvas.height);
+
+    var data = this.ctx.getImageData(0, 0, this.sizeX, this.sizeY);
+    annotation_ctx.putImageData(data, 0, 0);
+
+    //update annotation
+    this.annotation.saveAnnotation();
 };
+
+//plx.PaintBucket.prototype._debug = function(imdata){
+//    this.ctx.putImageData(imdata, 0, 0);
+//    this.updateAnnotationLayer(VIEW);
+//    VIEW.render();
+//    var x = 0;
+//};
 
 
 /*-----------------------------------------------------------------------------------------------
  Zoom Object
  ------------------------------------------------------------------------------------------------*/
-plx.Zoom = function (view) {
+plx.Zoom = function () {
 
-    this.view  = view;
     this.x     = 0;
     this.y     = 0;
     this.scale = 1;
@@ -939,7 +1052,6 @@ plx.Zoom.prototype.setScaleMouse = function (delta) {
 };
 
 plx.Zoom.prototype.apply = function (ctx) {
-    ctx.clearRect(0, 0, this.view.canvas.width, this.view.canvas.height);
     ctx.setTransform(1, 0, 0, 1, 0, 0); //identitiy
     ctx.translate(this.x, this.y);
     ctx.scale(this.scale, this.scale);
@@ -953,6 +1065,14 @@ plx.Zoom.prototype.apply = function (ctx) {
 plx.AnnotationSet = function (dataset_id, user_id, annotation_set_id, labelset_id) {
     this.annotations = {}; //dictionary containing the slice-uri, annotation slice object pairing.
 };
+
+/**
+ * Returns the set of annotation layers as a list. Useful for set operations
+ * @returns {Array}
+ */
+plx.AnnotationSet.prototype.getKeys = function(){
+    return Object.keys(this.annotations).sort();
+}
 
 plx.AnnotationSet.load = function (anset_url) {
     //loads an annotationset given the corresponding JSON file URL
@@ -983,6 +1103,15 @@ plx.AnnotationSet.prototype.getAnnotation = function (slice_uri) {
 
 plx.AnnotationSet.prototype.hasAnnotation = function (slice_uri) {
     return (slice_uri in this.annotations);
+};
+
+plx.AnnotationSet.prototype.getUsedLabels = function(){
+
+    for (annotation in this.annotations){
+        if (this.annotations.hasOwnProperty(annotation)) {
+            var labels = annotation.getUsedLabels();
+        }
+    }
 };
 
 
@@ -1057,7 +1186,6 @@ plx.View = function (canvas_id) {
     this.renderer           = new plx.Renderer(this);
     this.current_slice      = undefined;
     this.current_annotation = undefined;
-    //this.fullscreen             = false;
 };
 
 plx.View.prototype.resizeTo = function (width, height) {
@@ -1077,7 +1205,7 @@ plx.View.prototype.render = function () {
 plx.View.prototype.showSlice = function (slice) {
     this.current_slice = slice;
     this.getCurrentAnnotationLayer();
-    if (slice.stack == undefined) {
+    if (slice.stack === undefined) {
         this.renderer.addLayer(slice.uri, plx.Renderer.BACKGROUND_LAYER, this.current_slice);
         this.renderer.addLayer(slice.uri, plx.Renderer.ANNOTATION_LAYER, this.current_annotation);
         slice.stack = 'built';
@@ -1137,9 +1265,7 @@ plx.View.prototype.showPreviousSlice = function () {
     }
     return index;
 };
-//plx.View.prototype.showCurrentAnnotationSlice = function () {
-//    this.currentAnnotationLayer.draw(this);
-//}
+
 plx.View.prototype.getAnnotationLayer = function (slice_uri) {
     if (this.aset == undefined) { //@TODO: review hard code
         this.aset = new plx.AnnotationSet('spine_phantom_1', 'dcantor', '1', 'labels_spine');
@@ -1156,20 +1282,25 @@ plx.View.prototype.getCurrentAnnotationLayer = function () {
     }
     /*--------------------------------------------------------------------------------------*/
     this.current_annotation = this.aset.getAnnotation(this.current_slice.uri);
+    this.current_annotation.setView(this);
     return this.current_annotation;
 };
 
 plx.View.prototype.undo = function () {
     var alayer      = this.current_annotation;
     var successFlag = alayer.undo();
-    this.render();
+    if (successFlag) {
+        this.render();
+    }
     return successFlag; //false if nothing to undo
 };
 
 plx.View.prototype.redo = function () {
     var alayer      = this.current_annotation;
     var successFlag = alayer.redo();
-    this.render();
+    if (successFlag){
+        this.render();
+    }
     return successFlag;  //false if nothing to redo
 };
 
@@ -1191,7 +1322,7 @@ plx.ViewInteractor = function (view) {
     this._midpoint         = 0;
     this._scale            = 1;
 
-    plx.zoom = new plx.Zoom(view);  //this is a good place
+    plx.zoom = new plx.Zoom();  //this is a good place
 };
 
 plx.ViewInteractor.prototype.connectView = function () {
@@ -1253,7 +1384,7 @@ plx.ViewInteractor.prototype._getCanvasCoordinates = function (eventX, eventY) {
 plx.ViewInteractor.prototype.action_startAnnotation = function (x, y) {
     var view    = this.view;
     this.aslice = view.getCurrentAnnotationLayer();
-    this.aslice.startAnnotation(x, y, view);
+    this.aslice.startAnnotation();
 
 };
 
@@ -1270,7 +1401,7 @@ plx.ViewInteractor.prototype.action_paintBucket = function (x, y) {
     y          = Math.round(y);
     plx.bucket = new plx.PaintBucket(aslice);
     plx.bucket.fill(x, y, plx.BRUSH.getHexColor());
-    plx.bucket.updateAnnotationLayer(this.view);
+    this.view.render();
 };
 
 plx.ViewInteractor.prototype.action_paintBucket_long_press = function (x, y, delay) {
@@ -1341,6 +1472,7 @@ plx.ViewInteractor.prototype.onMouseDown = function (ev) {
             this.action_paintBucket(coords[0], coords[1]);
             break;
     }
+
     this.notify(plx.EV_COORDS_UPDATED);
 };
 
@@ -1350,9 +1482,10 @@ plx.ViewInteractor.prototype.onMouseMove = function (ev) {
     var x      = coords[0];
     var y      = coords[1];
 
-    if ((Math.abs(this.initX - x) > 5) && (Math.abs(this.initY - y) > 5)) { //it moved too much
-        clearTimeout(this._long_press_timer);
-    }
+    clearTimeout(this._long_press_timer);
+    /*if ((Math.abs(this.initX - x) > 3) && (Math.abs(this.initY - y) > 3)) { //it moved too much
+
+    }*/
 
     if (ev.shiftKey) {
         clearTimeout(this._long_press_timer);
@@ -1363,7 +1496,7 @@ plx.ViewInteractor.prototype.onMouseMove = function (ev) {
         if (this.dragging) {
             this.aslice = this.view.getCurrentAnnotationLayer();
             message('annotating/deleting with mouse');
-            this.aslice.updateAnnotation(x, y, this.view);
+            this.aslice.updateAnnotation(x, y);
         }
     }
 
@@ -1378,9 +1511,10 @@ plx.ViewInteractor.prototype.onMouseUp = function (ev) {
 
     if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE || plx.CURRENT_OPERATION == plx.OP_DELETE) {
         if (this.dragging) {
-            this.dragging = false;
-            this.aslice.stopAnnotation();
+            this.aslice.saveAnnotation();
             message('annotation completed');
+            this.dragging = false;
+
         }
     }
 };
@@ -1589,7 +1723,7 @@ plx.ViewInteractor.prototype.onSingleTouchMove = function (touch) {
     switch(plx.CURRENT_OPERATION){
         case plx.OP_ANNOTATE:
         case plx.OP_DELETE:
-            this.aslice.updateAnnotation(x, y, this.view);
+            this.aslice.updateAnnotation(x, y);
             break;
         case plx.OP_PANNING:
             this.action_panning(x, y);
@@ -1603,7 +1737,7 @@ plx.ViewInteractor.prototype.onSingleTouchMove = function (touch) {
 plx.ViewInteractor.prototype.onSingleTouchEnd = function (touchReleased) {
 
     if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE || plx.CURRENT_OPERATION == plx.OP_DELETE) {
-        this.aslice.stopAnnotation();
+        this.aslice.saveAnnotation();
         this.view.render();
     }
 

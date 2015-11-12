@@ -14,7 +14,7 @@ plx.ViewInteractor = function (view) {
     this._midpoint         = 0;
     this._scale            = 1;
 
-    plx.zoom = new plx.Zoom(view);  //this is a good place
+    plx.zoom = new plx.Zoom();  //this is a good place
 };
 
 plx.ViewInteractor.prototype.connectView = function () {
@@ -76,7 +76,7 @@ plx.ViewInteractor.prototype._getCanvasCoordinates = function (eventX, eventY) {
 plx.ViewInteractor.prototype.action_startAnnotation = function (x, y) {
     var view    = this.view;
     this.aslice = view.getCurrentAnnotationLayer();
-    this.aslice.startAnnotation(x, y, view);
+    this.aslice.startAnnotation();
 
 };
 
@@ -93,7 +93,7 @@ plx.ViewInteractor.prototype.action_paintBucket = function (x, y) {
     y          = Math.round(y);
     plx.bucket = new plx.PaintBucket(aslice);
     plx.bucket.fill(x, y, plx.BRUSH.getHexColor());
-    plx.bucket.updateAnnotationLayer(this.view);
+    this.view.render();
 };
 
 plx.ViewInteractor.prototype.action_paintBucket_long_press = function (x, y, delay) {
@@ -164,6 +164,7 @@ plx.ViewInteractor.prototype.onMouseDown = function (ev) {
             this.action_paintBucket(coords[0], coords[1]);
             break;
     }
+
     this.notify(plx.EV_COORDS_UPDATED);
 };
 
@@ -173,9 +174,10 @@ plx.ViewInteractor.prototype.onMouseMove = function (ev) {
     var x      = coords[0];
     var y      = coords[1];
 
-    if ((Math.abs(this.initX - x) > 5) && (Math.abs(this.initY - y) > 5)) { //it moved too much
-        clearTimeout(this._long_press_timer);
-    }
+    clearTimeout(this._long_press_timer);
+    /*if ((Math.abs(this.initX - x) > 3) && (Math.abs(this.initY - y) > 3)) { //it moved too much
+
+    }*/
 
     if (ev.shiftKey) {
         clearTimeout(this._long_press_timer);
@@ -186,7 +188,7 @@ plx.ViewInteractor.prototype.onMouseMove = function (ev) {
         if (this.dragging) {
             this.aslice = this.view.getCurrentAnnotationLayer();
             message('annotating/deleting with mouse');
-            this.aslice.updateAnnotation(x, y, this.view);
+            this.aslice.updateAnnotation(x, y);
         }
     }
 
@@ -201,9 +203,10 @@ plx.ViewInteractor.prototype.onMouseUp = function (ev) {
 
     if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE || plx.CURRENT_OPERATION == plx.OP_DELETE) {
         if (this.dragging) {
-            this.dragging = false;
-            this.aslice.stopAnnotation();
+            this.aslice.saveAnnotation();
             message('annotation completed');
+            this.dragging = false;
+
         }
     }
 };
@@ -412,7 +415,7 @@ plx.ViewInteractor.prototype.onSingleTouchMove = function (touch) {
     switch(plx.CURRENT_OPERATION){
         case plx.OP_ANNOTATE:
         case plx.OP_DELETE:
-            this.aslice.updateAnnotation(x, y, this.view);
+            this.aslice.updateAnnotation(x, y);
             break;
         case plx.OP_PANNING:
             this.action_panning(x, y);
@@ -426,7 +429,7 @@ plx.ViewInteractor.prototype.onSingleTouchMove = function (touch) {
 plx.ViewInteractor.prototype.onSingleTouchEnd = function (touchReleased) {
 
     if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE || plx.CURRENT_OPERATION == plx.OP_DELETE) {
-        this.aslice.stopAnnotation();
+        this.aslice.saveAnnotation();
         this.view.render();
     }
 

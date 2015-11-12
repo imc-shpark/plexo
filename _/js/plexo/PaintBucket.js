@@ -5,8 +5,8 @@ plx.PaintBucket = function (annotation_layer) {
 
     //Info of the annotation layer
     this.annotation = annotation_layer;
-    this.sizeX      = annotation_layer.offcanvas.width;
-    this.sizeY      = annotation_layer.offcanvas.height;
+    this.sizeX      = annotation_layer.canvas.width;
+    this.sizeY      = annotation_layer.canvas.height;
 
     // create a local canvas and context
     this.buffer        = document.createElement("canvas");
@@ -14,69 +14,57 @@ plx.PaintBucket = function (annotation_layer) {
     this.buffer.height = this.sizeY;
 
     this.ctx = this.buffer.getContext("2d");
+
+
     this.ctx.clearRect(0, 0, this.sizeX, this.sizeY);
 
-    if (annotation_layer.data) {
-        this.ctx.putImageData(annotation_layer.data, 0, 0); //copy the annotation data to the local context
+    if (annotation_layer.imageData) {
+        plx.smoothingEnabled(this.ctx, false);
+        this.ctx.putImageData(annotation_layer.imageData, 0, 0); //copy the annotation data to the local context
     }
-};
-
-plx.PaintBucket.prototype.updateAnnotationLayer = function (view) {
-
-    //clear layer
-    var annotation_ctx = this.annotation.ctx;
-    annotation_ctx.clearRect(0, 0, this.annotation.offcanvas.width, this.annotation.offcanvas.height);
-
-    //initalize with previous data
-    //if (this.annotation.data) {
-    //    annotation_ctx.putImageData(this.annotation.data, 0, 0);
-    //}
-
-    //add current buffer
-    //annotation_ctx.drawImage(this.buffer, 0, 0, this.sizeX, this.sizeY);
-    var data = this.ctx.getImageData(0, 0, this.sizeX, this.sizeY);
-    annotation_ctx.putImageData(data, 0, 0);
-
-    //update data object
-    this.annotation.data = annotation_ctx.getImageData(0, 0, this.annotation.offcanvas.width, this.annotation.offcanvas.height);
-    //saveStep
-    this.annotation.saveUndoStep();
-
-    view.render();
 };
 
 plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
 
-    this.ctx.imageSmoothingEnabled = false;
-    this.ctx.mozImageSmoothingEnabled = false;
-    this.ctx.webkitImageSmoothingEnabled = false;
-    this.ctx.msImageSmoothingEnabled = false;
+    var imdata       = this.ctx.getImageData(0, 0, this.sizeX, this.sizeY),
+        bucket       = this,
 
-    var imdata = this.ctx.getImageData(0, 0, this.sizeX, this.sizeY);
-    var width  = this.sizeX, height = this.sizeY;
+        width        = this.sizeX,
+        height       = this.sizeY,
+        startX       = x,
+        startY       = y,
 
-    var posOri = (y * width) + x;
-    var ori    = {
-        'r': imdata.data[posOri * 4],
-        'g': imdata.data[posOri * 4 + 1],
-        'b': imdata.data[posOri * 4 + 2]
-    };
+        posOri       = (y * width) + x,
 
-    var origin_color = plx.rgb2hex(ori.r, ori.g, ori.b);
+        ori          = {
+            'r': imdata.data[posOri * 4],
+            'g': imdata.data[posOri * 4 + 1],
+            'b': imdata.data[posOri * 4 + 2]
+        },
+
+        origin_color = plx.rgb2hex(ori.r, ori.g, ori.b),
+        rep = plx.hex2rgb(replacement_color),
+
+
+        maxProcessed = 50000, //hard stop
+        countProcessed = 0;
+
+    console.debug('paint bucket. origin color:', origin_color, ' replacement color:', replacement_color);
 
     /*if (origin_color == replacement_color && plx.CURRENT_OPERATION != plx.OP_DELETE){
      console.debug('same color, nothing to fill here');
      return;
      }*/
 
-    var rep = plx.hex2rgb(replacement_color);
 
-    console.debug('paint bucket. origin color:', origin_color, ' replacement color:', replacement_color);
-
-    var queue = [[x, x, y, null, true, true]];
-
-    var maxProcessed = 50000; //hard stop
-    var countProcessed = 0;
+    function getColor(x, y) {
+        var pos = (y * width) + x;
+        return [
+            imdata.data[pos * 4],
+            imdata.data[pos * 4 + 1],
+            imdata.data[pos * 4 + 2]
+        ];
+    }
 
     function paint(x, y) {
         var pos = (y * width) + x;
@@ -94,19 +82,6 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
         }
     };
 
-    function getColor(x,y){
-        var pos = (y * width) + x;
-        return [
-            imdata.data[pos * 4],
-        imdata.data[pos * 4 + 1],
-        imdata.data[pos * 4 + 2]
-        ];
-    }
-
-    var bucket = this;
-
-
-
     function test(x, y) { //check if the color is not any of the labels or zero
         var pos = (y * width) + x;
 
@@ -114,29 +89,12 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
         var g = imdata.data[pos * 4 + 1];
         var b = imdata.data[pos * 4 + 2];
 
-        if (r == ori.r && g == ori.g && b == ori.b){
+        if ((Math.abs(r-ori.r) +  Math.abs(g-ori.g) +  Math.abs(b -ori.b) ) <= 10) { //tolerance :10
             return true;  //Empty, good to fill
         }
-        else{
-            /*var label = plx.LABELS.getLabelByRGBColor(r,g,b);
-            if (label === undefined){
-                getColor(x,y);
-                //this voxel does not contain a label, it must be an artifact
-                bucket.debug(imdata);
-                return true;
-            }
-            else {
-                getColor(x,y);
-                bucket.debug(imdata);
-                return false; //the voxel contains a label. stop.
-            }*/
-            return false;
+        else {
+           return false;
         }
-
-
-
-
-
     };
 
     var queue = [{'xMin': x, 'xMax': x, 'y': y, 'direction': null, 'extendLeft': true, 'extendRight': true}];
@@ -146,11 +104,9 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
     var diagonal = true;
 
     while (queue.length) {
-
         var item = queue.pop();
 
         countProcessed++;
-
         if (countProcessed == maxProcessed) {
             console.info('processed ' + maxProcessed);
             console.info('stopping now');
@@ -159,29 +115,28 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
 
         var down = item.direction === true;
         var up   = item.direction === false;
-
-        // extendLeft
         var minX = item.xMin;
         var y    = item.y;
 
-        if (item.extendLeft) {
+        if (item.extendLeft) { // extendLeft
             while (minX >= 0 && test(minX - 1, y)) {
                 minX--;
                 paint(minX, y);
             }
+
         }
 
         var maxX = item.xMax;
-        // extendRight
-        if (item.extendRight) {
+
+        if (item.extendRight) { // extendRight
             while (maxX <= width - 1 && test(maxX + 1, y)) {
                 maxX++;
                 paint(maxX, y);
             }
+
         }
 
-        if (diagonal) {
-            // extend range looked at for next lines
+        if (diagonal) {             // extend range looked at for next lines
             if (minX >= 0) {
                 minX--;
             }
@@ -189,8 +144,7 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
                 maxX++;
             }
         }
-        else {
-            // extend range ignored from previous line
+        else { // extend range ignored from previous line
             item.xMin--;
             item.xMax++;
         }
@@ -227,19 +181,36 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
 
         if (y < height - 1) {
             addNextLine(y + 1, !up, true);
-
         }
         if (y > 0) {
             addNextLine(y - 1, !down, false);
-
         }
     }
 
-    this.ctx.putImageData(imdata, 0, 0);
+
+
+    this._updateAnnotation(imdata);
 };
 
-plx.PaintBucket.prototype.debug = function(imdata){
+
+plx.PaintBucket.prototype._updateAnnotation = function (imdata) {
+
     this.ctx.putImageData(imdata, 0, 0);
-    this.updateAnnotationLayer(VIEW);
-    var x = 0;
+
+    //clear layer
+    var annotation_ctx = this.annotation.ctx;
+    annotation_ctx.clearRect(0, 0, this.annotation.canvas.width, this.annotation.canvas.height);
+
+    var data = this.ctx.getImageData(0, 0, this.sizeX, this.sizeY);
+    annotation_ctx.putImageData(data, 0, 0);
+
+    //update annotation
+    this.annotation.saveAnnotation();
 };
+
+//plx.PaintBucket.prototype._debug = function(imdata){
+//    this.ctx.putImageData(imdata, 0, 0);
+//    this.updateAnnotationLayer(VIEW);
+//    VIEW.render();
+//    var x = 0;
+//};

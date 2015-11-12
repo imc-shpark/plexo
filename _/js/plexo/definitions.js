@@ -33,12 +33,12 @@ plx.setCurrentCoordinates = function (x, y) {
 /*-----------------------------------------------------------------------------------------------
  EVENTS
  ------------------------------------------------------------------------------------------------*/
-plx.EV_SLICE_CHANGED  = 'plx-ev-slice-changed';
-plx.EV_COORDS_UPDATED = 'plx-ev-coords-updated';
+plx.EV_SLICE_CHANGED     = 'plx-ev-slice-changed';
+plx.EV_COORDS_UPDATED    = 'plx-ev-coords-updated';
 plx.EV_OPERATION_CHANGED = 'plx-ev-op-changed';
 
 /*-----------------------------------------------------------------------------------------------
-  Utilities
+ Utilities
  ------------------------------------------------------------------------------------------------*/
 
 plx.hex2rgb = function (hex) {
@@ -59,9 +59,16 @@ plx.rgb2hex = function (R, G, B) {
         return "0123456789ABCDEF".charAt((n - n % 16) / 16)
             + "0123456789ABCDEF".charAt(n % 16);
     }
+
     return '#' + toHex(R) + toHex(G) + toHex(B);
 };
 
+plx.smoothingEnabled = function (ctx, flag) {
+    ctx.imageSmoothingEnabled       = flag;
+    ctx.mozImageSmoothingEnabled    = flag;
+    ctx.webkitImageSmoothingEnabled = flag;
+    ctx.msImageSmoothingEnabled     = flag;
+}
 
 function message(text) {
     document.getElementById('status-message-id').innerHTML = text;

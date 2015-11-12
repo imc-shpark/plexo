@@ -9,6 +9,7 @@
 //@koala-append "BrushDialog.js"
 //@koala-append "EraserDialog.js"
 //@koala-append "PropagateDialog.js"
+//@koala-append "DownloadAnnotationsDialog.js"
 //@koala-append "Keyboard.js"
 //@koala-append "CoordinatesTracker.js"
 //@koala-append "AlertController.js"

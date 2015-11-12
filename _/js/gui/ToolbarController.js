@@ -1,11 +1,4 @@
 /*-----------------------------------------------------------------------------------------------
- UPDATE GUI METHODS
- ------------------------------------------------------------------------------------------------*/
-
-
-
-
-/*-----------------------------------------------------------------------------------------------
  Toolbar Controller
  ------------------------------------------------------------------------------------------------*/
 gui.ToolbarController = function (view) {
@@ -29,6 +22,7 @@ gui.ToolbarController.prototype._setup = function () {
     this.btn_redo         = $('#btn-redo-id');
     this.btn_paint_bucket = $('#btn-paint-bucket-id');
     this.btn_zoom         = $('#btn-zoom-id');
+    this.btn_save         = $('#btn-save-id');
 };
 
 gui.ToolbarController.prototype._setup_brush_button = function () {

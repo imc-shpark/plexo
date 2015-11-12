@@ -45,17 +45,19 @@ plx.Slice.prototype.updateLayer = function (view) {
     var ctx = view.ctx;
 
     /*----------------------------------------------------------*/
-    // ALL CANVAS OPERATIONS MUST OCCUR IN ORIGINAL COORDINATES.
+    // ALL CANVAS OPERATIONS OCCUR IN ORIGINAL IMAGE COORDINATES
     // Regardless of the current scaling of the canvas through CSS
+    //
     // Canvas style      width and height -> determine appearance on screen
+    //
+    // WHEREAS:
     // Canvas properties width and height -> determine buffer operations
     /*----------------------------------------------------------*/
     var width  = this.image.width;
     var height = this.image.height;
 
-    view.canvas.width  = width;  //this will reset the transforms
+    view.canvas.width  = width;  //this resets the canvas state (content, transform, styles, etc).
     view.canvas.height = height;
-    /*---------------------------------------------*/
 
 
     ctx.globalAlpha = 1;
@@ -65,21 +67,21 @@ plx.Slice.prototype.updateLayer = function (view) {
         plx.zoom.apply(ctx);
     }
 
-    ctx.imageSmoothingEnabled = false;
-    ctx.mozImageSmoothingEnabled = false;
-    ctx.webkitImageSmoothingEnabled = false;
-    ctx.msImageSmoothingEnabled = false;
 
+    plx.smoothingEnabled(ctx, false);
     ctx.drawImage(this.image, 0, 0, width, height);
+    //this._debugZooom(ctx);
 
-
-    //var p1 = [150,150];
-    //var p2 = [300,300];
-    //ctx.fillStyle = '#FF0000';
-    //ctx.beginPath();
-    //ctx.arc(p1[0], p1[1], 5, 0, plx.PI2);
-    //ctx.fill();
-    //ctx.beginPath();
-    //ctx.arc(p2[0], p2[1], 5, 0, plx.PI2);
-    //ctx.fill();
 };
+
+//plx.Slice.prototype._debugZoom = function(ctx){
+//    var p1 = [150,150];
+//    var p2 = [300,300];
+//    ctx.fillStyle = '#FF0000';
+//    ctx.beginPath();
+//    ctx.arc(p1[0], p1[1], 5, 0, plx.PI2);
+//    ctx.fill();
+//    ctx.beginPath();
+//    ctx.arc(p2[0], p2[1], 5, 0, plx.PI2);
+//    ctx.fill();
+//};

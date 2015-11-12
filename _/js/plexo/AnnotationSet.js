@@ -5,6 +5,14 @@ plx.AnnotationSet = function (dataset_id, user_id, annotation_set_id, labelset_i
     this.annotations = {}; //dictionary containing the slice-uri, annotation slice object pairing.
 };
 
+/**
+ * Returns the set of annotation layers as a list. Useful for set operations
+ * @returns {Array}
+ */
+plx.AnnotationSet.prototype.getKeys = function(){
+    return Object.keys(this.annotations).sort();
+}
+
 plx.AnnotationSet.load = function (anset_url) {
     //loads an annotationset given the corresponding JSON file URL
     // the JSON file contains:
@@ -34,4 +42,13 @@ plx.AnnotationSet.prototype.getAnnotation = function (slice_uri) {
 
 plx.AnnotationSet.prototype.hasAnnotation = function (slice_uri) {
     return (slice_uri in this.annotations);
+};
+
+plx.AnnotationSet.prototype.getUsedLabels = function(){
+
+    for (annotation in this.annotations){
+        if (this.annotations.hasOwnProperty(annotation)) {
+            var labels = annotation.getUsedLabels();
+        }
+    }
 };
