@@ -21,9 +21,6 @@
 
 
 var VIEW, BRUSH, ERASER, LABELS;
-var init_slice = 210; //remember it starts on one
-var end_slice  = 215;
-var step_slice = 1;
 
 BRUSH  = plx.setGlobalBrush(new plx.Brush(5, 0.5, 'round'));
 ERASER = plx.setGlobalEraser(new plx.Eraser(10));
@@ -268,7 +265,7 @@ gui.EraserDialog.prototype._setup_controls = function(){
    this._btn_clear_slice.click(function () {
         var layer = VIEW.getCurrentAnnotationLayer();
         if (layer.isEmpty() && gui.alert) {
-            gui.alert.showAlert('Delete', 'The layer is empty, nothing to delete', 'alarm-info', 3000);
+            gui.alert.showAlert('Delete', 'The layer is empty, nothing to delete', 'alarm-info');
         }
         else {
             layer.clearAnnotations();
@@ -346,42 +343,49 @@ gui.EraserDialog.prototype.select = function(){
 /*-----------------------------------------------------------------------------------------------
  Propagate DIALOG
  ------------------------------------------------------------------------------------------------*/
-gui.PropagateDialog = function(view){
-    this.view = view;
+gui.PropagateDialog = function (view) {
+    this.view         = view;
     this._dialog      = $('#label-propagation-modal-id');
+    this.used_labels_div = $('#used-labels-div-id');
     this.label_picker = $('#propagate-label-selector-id');
     this.btn_ok       = $('#btn-ok-propagate-id');
+    this.labels       = undefined;
     this._setup_events();
     this._setup_controls();
 };
 
-gui.PropagateDialog.prototype._setup_events = function(){
+gui.PropagateDialog.prototype._setup_events = function () {
 
     var propagate_dialog = this;
 
-    this._dialog.on('shown.bs.modal', function () {
-        propagate_dialog.update_picker();
+    this._dialog.on('show.bs.modal', function () {
+        propagate_dialog.prepare();
     });
 };
 
-gui.PropagateDialog.prototype._setup_controls = function(){
+gui.PropagateDialog.prototype._setup_controls = function () {
 
-    this.btn_ok.click(function(){
-        alert();
-    });
 
-}
+};
 
-gui.PropagateDialog.prototype.update_picker = function(){
-    var labels = LABELS;
+
+gui.PropagateDialog.prototype.prepare = function () {
 
     var selector = this.label_picker;
-    selector.labelpicker('destroy');
+    if (selector.labelpicker)  selector.labelpicker('destroy');
     selector.html('');
+
+    var labels = this.view.current_annotation.getUsedLabels();
+
     $.each(labels, function () { selector.append($("<option />", {value: this.color, text: this.name})); });
+    this.label_picker.labelpicker({'theme': 'fontawesome', 'list': true, 'multiple': true, 'noselected': true});
 
-
-    this.label_picker.labelpicker({'theme':'fontawesome','list':true, 'multiple':true, 'noselected':true});
+    if (labels.length <= 5){
+        this.used_labels_div.css('height', (labels.length*40)+20 +'px');
+    }
+    else{
+        this.used_labels_div.removeAttr('style');
+    }
 };
 
 
@@ -390,8 +394,18 @@ gui.PropagateDialog.prototype.update_picker = function(){
 gui.DownloadAnnotationsDialog = function(view){
     this.view = view;
     this._dialog               = $('#download-annotations-modal-id');
+    this.btn_download_zip      = $('#btn-download-zip-id');
+    this._setup_controls();
     this._setup_events();
 };
+
+
+gui.DownloadAnnotationsDialog.prototype._setup_controls = function(){
+    var self = this;
+    this.btn_download_zip.click(function(){
+        self.generateZipFile();
+    });
+}
 
 gui.DownloadAnnotationsDialog.prototype._setup_events = function(){
     var self = this;
@@ -419,12 +433,13 @@ gui.DownloadAnnotationsDialog.prototype._setup_events = function(){
             var row = document.createElement('tr');
             var column = document.createElement('td');
 
-            var acanvas = annotations[keys[i]].canvas
+            var acanvas = annotations[keys[i]].canvas;
             var dataURL = acanvas.toDataURL();
             var link = document.createElement('a');
-            link.setAttribute('download','annotation_'+keys[i]);
+            var filename = 'AL_'+keys[i];
+            link.setAttribute('download',filename);
             link.href = dataURL;
-            link.innerHTML = " Annotation Layer - "+keys[i];
+            link.innerHTML = " "+filename;
 
             var thumb = document.createElement('img');
             thumb.setAttribute('width','50px');
@@ -440,6 +455,32 @@ gui.DownloadAnnotationsDialog.prototype._setup_events = function(){
 
 
     });
+};
+
+
+gui.DownloadAnnotationsDialog.prototype.generateZipFile = function(){
+    if (JSZip === undefined){
+        throw "JSZip.js not found";
+    }
+    var zip = new JSZip();
+
+
+    zip.file('labels.json', JSON.stringify(plx.LABELS));
+
+    var annotations = this.view.aset.annotations;
+    var _keys = this.view.aset.getKeys();
+    for (var i= 0, N = _keys.length; i<N; i+=1) {
+        if (annotations[_keys[i]].isEmpty()) {
+            continue;
+        }
+        var drl = annotations[_keys[i]].canvas.toDataURL();
+        drl = drl.substr(drl.indexOf(',')+1);
+        zip.file('AL_' + _keys[i], drl,{'base64':true});
+    }
+
+    var content = zip.generate({type:'blob'});
+    saveAs(content,this.view.dataset.name+'.zip');
+
 };
 
 /*-----------------------------------------------------------------------------------------------
@@ -489,7 +530,7 @@ function setup_keyboard() {
             else if (letter == 'z' && !event.shiftKey) {
                 event.preventDefault();
                 if (!VIEW.undo() && gui.alert) {
-                    gui.alert.showAlert('Undo', 'Nothing to undo', 'alert-info', 3000);
+                    gui.alert.showAlert('Undo', 'Nothing to undo', 'alert-info');
                 }
                 else {
                     gui.toolbar.update_selected_tool('undo');
@@ -498,7 +539,7 @@ function setup_keyboard() {
             else if (letter == 'z' && event.shiftKey) {
                 event.preventDefault();
                 if (!VIEW.redo() && gui.alert) {
-                    gui.alert.showAlert('Redo', 'Nothing to redo', 'alert-info', 2000);
+                    gui.alert.showAlert('Redo', 'Nothing to redo', 'alert-info');
                 }
                 else {
                     gui.toolbar.update_selected_tool('redo');
@@ -539,49 +580,32 @@ gui.AlertController = function (view) {
     view.interactor.addObserver(this, 'alert-event');
 };
 
-gui.AlertController.prototype.showAlert = function (title, message, alert_type, delay) {
+gui.AlertController.prototype.showAlert = function (title, message, alert_type) {
 
-    var alert = $('#alert-message-id');
-    $(alert).removeAttr('class').attr('class', 'alert');
+    var container = document.getElementById('alert-container-id');
 
-    if (alert_type == undefined || alert_type == 'alert-info') {
-        $(alert).addClass('alert-info');
-    }
-    else {
-        $(alert).addClass(alert_type);
-    }
+    var alert = document.createElement('div');
+    alert.className = 'alert '+alert_type+' alert-dismissable';
+    alert.setAttribute('role','alert');
+    alert.innerHTML = '<strong>' + title + '</strong>  ' + message;
+    alert.innerHTML += "<button type='button' class='close' data-dismiss='alert' aria-label='Close'>Close</button>";
+    alert.style.display = 'none';
+    container.appendChild(alert);
+    $(alert).fadeIn(1000);
 
-    $(alert).html('<strong>' + title + '</strong>  ' + message);
+    function closeAlert(element){
+         $(element).fadeOut('slow', function(){
+             $(this).alert('close');
+         });
+    };
 
-    var container = $('#alert-container-id');
-    $(container).removeAttr('class').attr('class', '');
-    $(container).addClass('animated');
-    $(container).addClass('fadeInDown');
+    window.setTimeout(function(){closeAlert(alert);}, 3000);
 
-    //timing out the alert
-    var timeout = window.setTimeout(function () {
-        $(container).removeClass('fadeInDown').addClass('fadeOutUp');
-
-    }, 5000);
-
-    $(container).click(function (ev) {
-        window.clearTimeout(timeout);
-        $(container).removeClass('fadeInDown').addClass('fadeOutUp');
-    });
-
-    //dismissing it with a click in the alert
-    var canvas = document.getElementById('plexo-canvas-id');
-
-    $(canvas).on('click', function (evt) {
-        console.debug('click');
-        window.clearTimeout(timeout);
-        $(container).removeClass('fadeInDown').addClass('fadeOutUp');
-        $(this).off(evt);
-    });
 };
 
+
 gui.AlertController.prototype.processNotification = function (data) {
-    this.showAlert(data.title, data.message, data.type, 3000);
+    this.showAlert(data.title, data.message, data.type);
 };
 
 
@@ -589,7 +613,17 @@ gui.AlertController.prototype.processNotification = function (data) {
  Slice Controller
  ------------------------------------------------------------------------------------------------*/
 gui.SliceController = function (view) {
+    this.view = view;
     this.slider = document.getElementById('dataset-slider-id');
+    this._setup_slider();
+    view.interactor.addObserver(this, plx.EV_SLICE_CHANGED);
+};
+
+gui.SliceController.prototype._setup_slider = function(){
+
+    var init_slice = this.view.dataset.options.start;
+    var step_slice = this.view.dataset.options.step;
+    var end_slice  = this.view.dataset.options.end;
 
     noUiSlider.create(this.slider, {
         start: init_slice,
@@ -611,10 +645,7 @@ gui.SliceController = function (view) {
         message('slice: ' +index);
         VIEW.showSliceByIndex(index);
     });
-
-
-    view.interactor.addObserver(this, plx.EV_SLICE_CHANGED);
-};
+}
 
 gui.SliceController.prototype.processNotification = function (data) {
     this.slider.noUiSlider.set(data.slice);
@@ -629,12 +660,6 @@ gui.ToolbarController = function (view) {
     this.view = view;
     view.interactor.addObserver(this, plx.EV_OPERATION_CHANGED);
     this._setup();
-    this._setup_brush_button();
-    this._setup_paint_bucket_button();
-    this._setup_eraser_button();
-    this._setup_zoom_button();
-    this._setup_undo_button();
-    this._setup_redo_button();
 };
 
 gui.ToolbarController.prototype._setup = function () {
@@ -646,7 +671,48 @@ gui.ToolbarController.prototype._setup = function () {
     this.btn_redo         = $('#btn-redo-id');
     this.btn_paint_bucket = $('#btn-paint-bucket-id');
     this.btn_zoom         = $('#btn-zoom-id');
+    this.btn_propagate    = $('#btn-propagate-id');
     this.btn_save         = $('#btn-save-id');
+
+    this._setup_brush_button();
+    this._setup_paint_bucket_button();
+    this._setup_eraser_button();
+    this._setup_zoom_button();
+    this._setup_undo_button();
+    this._setup_redo_button();
+    this._setup_propagate_button();
+};
+
+/**
+ * If the deviced is touch-enabled, this method will make sure that the buttons
+ * are activated with touch and not with clicks. This improves the user interaction
+ * since clicks are slow.
+ *
+ * There is one caveat: once the touch interface is enabled, the mouse clicks are disabled. Forever!
+ * at least in this version.
+ *
+ * @param button
+ * @param delegate
+ * @private
+ */
+gui.ToolbarController.prototype._touchOrClick = function(button, delegate){
+
+    if (button instanceof jQuery){
+        button = button[0];
+    }
+
+    button.addEventListener('click', function(event){
+        if (button.touched === true) return;
+        delegate();
+    });
+
+    button.addEventListener('touchend', function(event){
+        event.preventDefault();
+        event.stopPropagation();
+        delegate();
+        button.touched = true;
+
+    });
 };
 
 gui.ToolbarController.prototype._setup_brush_button = function () {
@@ -678,13 +744,14 @@ gui.ToolbarController.prototype._setup_brush_button = function () {
 gui.ToolbarController.prototype._setup_paint_bucket_button = function () {
     var controller = this;
 
-    this.btn_paint_bucket.on('touchstart click', function(event){
-        event.preventDefault();
-        event.stopPropagation();
+    function paint_bucket_function() {
         plx.setCurrentOperation(plx.OP_PAINT_BUCKET);
         controller.update_selected_tool(plx.OP_PAINT_BUCKET);
-    });
+    }
+
+    this._touchOrClick(this.btn_paint_bucket, paint_bucket_function);
 };
+
 
 gui.ToolbarController.prototype._setup_eraser_button = function () {
 
@@ -713,7 +780,6 @@ gui.ToolbarController.prototype._setup_eraser_button = function () {
 };
 
 gui.ToolbarController.prototype._setup_zoom_button = function () {
-
     var controller = this;
 
     function activate_zoom(){
@@ -727,17 +793,7 @@ gui.ToolbarController.prototype._setup_zoom_button = function () {
         }
     }
 
-    this.btn_zoom.on('click', function(event){
-       if (controller.btn_zoom.touched === true) return; //if
-        activate_zoom();
-    });
-
-    this.btn_zoom.on('touchend', function(event){
-        event.stopPropagation();
-        event.preventDefault();
-        activate_zoom();
-        controller.btn_zoom.touched = true;
-   });
+    this._touchOrClick(this.btn_zoom, activate_zoom);
 };
 
 gui.ToolbarController.prototype._setup_undo_button = function () {
@@ -745,50 +801,64 @@ gui.ToolbarController.prototype._setup_undo_button = function () {
 
     function undo(){
         if (!controller.view.undo() && gui.alert) {
-            gui.alert.showAlert('Undo', 'Nothing to undo', 'alert-info', 3000);
+            gui.alert.showAlert('Undo', 'Nothing to undo', 'alert-info');
         }
         else {
             controller.update_selected_tool('undo');
         }
     }
 
-    this.btn_undo.on('click', function(event){
-        if (controller.btn_undo.touched === true) return;
-        undo();
-    })
-
-    this.btn_undo.on('touchend', function(event){
-        event.stopPropagation();
-        event.preventDefault();
-        undo();
-        controller.btn_undo.touched = true;
-    })
+    this._touchOrClick(this.btn_undo, undo);
 };
 
 gui.ToolbarController.prototype._setup_redo_button = function () {
-
     var controller = this;
 
     function redo(){
         if (!controller.view.redo() && gui.alert) {
-            gui.alert.showAlert('Redo', 'Nothing to redo', 'alert-info', 2000);
+            gui.alert.showAlert('Redo', 'Nothing to redo', 'alert-info');
         }
         else {
             controller.update_selected_tool('redo');
         }
     }
 
-    this.btn_redo.on('click', function(event){
-       if (controller.btn_redo.touched === true) return;
-        redo();
+    this._touchOrClick(this.btn_redo, redo);
+};
+
+
+gui.ToolbarController.prototype._setup_propagate_button = function(){
+
+    var controller = this;
+
+    function show_propagate_dialog(){
+        var labels = controller.view.current_annotation.getUsedLabels();
+        if (labels.length == 0){
+            gui.alert.showAlert('Annotation empty',
+                'The current slice does not have any annotations',
+                'alert-warning'
+            );
+        }
+        else{
+            $('#label-propagation-modal-id').modal('show');
+        }
+    };
+
+    this._touchOrClick(controller.btn_propagate, show_propagate_dialog);
+
+    /*this.btn_propagate[0].addEventListener('click', function(event){
+        event.preventDefault();
+        event.stopPropagation();
+        show_propagate_dialog();
     });
 
-    this.btn_redo.on('touchend', function(event){
-        event.stopPropagation();
+    this.btn_propagate[0].addEventListener('touchend', function(event){
         event.preventDefault();
-        redo();
-        controller.btn_redo.touched = true;
-    })
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        show_propagate_dialog();
+    })*/
+
 
 };
 
@@ -851,7 +921,7 @@ function load_dataset_callback(dataset) {
 
     if (percentage == 100) {
         $('#dataset-progressbar-container-id').fadeOut(1000, function () {
-            var sliceIdx = index = VIEW.showMiddleSlice();
+            var sliceIdx = VIEW.showMiddleSlice();
             gui.slice.slider.noUiSlider.set(sliceIdx);
             VIEW.interactor.connectView();
             update_canvas_size();
@@ -892,7 +962,14 @@ function initPlexo() {
     setup_labels();
     setup_keyboard();
 
-    dataset = new plx.Dataset('data/ds_us_1', init_slice, end_slice, step_slice);
+    dataset = new plx.Dataset('data/ds_us_1', plx.Dataset.SELECT_INDEXED,
+        {
+            'start': 1,
+            'end'  : 400,
+            'step' : 1
+        }
+    );
+
     VIEW = new plx.View('plexo-canvas-id');
     VIEW.load(dataset, load_dataset_callback);
 
@@ -904,6 +981,7 @@ function initPlexo() {
     gui.eraser_dialog    = new gui.EraserDialog(VIEW);
     gui.propagate_dialog = new gui.PropagateDialog(VIEW);
     gui.download_dialog  = new gui.DownloadAnnotationsDialog(VIEW);
+
 };
 
 /*-----------------------------------------------------------------------------------------------
@@ -995,7 +1073,7 @@ $(function () {
     }
 
     // Reposition when a modal is shown
-    $('.modal').on('show.bs.modal', reposition);
+    $('.modal').on('shown.bs.modal', reposition);
     // Reposition when the window is resized
     $(window).on('resize', function () {
         $('.modal:visible').each(reposition);
@@ -1006,8 +1084,15 @@ $(function () {
  * Deactivate global touch events (tested on ipad so far)
  */
 document.body.ontouchmove = function (event) {
-    if (event.touches.length == 2) {
+    if (event.touches.length >= 2) {
         event.preventDefault();
-    } //no zooming children./
+    }
+    else{
+        if (event.target.id == 'page-wrapper'){
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    }
 };
+
 

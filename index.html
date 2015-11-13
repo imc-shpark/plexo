@@ -98,18 +98,16 @@
 					</button>
 
 					<span class="inline">|</span>
-                    <button id='btn-zoom-id' class="btn  btn-icon" href="#" ><i class="fa fa-search"></i></button>
-              		<span class="inline">|</span>
+					<button id='btn-zoom-id' class="btn  btn-icon" href="#"><i class="fa fa-search"></i></button>
+					<span class="inline">|</span>
 					<button id='btn-undo-id' class="btn  btn-icon"><i class="fa fa-undo"></i></button>
 					<button id='btn-redo-id' class="btn  btn-icon"><i class="fa fa-repeat"></i></button>
-					<a id="btn-propagate-id" class="btn btn-icon" href="#"
-					   data-toggle="modal"
-					   data-target="#label-propagation-modal-id">
+					<button id="btn-propagate-id" class="btn btn-icon">
 						<i class="fa fa-copy"></i>
-					</a>
+					</button>
 					<a id='btn-save-id' class="btn  btn-icon" href="#"
-					    data-toggle="modal"
-					   data-target="#download-annotations-modal-id"><i class="fa fa-download" ></i>
+					   data-toggle="modal"
+					   data-target="#download-annotations-modal-id"><i class="fa fa-download"></i>
 					</a>
 
 				</div>
@@ -154,15 +152,17 @@
 						</select><!-- label colors selector-->
 					</div>
 
-    			</div>
+				</div>
 
 				<div class="row">
 					<div class="col-xs-12 col-md-6 col-lg-6">
 						<h4>Size</h4>
+
 						<div id="brush-size-slider-id" class="noUi-pips-light-gray noUi-margin-top"></div>
 					</div>
 					<div class="col-xs-12 col-md-6 col-lg-6">
 						<h4>Opacity</h4>
+
 						<div id="brush-opacity-slider-id" class="noUi-pips-light-gray noUi-margin-top"></div>
 					</div>
 
@@ -213,6 +213,7 @@
 					</div>
 					<div class="col-xs-12 col-sm-8 col-md-8 col-lg-8">
 						<h4>Size</h4>
+
 						<div id="eraser-size-slider-id" class="noUi-pips-light-gray noUi-margin-top"></div>
 					</div>
 
@@ -242,23 +243,24 @@
 			<div class="modal-body">
 				<div class="row">
 					<div class="col-xs-12">
-						<h4>Select the label(s) to propagate:</h4>
-						<div class="vertical-scroller">
+						<div class="text-center m-t-md">
+						<h4>Labels used in current slice</h4>
+						</div>
+						<div id='used-labels-div-id' class="vertical-scroller">
 							<select id="propagate-label-selector-id"></select>
 						</div>
+
 					</div>
 				</div>
-				<div class="row">
 
-				</div>
-			</div>
+			</div><!-- modal body-->
 			<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
 				<button id='btn-ok-propagate-id' type="button" class="btn btn-success" data-dismiss="modal">OK</button>
-			</div>
-		</div>
-	</div>
-</div>
+			</div><!-- modal footer -->
+		</div><!-- modal content -->
+	</div><!-- modal dialog -->
+</div><!-- modal propagation labels -->
 
 <div id="download-annotations-modal-id" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="">
 	<div class="modal-dialog modal-lg">
@@ -269,8 +271,7 @@
 			<div class="modal-body">
 				<div class="row">
 					<div class="col-xs-12">
-						<h4>Link test:</h4>
-						<div id ='download-annotations-list-id' class="vertical-scroller">
+						<div id='download-annotations-list-id' class="vertical-scroller">
 
 						</div>
 					</div>
@@ -280,36 +281,38 @@
 				</div>
 			</div>
 			<div class="modal-footer">
-				<button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				<a id='btn-download-zip-id' type="button" class="btn btn-primary"><i class='fa fa-download'></i> Download Zip</a>
 			</div>
 		</div>
 	</div>
 </div>
-<div id='alert-container-id'>
-	<div id='alert-message-id' class="alert alert-info">
-		message
-	</div>
-</div>
 
-<!-- Mainly scripts -->
+<div id='alert-container-id'></div>
+
+<!-- Main scripts -->
 <script src="_/js/jquery-2.1.1.js"></script>
-<script src="_/js/plugins/jquery_ui/jquery-ui.min.js"></script>
-
 <script src="_/js/bootstrap.js"></script>
+<!-- JQuery plugins -->
 <script src="_/js/plugins/metis_menu/jquery.metisMenu.js"></script>
 <script src="_/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
-<!-- Custom and plugin javascript -->
+<script src="_/js/plugins/simple_color_picker/jquery.simplecolorpicker.js"></script>
+<script src="_/js/plugins/label_picker/jquery.label_picker.js"></script>
+<!-- Other plugins -->
 <script src="_/js/inspinia.js"></script>
 <script src="_/js/plugins/pace/pace.min.js"></script>
-
+<!-- No JQuery plugins -->
 <script src="_/js/plugins/no_ui_slider/wNumb.js"></script>
 <script src="_/js/plugins/no_ui_slider/nouislider.js"></script>
-<script src="_/js/plugins/simple_color_picker/jquery.simplecolorpicker.js"></script>
-<script src="_/js/plugins/label_picker/label_picker.js"></script>
-
+<!-- Zip -->
+<script src="_/js/plugins/JSZip/jszip.min.js"></script>
+<script src="_/js/plugins/JSZip/FileSaver.js"></script>
+<!-- Plexo and GUI -->
 <script src="_/plexo.lib.js"></script>
 <script src="_/gui.lib.js"></script>
- <!--<script src="http://jsconsole.com/remote.js?D50BBFD8-2CD5-4E60-ADBD-7CD75B4A17E8"></script>-->
+
+
+<!--<script src="http://jsconsole.com/remote.js?D50BBFD8-2CD5-4E60-ADBD-7CD75B4A17E8"></script>-->
 <!--<script src="http://jsconsole.com/remote.js?FAE031CD-74A0-46D3-AE36-757BAB262BEA"></script>-->
 <script>
 	initPlexo();

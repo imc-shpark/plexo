@@ -5,12 +5,6 @@ gui.ToolbarController = function (view) {
     this.view = view;
     view.interactor.addObserver(this, plx.EV_OPERATION_CHANGED);
     this._setup();
-    this._setup_brush_button();
-    this._setup_paint_bucket_button();
-    this._setup_eraser_button();
-    this._setup_zoom_button();
-    this._setup_undo_button();
-    this._setup_redo_button();
 };
 
 gui.ToolbarController.prototype._setup = function () {
@@ -22,7 +16,48 @@ gui.ToolbarController.prototype._setup = function () {
     this.btn_redo         = $('#btn-redo-id');
     this.btn_paint_bucket = $('#btn-paint-bucket-id');
     this.btn_zoom         = $('#btn-zoom-id');
+    this.btn_propagate    = $('#btn-propagate-id');
     this.btn_save         = $('#btn-save-id');
+
+    this._setup_brush_button();
+    this._setup_paint_bucket_button();
+    this._setup_eraser_button();
+    this._setup_zoom_button();
+    this._setup_undo_button();
+    this._setup_redo_button();
+    this._setup_propagate_button();
+};
+
+/**
+ * If the deviced is touch-enabled, this method will make sure that the buttons
+ * are activated with touch and not with clicks. This improves the user interaction
+ * since clicks are slow.
+ *
+ * There is one caveat: once the touch interface is enabled, the mouse clicks are disabled. Forever!
+ * at least in this version.
+ *
+ * @param button
+ * @param delegate
+ * @private
+ */
+gui.ToolbarController.prototype._touchOrClick = function(button, delegate){
+
+    if (button instanceof jQuery){
+        button = button[0];
+    }
+
+    button.addEventListener('click', function(event){
+        if (button.touched === true) return;
+        delegate();
+    });
+
+    button.addEventListener('touchend', function(event){
+        event.preventDefault();
+        event.stopPropagation();
+        delegate();
+        button.touched = true;
+
+    });
 };
 
 gui.ToolbarController.prototype._setup_brush_button = function () {
@@ -54,13 +89,14 @@ gui.ToolbarController.prototype._setup_brush_button = function () {
 gui.ToolbarController.prototype._setup_paint_bucket_button = function () {
     var controller = this;
 
-    this.btn_paint_bucket.on('touchstart click', function(event){
-        event.preventDefault();
-        event.stopPropagation();
+    function paint_bucket_function() {
         plx.setCurrentOperation(plx.OP_PAINT_BUCKET);
         controller.update_selected_tool(plx.OP_PAINT_BUCKET);
-    });
+    }
+
+    this._touchOrClick(this.btn_paint_bucket, paint_bucket_function);
 };
+
 
 gui.ToolbarController.prototype._setup_eraser_button = function () {
 
@@ -89,7 +125,6 @@ gui.ToolbarController.prototype._setup_eraser_button = function () {
 };
 
 gui.ToolbarController.prototype._setup_zoom_button = function () {
-
     var controller = this;
 
     function activate_zoom(){
@@ -103,17 +138,7 @@ gui.ToolbarController.prototype._setup_zoom_button = function () {
         }
     }
 
-    this.btn_zoom.on('click', function(event){
-       if (controller.btn_zoom.touched === true) return; //if
-        activate_zoom();
-    });
-
-    this.btn_zoom.on('touchend', function(event){
-        event.stopPropagation();
-        event.preventDefault();
-        activate_zoom();
-        controller.btn_zoom.touched = true;
-   });
+    this._touchOrClick(this.btn_zoom, activate_zoom);
 };
 
 gui.ToolbarController.prototype._setup_undo_button = function () {
@@ -121,50 +146,64 @@ gui.ToolbarController.prototype._setup_undo_button = function () {
 
     function undo(){
         if (!controller.view.undo() && gui.alert) {
-            gui.alert.showAlert('Undo', 'Nothing to undo', 'alert-info', 3000);
+            gui.alert.showAlert('Undo', 'Nothing to undo', 'alert-info');
         }
         else {
             controller.update_selected_tool('undo');
         }
     }
 
-    this.btn_undo.on('click', function(event){
-        if (controller.btn_undo.touched === true) return;
-        undo();
-    })
-
-    this.btn_undo.on('touchend', function(event){
-        event.stopPropagation();
-        event.preventDefault();
-        undo();
-        controller.btn_undo.touched = true;
-    })
+    this._touchOrClick(this.btn_undo, undo);
 };
 
 gui.ToolbarController.prototype._setup_redo_button = function () {
-
     var controller = this;
 
     function redo(){
         if (!controller.view.redo() && gui.alert) {
-            gui.alert.showAlert('Redo', 'Nothing to redo', 'alert-info', 2000);
+            gui.alert.showAlert('Redo', 'Nothing to redo', 'alert-info');
         }
         else {
             controller.update_selected_tool('redo');
         }
     }
 
-    this.btn_redo.on('click', function(event){
-       if (controller.btn_redo.touched === true) return;
-        redo();
+    this._touchOrClick(this.btn_redo, redo);
+};
+
+
+gui.ToolbarController.prototype._setup_propagate_button = function(){
+
+    var controller = this;
+
+    function show_propagate_dialog(){
+        var labels = controller.view.current_annotation.getUsedLabels();
+        if (labels.length == 0){
+            gui.alert.showAlert('Annotation empty',
+                'The current slice does not have any annotations',
+                'alert-warning'
+            );
+        }
+        else{
+            $('#label-propagation-modal-id').modal('show');
+        }
+    };
+
+    this._touchOrClick(controller.btn_propagate, show_propagate_dialog);
+
+    /*this.btn_propagate[0].addEventListener('click', function(event){
+        event.preventDefault();
+        event.stopPropagation();
+        show_propagate_dialog();
     });
 
-    this.btn_redo.on('touchend', function(event){
-        event.stopPropagation();
+    this.btn_propagate[0].addEventListener('touchend', function(event){
         event.preventDefault();
-        redo();
-        controller.btn_redo.touched = true;
-    })
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        show_propagate_dialog();
+    })*/
+
 
 };
 

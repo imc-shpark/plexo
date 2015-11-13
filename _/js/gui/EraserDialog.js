@@ -40,7 +40,7 @@ gui.EraserDialog.prototype._setup_controls = function(){
    this._btn_clear_slice.click(function () {
         var layer = VIEW.getCurrentAnnotationLayer();
         if (layer.isEmpty() && gui.alert) {
-            gui.alert.showAlert('Delete', 'The layer is empty, nothing to delete', 'alarm-info', 3000);
+            gui.alert.showAlert('Delete', 'The layer is empty, nothing to delete', 'alarm-info');
         }
         else {
             layer.clearAnnotations();

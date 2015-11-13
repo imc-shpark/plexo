@@ -243,12 +243,17 @@ plx.setGlobalEraser = function (eraser) {
 /**
  * Displays an image on a canvas
  */
-plx.Slice = function (uri, dataset) {
-    this.dataset = dataset;
-    this.uri     = uri;
+plx.Slice = function (dataset, filename, index) {
+
+    this.dataset  = dataset;
+    this.filename = filename;
+    this.index     = index;
+
+    this.url = this.dataset.url + '/' + this.filename;
     this.image   = new Image();
-    this.index   = undefined; //given by the dataset
 };
+
+
 
 /**
  * Loads he image to display and tries to display it
@@ -256,6 +261,7 @@ plx.Slice = function (uri, dataset) {
  */
 plx.Slice.prototype.load = function () {
     var slice              = this;
+
     var xhr                = new XMLHttpRequest();
     xhr.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
@@ -266,8 +272,9 @@ plx.Slice.prototype.load = function () {
             }
         }
     }
-    xhr.open('GET', slice.uri + '?1=' + Math.random());
-    xhr.responseType       = 'blob';
+
+    xhr.open('GET', slice.url + '?v=' + Math.random()); //no cache
+    xhr.responseType = 'blob';
     xhr.send();
 };
 
@@ -276,7 +283,7 @@ plx.Slice.prototype.load = function () {
  * @returns {boolean}
  */
 plx.Slice.prototype.isCurrent = function (view) {
-    return view.currentSlice == this;
+    return view.current_slice == this;
 };
 
 plx.Slice.prototype.updateLayer = function (view) {
@@ -295,9 +302,8 @@ plx.Slice.prototype.updateLayer = function (view) {
     var width  = this.image.width;
     var height = this.image.height;
 
-    view.canvas.width  = width;  //this resets the canvas state (content, transform, styles, etc).
+    view.canvas.width = width;  //this resets the canvas state (content, transform, styles, etc).
     view.canvas.height = height;
-
 
     ctx.globalAlpha = 1;
     ctx.clearRect(0, 0, width, height);
@@ -305,7 +311,6 @@ plx.Slice.prototype.updateLayer = function (view) {
     if (plx.zoom) {
         plx.zoom.apply(ctx);
     }
-
 
     plx.smoothingEnabled(ctx, false);
     ctx.drawImage(this.image, 0, 0, width, height);
@@ -329,26 +334,99 @@ plx.Slice.prototype.updateLayer = function (view) {
 /*-----------------------------------------------------------------------------------------------
  Dataset
  ------------------------------------------------------------------------------------------------*/
-plx.Dataset = function (folder, start_item, end_item, step) {
-    this.folder = folder;
-    this.slices = []; //to do set operations
-    this.slicemap = {}; //to quickly access a slice by index
-    this.keys = []; //easy access to keys in the slicemap
-    if (step == undefined || step <= 0) {
+
+plx.Dataset = function (url, select, options) {
+
+    this.url = url;
+
+    this.select  = select;
+    this.options = options;
+    this.slices  = []; //to do set operations
+    
+    this._slicemap = {}; // for private operations, to quickly access a slice by index
+    this._keys = [];     // for private operations easy access to keys in the slicemap
+
+
+    this._parseURL();
+    this._populate();
+};
+
+plx.Dataset.SELECT_ALL     = 'all';
+plx.Dataset.SELECT_SINGLE  = 'single';
+plx.Dataset.SELECT_INDEXED = 'indexed';
+
+plx.Dataset.prototype._parseURL = function () {
+    var link      = document.createElement('a');
+    link.href     = this.url;  //initalize with the url passed initially (might be a relative one_
+
+    this.hostname = link.hostname;
+    this.port     = link.port;
+    this.pathname = link.pathname;
+    this.protocol = link.protocol;
+
+    this.url = link.href; //now the url is completed
+
+    this.name =  this.url.substr(this.url.lastIndexOf('/') + 1);
+};
+
+plx.Dataset.prototype._populate = function () {
+
+    switch (this.select) {
+        case plx.Dataset.SELECT_INDEXED:
+            this._populateIndexed();
+            break;
+        default:
+            throw ('plx.Dataset ERROR: kind of selection (' + this.source + ') unknown');
+    }
+};
+
+/**
+ * Look for files in the given dataset folder (url) whose name is equal to the dataset with the suffix '_i.png</i>
+ * where 'i' is a number.
+ *
+ * An indexed dataset requires a start, step and end parameters to be passed in the options (see constructor).
+ *
+ */
+plx.Dataset.prototype._populateIndexed = function () {
+
+    var step  = 1 || this.options.step;
+    var start = this.options.start;
+    var end   = this.options.end;
+
+    if (step <= 0) {
         step = 1;
+        console.warn('changing step to 1 (negative steps are not allowed)');
     }
-    for (var i = start_item; i <= end_item; i = i + step) {
-        var filename     = folder + '/' + folder.substr(folder.lastIndexOf('/') + 1) + '_' + i + '.png';
-        var slice        = new plx.Slice(filename, this);
-        slice.index      = i;
-        this.slices.push(slice);
-        this.slicemap[i] = slice;
-        this.keys.push(i);
+
+    if (start > end) {
+        throw 'plx.Dataset ERROR: start index must be lower than end index';
     }
+
+    var baseurl = this.url;
+
+    for (var index = start; index <= end; index = index + step) {
+
+        var filename = baseurl.substr(baseurl.lastIndexOf('/') + 1) + '_' + index + '.png';
+        this.addSlice(filename, index);
+    }
+
     this.num_items  = this.slices.length;
     this.num_loaded = 0;
-    console.debug('dataset: ' + folder + ', number items: ' + this.num_items)
+
+    console.debug('dataset url: ' + this.url + ', number items: ' + this.num_items);
 };
+
+
+plx.Dataset.prototype.addSlice = function(filename, index){
+
+    var slice    = new plx.Slice(this, filename, index);
+
+    //Update Internal Collections
+    this.slices.push(slice);
+    this._slicemap[index] = slice;
+    this._keys.push(index);
+};
+
 
 plx.Dataset.prototype.load = function (progress_callback) {
     this.progress_callback = progress_callback;
@@ -370,6 +448,43 @@ plx.Dataset.prototype.hasLoaded = function () {
     return (this.num_loaded == this.num_items);
 };
 
+plx.Dataset.prototype.getSliceByIndex = function(index){
+   return this._slicemap[index]; 
+};
+
+
+plx.Dataset.prototype.getMiddleSlice = function(){
+    var index = Math.floor(this._keys.length / 2);
+    return this._slicemap[this._keys[index]];
+};
+
+
+plx.Dataset.prototype.getNextSlice = function(index){
+    var keys      = this._keys;
+    var i       = keys.indexOf(index);
+    var next_index     = undefined;
+
+    if (i < keys.length - 1) {
+        next_index = keys[i + 1];
+        return this._slicemap[next_index];
+    }
+
+    return undefined;
+};
+
+plx.Dataset.prototype.getPreviousSlice = function(index){
+    var keys      = this._keys;
+    var i       = keys.indexOf(index);
+    var previous_index     = undefined;
+
+    if (i > 0) {
+        previous_index = keys[i - 1];
+        return this._slicemap[previous_index];
+    }
+
+    return undefined;
+
+};
 
 /*-----------------------------------------------------------------------------------------------
  Annotation Layer
@@ -1089,20 +1204,21 @@ plx.AnnotationSet.prototype.save = function () {
     //  2. Writes the corresponding anset_url (so we can load this later on).
 };
 
-plx.AnnotationSet.prototype.getAnnotation = function (slice_uri) {
+plx.AnnotationSet.prototype.getAnnotation = function (slice_id) {
+
     var aslice = undefined;
-    if (!(slice_uri in this.annotations)) {
-        aslice                      = new plx.AnnotationLayer(slice_uri);
-        this.annotations[slice_uri] = aslice;
+    if (!(slice_id in this.annotations)) {
+        aslice                      = new plx.AnnotationLayer(slice_id);
+        this.annotations[slice_id] = aslice;
     }
     else {
-        aslice = this.annotations[slice_uri];
+        aslice = this.annotations[slice_id];
     }
     return aslice;
 };
 
-plx.AnnotationSet.prototype.hasAnnotation = function (slice_uri) {
-    return (slice_uri in this.annotations);
+plx.AnnotationSet.prototype.hasAnnotation = function (slice_id) {
+    return (slice_id in this.annotations);
 };
 
 plx.AnnotationSet.prototype.getUsedLabels = function(){
@@ -1206,23 +1322,25 @@ plx.View.prototype.showSlice = function (slice) {
     this.current_slice = slice;
     this.getCurrentAnnotationLayer();
     if (slice.stack === undefined) {
-        this.renderer.addLayer(slice.uri, plx.Renderer.BACKGROUND_LAYER, this.current_slice);
-        this.renderer.addLayer(slice.uri, plx.Renderer.ANNOTATION_LAYER, this.current_annotation);
+        this.renderer.addLayer(slice.url, plx.Renderer.BACKGROUND_LAYER, this.current_slice);
+        this.renderer.addLayer(slice.url, plx.Renderer.ANNOTATION_LAYER, this.current_annotation);
         slice.stack = 'built';
     }
 
     this.resizeTo(slice.image.width, slice.image.height);
-    this.renderer.setCurrentStack(slice.uri);
+    this.renderer.setCurrentStack(slice.url);
     this.renderer.update();
 };
 
 /**
  * Index in the dictionary (there could be missing indices if the
  * dataset is loaded with step != 1).
- * @param slice
+ * @param index
  */
-plx.View.prototype.showSliceByIndex = function (slice_index) {
-    var slice = this.dataset.slicemap[slice_index];
+plx.View.prototype.showSliceByIndex = function (index) {
+
+    var slice = this.dataset.getSliceByIndex(index);
+
     if (slice == undefined) {
         console.error('slice does not exist');
         return;
@@ -1231,11 +1349,9 @@ plx.View.prototype.showSliceByIndex = function (slice_index) {
 };
 
 plx.View.prototype.showMiddleSlice = function () {
-    var keys  = this.dataset.keys;
-    var index = Math.floor(keys.length / 2);
-    var slice = this.dataset.slicemap[keys[index]];
+    var slice = this.dataset.getMiddleSlice();
     this.showSlice(slice);
-    return keys[index];
+    return slice.index;
 };
 
 plx.View.prototype.showCurrentSlice = function () {
@@ -1243,36 +1359,29 @@ plx.View.prototype.showCurrentSlice = function () {
 };
 
 plx.View.prototype.showNextSlice = function () {
-    var keys      = this.dataset.keys;
-    var key       = this.current_slice.index;
-    var index_key = keys.indexOf(key);
-    var index     = undefined;
-    if (index_key < keys.length - 1) {
-        index = keys[index_key + 1];
-        this.showSlice(this.dataset.slicemap[index]);
+
+    var index       = this.current_slice.index;
+    var nextSlice = this.dataset.getNextSlice(index);
+
+    if (nextSlice != undefined) {
+        this.showSlice(nextSlice);
+        return nextSlice.index;
     }
-    return index;
+    return index; //can't move next, return current index
 };
 
 plx.View.prototype.showPreviousSlice = function () {
-    var keys      = this.dataset.keys;
-    var key       = this.current_slice.index;
-    var index_key = keys.indexOf(key);
-    var index     = undefined;
-    if (index_key > 0) {
-        index = keys[index_key - 1];
-        this.showSlice(this.dataset.slicemap[index]);
+
+    var index       = this.current_slice.index;
+    var previousSlice = this.dataset.getPreviousSlice(index);
+
+    if (previousSlice != undefined) {
+        this.showSlice(previousSlice);
+        return previousSlice.index;
     }
-    return index;
+    return index; //can't move to previous, return current index
 };
 
-plx.View.prototype.getAnnotationLayer = function (slice_uri) {
-    if (this.aset == undefined) { //@TODO: review hard code
-        this.aset = new plx.AnnotationSet('spine_phantom_1', 'dcantor', '1', 'labels_spine');
-    }
-    var aset = this.aset;
-    return aset.getAnnotationLayer(slice_uri);
-};
 
 plx.View.prototype.getCurrentAnnotationLayer = function () {
 
@@ -1281,14 +1390,14 @@ plx.View.prototype.getCurrentAnnotationLayer = function () {
         this.aset = new plx.AnnotationSet('spine_phantom_1', 'dcantor', '1', 'labels_spine');
     }
     /*--------------------------------------------------------------------------------------*/
-    this.current_annotation = this.aset.getAnnotation(this.current_slice.uri);
+    this.current_annotation = this.aset.getAnnotation(this.current_slice.filename); //for now the filename is the id.
     this.current_annotation.setView(this);
     return this.current_annotation;
 };
 
 plx.View.prototype.undo = function () {
-    var alayer      = this.current_annotation;
-    var successFlag = alayer.undo();
+    var annotation_layer      = this.current_annotation;
+    var successFlag = annotation_layer.undo();
     if (successFlag) {
         this.render();
     }
@@ -1296,8 +1405,8 @@ plx.View.prototype.undo = function () {
 };
 
 plx.View.prototype.redo = function () {
-    var alayer      = this.current_annotation;
-    var successFlag = alayer.redo();
+    var annotation_layer      = this.current_annotation;
+    var successFlag = annotation_layer.redo();
     if (successFlag){
         this.render();
     }

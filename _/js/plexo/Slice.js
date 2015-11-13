@@ -4,12 +4,17 @@
 /**
  * Displays an image on a canvas
  */
-plx.Slice = function (uri, dataset) {
-    this.dataset = dataset;
-    this.uri     = uri;
+plx.Slice = function (dataset, filename, index) {
+
+    this.dataset  = dataset;
+    this.filename = filename;
+    this.index     = index;
+
+    this.url = this.dataset.url + '/' + this.filename;
     this.image   = new Image();
-    this.index   = undefined; //given by the dataset
 };
+
+
 
 /**
  * Loads he image to display and tries to display it
@@ -17,6 +22,7 @@ plx.Slice = function (uri, dataset) {
  */
 plx.Slice.prototype.load = function () {
     var slice              = this;
+
     var xhr                = new XMLHttpRequest();
     xhr.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
@@ -27,8 +33,9 @@ plx.Slice.prototype.load = function () {
             }
         }
     }
-    xhr.open('GET', slice.uri + '?1=' + Math.random());
-    xhr.responseType       = 'blob';
+
+    xhr.open('GET', slice.url + '?v=' + Math.random()); //no cache
+    xhr.responseType = 'blob';
     xhr.send();
 };
 
@@ -37,7 +44,7 @@ plx.Slice.prototype.load = function () {
  * @returns {boolean}
  */
 plx.Slice.prototype.isCurrent = function (view) {
-    return view.currentSlice == this;
+    return view.current_slice == this;
 };
 
 plx.Slice.prototype.updateLayer = function (view) {
@@ -56,9 +63,8 @@ plx.Slice.prototype.updateLayer = function (view) {
     var width  = this.image.width;
     var height = this.image.height;
 
-    view.canvas.width  = width;  //this resets the canvas state (content, transform, styles, etc).
+    view.canvas.width = width;  //this resets the canvas state (content, transform, styles, etc).
     view.canvas.height = height;
-
 
     ctx.globalAlpha = 1;
     ctx.clearRect(0, 0, width, height);
@@ -66,7 +72,6 @@ plx.Slice.prototype.updateLayer = function (view) {
     if (plx.zoom) {
         plx.zoom.apply(ctx);
     }
-
 
     plx.smoothingEnabled(ctx, false);
     ctx.drawImage(this.image, 0, 0, width, height);

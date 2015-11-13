@@ -36,23 +36,25 @@ plx.View.prototype.showSlice = function (slice) {
     this.current_slice = slice;
     this.getCurrentAnnotationLayer();
     if (slice.stack === undefined) {
-        this.renderer.addLayer(slice.uri, plx.Renderer.BACKGROUND_LAYER, this.current_slice);
-        this.renderer.addLayer(slice.uri, plx.Renderer.ANNOTATION_LAYER, this.current_annotation);
+        this.renderer.addLayer(slice.url, plx.Renderer.BACKGROUND_LAYER, this.current_slice);
+        this.renderer.addLayer(slice.url, plx.Renderer.ANNOTATION_LAYER, this.current_annotation);
         slice.stack = 'built';
     }
 
     this.resizeTo(slice.image.width, slice.image.height);
-    this.renderer.setCurrentStack(slice.uri);
+    this.renderer.setCurrentStack(slice.url);
     this.renderer.update();
 };
 
 /**
  * Index in the dictionary (there could be missing indices if the
  * dataset is loaded with step != 1).
- * @param slice
+ * @param index
  */
-plx.View.prototype.showSliceByIndex = function (slice_index) {
-    var slice = this.dataset.slicemap[slice_index];
+plx.View.prototype.showSliceByIndex = function (index) {
+
+    var slice = this.dataset.getSliceByIndex(index);
+
     if (slice == undefined) {
         console.error('slice does not exist');
         return;
@@ -61,11 +63,9 @@ plx.View.prototype.showSliceByIndex = function (slice_index) {
 };
 
 plx.View.prototype.showMiddleSlice = function () {
-    var keys  = this.dataset.keys;
-    var index = Math.floor(keys.length / 2);
-    var slice = this.dataset.slicemap[keys[index]];
+    var slice = this.dataset.getMiddleSlice();
     this.showSlice(slice);
-    return keys[index];
+    return slice.index;
 };
 
 plx.View.prototype.showCurrentSlice = function () {
@@ -73,36 +73,29 @@ plx.View.prototype.showCurrentSlice = function () {
 };
 
 plx.View.prototype.showNextSlice = function () {
-    var keys      = this.dataset.keys;
-    var key       = this.current_slice.index;
-    var index_key = keys.indexOf(key);
-    var index     = undefined;
-    if (index_key < keys.length - 1) {
-        index = keys[index_key + 1];
-        this.showSlice(this.dataset.slicemap[index]);
+
+    var index       = this.current_slice.index;
+    var nextSlice = this.dataset.getNextSlice(index);
+
+    if (nextSlice != undefined) {
+        this.showSlice(nextSlice);
+        return nextSlice.index;
     }
-    return index;
+    return index; //can't move next, return current index
 };
 
 plx.View.prototype.showPreviousSlice = function () {
-    var keys      = this.dataset.keys;
-    var key       = this.current_slice.index;
-    var index_key = keys.indexOf(key);
-    var index     = undefined;
-    if (index_key > 0) {
-        index = keys[index_key - 1];
-        this.showSlice(this.dataset.slicemap[index]);
+
+    var index       = this.current_slice.index;
+    var previousSlice = this.dataset.getPreviousSlice(index);
+
+    if (previousSlice != undefined) {
+        this.showSlice(previousSlice);
+        return previousSlice.index;
     }
-    return index;
+    return index; //can't move to previous, return current index
 };
 
-plx.View.prototype.getAnnotationLayer = function (slice_uri) {
-    if (this.aset == undefined) { //@TODO: review hard code
-        this.aset = new plx.AnnotationSet('spine_phantom_1', 'dcantor', '1', 'labels_spine');
-    }
-    var aset = this.aset;
-    return aset.getAnnotationLayer(slice_uri);
-};
 
 plx.View.prototype.getCurrentAnnotationLayer = function () {
 
@@ -111,14 +104,14 @@ plx.View.prototype.getCurrentAnnotationLayer = function () {
         this.aset = new plx.AnnotationSet('spine_phantom_1', 'dcantor', '1', 'labels_spine');
     }
     /*--------------------------------------------------------------------------------------*/
-    this.current_annotation = this.aset.getAnnotation(this.current_slice.uri);
+    this.current_annotation = this.aset.getAnnotation(this.current_slice.filename); //for now the filename is the id.
     this.current_annotation.setView(this);
     return this.current_annotation;
 };
 
 plx.View.prototype.undo = function () {
-    var alayer      = this.current_annotation;
-    var successFlag = alayer.undo();
+    var annotation_layer      = this.current_annotation;
+    var successFlag = annotation_layer.undo();
     if (successFlag) {
         this.render();
     }
@@ -126,8 +119,8 @@ plx.View.prototype.undo = function () {
 };
 
 plx.View.prototype.redo = function () {
-    var alayer      = this.current_annotation;
-    var successFlag = alayer.redo();
+    var annotation_layer      = this.current_annotation;
+    var successFlag = annotation_layer.redo();
     if (successFlag){
         this.render();
     }

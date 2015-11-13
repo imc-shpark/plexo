@@ -732,7 +732,7 @@ fieldset[disabled] .btn-info.active {
   border-color: #26d7d9;
 }
 .btn-default {
-  background-color: #c2c2c2;
+  background-color: #838383;
   border-color: #c2c2c2;
   color: #FFFFFF;
 }
@@ -745,7 +745,7 @@ fieldset[disabled] .btn-info.active {
 .btn-default:active:hover,
 .btn-default.active:hover,
 .btn-default.active:focus {
-  background-color: #bababa;
+  background-color: #777777;
   border-color: #bababa;
   color: #FFFFFF;
 }

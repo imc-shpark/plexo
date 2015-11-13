@@ -176,8 +176,15 @@ body{
     width:100%;
     margin:0px;
     right:0px;
-    visibility:hidden;
+}
 
+.alert {
+    padding:10px;
+    margin-bottom:1px;
+}
+
+.alert-dismissable{
+    padding-right: 35px !important;
 }
 
 .animated{
@@ -229,4 +236,8 @@ border: 1px solid #ccc;
 .thumb{
     background-color: #080808;
     border: 1px solid #ccc;
+}
+
+.modal-body{
+    padding: 10px 20px 10px;
 }

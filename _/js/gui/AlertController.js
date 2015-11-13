@@ -5,47 +5,30 @@ gui.AlertController = function (view) {
     view.interactor.addObserver(this, 'alert-event');
 };
 
-gui.AlertController.prototype.showAlert = function (title, message, alert_type, delay) {
+gui.AlertController.prototype.showAlert = function (title, message, alert_type) {
 
-    var alert = $('#alert-message-id');
-    $(alert).removeAttr('class').attr('class', 'alert');
+    var container = document.getElementById('alert-container-id');
 
-    if (alert_type == undefined || alert_type == 'alert-info') {
-        $(alert).addClass('alert-info');
-    }
-    else {
-        $(alert).addClass(alert_type);
-    }
+    var alert = document.createElement('div');
+    alert.className = 'alert '+alert_type+' alert-dismissable';
+    alert.setAttribute('role','alert');
+    alert.innerHTML = '<strong>' + title + '</strong>  ' + message;
+    alert.innerHTML += "<button type='button' class='close' data-dismiss='alert' aria-label='Close'>Close</button>";
+    alert.style.display = 'none';
+    container.appendChild(alert);
+    $(alert).fadeIn(1000);
 
-    $(alert).html('<strong>' + title + '</strong>  ' + message);
+    function closeAlert(element){
+         $(element).fadeOut('slow', function(){
+             $(this).alert('close');
+         });
+    };
 
-    var container = $('#alert-container-id');
-    $(container).removeAttr('class').attr('class', '');
-    $(container).addClass('animated');
-    $(container).addClass('fadeInDown');
+    window.setTimeout(function(){closeAlert(alert);}, 3000);
 
-    //timing out the alert
-    var timeout = window.setTimeout(function () {
-        $(container).removeClass('fadeInDown').addClass('fadeOutUp');
-
-    }, 5000);
-
-    $(container).click(function (ev) {
-        window.clearTimeout(timeout);
-        $(container).removeClass('fadeInDown').addClass('fadeOutUp');
-    });
-
-    //dismissing it with a click in the alert
-    var canvas = document.getElementById('plexo-canvas-id');
-
-    $(canvas).on('click', function (evt) {
-        console.debug('click');
-        window.clearTimeout(timeout);
-        $(container).removeClass('fadeInDown').addClass('fadeOutUp');
-        $(this).off(evt);
-    });
 };
 
+
 gui.AlertController.prototype.processNotification = function (data) {
-    this.showAlert(data.title, data.message, data.type, 3000);
+    this.showAlert(data.title, data.message, data.type);
 };

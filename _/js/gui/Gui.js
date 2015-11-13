@@ -9,7 +9,7 @@ function load_dataset_callback(dataset) {
 
     if (percentage == 100) {
         $('#dataset-progressbar-container-id').fadeOut(1000, function () {
-            var sliceIdx = index = VIEW.showMiddleSlice();
+            var sliceIdx = VIEW.showMiddleSlice();
             gui.slice.slider.noUiSlider.set(sliceIdx);
             VIEW.interactor.connectView();
             update_canvas_size();
@@ -50,7 +50,14 @@ function initPlexo() {
     setup_labels();
     setup_keyboard();
 
-    dataset = new plx.Dataset('data/ds_us_1', init_slice, end_slice, step_slice);
+    dataset = new plx.Dataset('data/ds_us_1', plx.Dataset.SELECT_INDEXED,
+        {
+            'start': 1,
+            'end'  : 400,
+            'step' : 1
+        }
+    );
+
     VIEW = new plx.View('plexo-canvas-id');
     VIEW.load(dataset, load_dataset_callback);
 
@@ -62,6 +69,7 @@ function initPlexo() {
     gui.eraser_dialog    = new gui.EraserDialog(VIEW);
     gui.propagate_dialog = new gui.PropagateDialog(VIEW);
     gui.download_dialog  = new gui.DownloadAnnotationsDialog(VIEW);
+
 };
 
 /*-----------------------------------------------------------------------------------------------
@@ -153,7 +161,7 @@ $(function () {
     }
 
     // Reposition when a modal is shown
-    $('.modal').on('show.bs.modal', reposition);
+    $('.modal').on('shown.bs.modal', reposition);
     // Reposition when the window is resized
     $(window).on('resize', function () {
         $('.modal:visible').each(reposition);
@@ -164,8 +172,15 @@ $(function () {
  * Deactivate global touch events (tested on ipad so far)
  */
 document.body.ontouchmove = function (event) {
-    if (event.touches.length == 2) {
+    if (event.touches.length >= 2) {
         event.preventDefault();
-    } //no zooming children./
+    }
+    else{
+        if (event.target.id == 'page-wrapper'){
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    }
 };
+
 

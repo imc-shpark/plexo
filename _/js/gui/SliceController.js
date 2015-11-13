@@ -2,7 +2,17 @@
  Slice Controller
  ------------------------------------------------------------------------------------------------*/
 gui.SliceController = function (view) {
+    this.view = view;
     this.slider = document.getElementById('dataset-slider-id');
+    this._setup_slider();
+    view.interactor.addObserver(this, plx.EV_SLICE_CHANGED);
+};
+
+gui.SliceController.prototype._setup_slider = function(){
+
+    var init_slice = this.view.dataset.options.start;
+    var step_slice = this.view.dataset.options.step;
+    var end_slice  = this.view.dataset.options.end;
 
     noUiSlider.create(this.slider, {
         start: init_slice,
@@ -24,10 +34,7 @@ gui.SliceController = function (view) {
         message('slice: ' +index);
         VIEW.showSliceByIndex(index);
     });
-
-
-    view.interactor.addObserver(this, plx.EV_SLICE_CHANGED);
-};
+}
 
 gui.SliceController.prototype.processNotification = function (data) {
     this.slider.noUiSlider.set(data.slice);

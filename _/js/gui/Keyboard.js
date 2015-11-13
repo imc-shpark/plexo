@@ -45,7 +45,7 @@ function setup_keyboard() {
             else if (letter == 'z' && !event.shiftKey) {
                 event.preventDefault();
                 if (!VIEW.undo() && gui.alert) {
-                    gui.alert.showAlert('Undo', 'Nothing to undo', 'alert-info', 3000);
+                    gui.alert.showAlert('Undo', 'Nothing to undo', 'alert-info');
                 }
                 else {
                     gui.toolbar.update_selected_tool('undo');
@@ -54,7 +54,7 @@ function setup_keyboard() {
             else if (letter == 'z' && event.shiftKey) {
                 event.preventDefault();
                 if (!VIEW.redo() && gui.alert) {
-                    gui.alert.showAlert('Redo', 'Nothing to redo', 'alert-info', 2000);
+                    gui.alert.showAlert('Redo', 'Nothing to redo', 'alert-info');
                 }
                 else {
                     gui.toolbar.update_selected_tool('redo');
