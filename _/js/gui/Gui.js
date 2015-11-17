@@ -168,6 +168,7 @@ $(function () {
     });
 });
 
+
 /**
  * Deactivate global touch events (tested on ipad so far)
  */

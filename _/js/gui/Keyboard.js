@@ -39,7 +39,7 @@ function setup_keyboard() {
                 event.preventDefault();
                 plx.setCurrentOperation(plx.OP_ANNOTATE);
                 gui.toolbar.update_brush();
-                gui.tooblar.update_selected_tool(plx.OP_ANNOTATE);
+                gui.toolbar.update_selected_tool(plx.OP_ANNOTATE);
             }
 
             else if (letter == 'z' && !event.shiftKey) {

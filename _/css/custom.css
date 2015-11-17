@@ -1,3 +1,5 @@
+
+
 @media (min-width: 768px) and (max-width: 815px) {
     .navbar-collapse.collapse {
         display: none !important;
@@ -113,8 +115,6 @@
     image-rendering: -webkit-optimize-contrast;
     -ms-interpolation-mode: nearest-neighbor;*/
 }
-
-
 
 body{
     background-color: #111;
@@ -241,3 +241,12 @@ border: 1px solid #ccc;
 .modal-body{
     padding: 10px 20px 10px;
 }
+
+.popover{
+    font-family:"Open Sans" !important;
+}
+
+.popover .ul{
+
+}
+

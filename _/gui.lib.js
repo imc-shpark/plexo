@@ -20,6 +20,7 @@
 
 
 
+
 var VIEW, BRUSH, ERASER, LABELS;
 
 BRUSH  = plx.setGlobalBrush(new plx.Brush(5, 0.5, 'round'));
@@ -524,7 +525,7 @@ function setup_keyboard() {
                 event.preventDefault();
                 plx.setCurrentOperation(plx.OP_ANNOTATE);
                 gui.toolbar.update_brush();
-                gui.tooblar.update_selected_tool(plx.OP_ANNOTATE);
+                gui.toolbar.update_selected_tool(plx.OP_ANNOTATE);
             }
 
             else if (letter == 'z' && !event.shiftKey) {
@@ -1079,6 +1080,7 @@ $(function () {
         $('.modal:visible').each(reposition);
     });
 });
+
 
 /**
  * Deactivate global touch events (tested on ipad so far)

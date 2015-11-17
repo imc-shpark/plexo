@@ -769,7 +769,7 @@ fieldset[disabled] .btn-default:hover,
 fieldset[disabled] .btn-default:focus,
 fieldset[disabled] .btn-default:active,
 fieldset[disabled] .btn-default.active {
-  background-color: #cccccc;
+  background-color: #969696;
   border-color: #cccccc;
 }
 .btn-warning {

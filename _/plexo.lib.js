@@ -1439,6 +1439,7 @@ plx.ViewInteractor.prototype.connectView = function () {
     var canvas     = this.view.canvas;
     var interactor = this;
 
+
     canvas.onmousedown  = function (ev) { interactor.onMouseDown(ev); };
     canvas.onmouseup    = function (ev) { interactor.onMouseUp(ev); };
     canvas.onmousemove  = function (ev) { interactor.onMouseMove(ev); };
@@ -1449,6 +1450,9 @@ plx.ViewInteractor.prototype.connectView = function () {
     canvas.addEventListener('touchstart', function (ev) { interactor.onTouchStart(ev); }, false);
     canvas.addEventListener('touchmove', function (ev) { interactor.onTouchMove(ev); }, false);
     canvas.addEventListener('touchend', function (ev) { interactor.onTouchEnd(ev); }, false);
+
+
+    document.onkeyup = function (ev) { interactor.onKeyUp(ev);}
 
 };
 
@@ -1525,13 +1529,13 @@ plx.ViewInteractor.prototype.action_paintBucket_long_press = function (x, y, del
     this._long_press_timer = window.setTimeout(deferred_execution, delay);
 }
 
-plx.ViewInteractor.prototype.action_panning = function(x,y){
+plx.ViewInteractor.prototype.action_panning = function (x, y) {
     plx.zoom.setFocus(x, y);
     this.view.render();
     message('panning');
 };
 
-plx.ViewInteractor.prototype.action_zooming = function(scale, mouseOrTouch){
+plx.ViewInteractor.prototype.action_zooming = function (scale, mouseOrTouch) {
 
     if (mouseOrTouch == 'mouse') {
 
@@ -1540,21 +1544,30 @@ plx.ViewInteractor.prototype.action_zooming = function(scale, mouseOrTouch){
         this.view.render();
 
     }
-    else if (mouseOrTouch == 'touch'){
+    else {
+        if (mouseOrTouch == 'touch') {
 
-        plx.zoom.setScaleTouch(scale);
-        this.view.render();
-        message('zoom (touch): ' + scale.toPrecision(3));
+            plx.zoom.setScaleTouch(scale);
+            this.view.render();
+            message('zoom (touch): ' + scale.toPrecision(3));
 
-    }
-    else{
-        message('Error: unknown type of zooming');
+        }
+        else {
+            message('Error: unknown type of zooming');
+        }
     }
 }
 
+plx.ViewInteractor.prototype.onKeyUp = function(ev){
+    if (ev.keyCode == 17 && plx.CURRENT_OPERATION == plx.OP_PANNING){
+        plx.setCurrentOperation(this.last_operation);
+        this.notify(plx.EV_OPERATION_CHANGED, {'operation': this.last_operation});
+    }
+};
+
 plx.ViewInteractor.prototype.onDoubleClick = function (ev) {
     ev.preventDefault();
-    var coords        = this._getCanvasCoordinates(ev.clientX, ev.clientY);
+    var coords = this._getCanvasCoordinates(ev.clientX, ev.clientY);
     this.action_paintBucket(coords[0], coords[1]);
     plx.COORDINATES.X = coords[0];
     plx.COORDINATES.Y = coords[0];
@@ -1566,6 +1579,7 @@ plx.ViewInteractor.prototype.onMouseDown = function (ev) {
     this.initY = plx.COORDINATES.Y;
 
     var coords = this._getCanvasCoordinates(ev.clientX, ev.clientY);
+
 
     this.action_paintBucket_long_press(coords[0], coords[1], 1000);
 
@@ -1594,18 +1608,28 @@ plx.ViewInteractor.prototype.onMouseMove = function (ev) {
     clearTimeout(this._long_press_timer);
     /*if ((Math.abs(this.initX - x) > 3) && (Math.abs(this.initY - y) > 3)) { //it moved too much
 
-    }*/
+     }*/
 
-    if (ev.shiftKey) {
-        clearTimeout(this._long_press_timer);
+    if (ev.ctrlKey){
+        if (plx.CURRENT_OPERATION != plx.OP_PANNING){
+            this.last_operation = plx.CURRENT_OPERATION;
+            console.debug('previous operation: '+this.last_operation);
+            plx.setCurrentOperation(plx.OP_PANNING);
+        }
         this.action_panning(x,y);
     }
 
-    if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE || plx.CURRENT_OPERATION == plx.OP_DELETE) {
-        if (this.dragging) {
-            this.aslice = this.view.getCurrentAnnotationLayer();
-            message('annotating/deleting with mouse');
-            this.aslice.updateAnnotation(x, y);
+    else {
+
+        switch (plx.CURRENT_OPERATION) {
+            case plx.OP_ANNOTATE:
+            case plx.OP_DELETE:
+                if (this.dragging) {
+                    this.aslice = this.view.getCurrentAnnotationLayer();
+                    message('annotating/deleting with mouse');
+                    this.aslice.updateAnnotation(x, y);
+                }
+                break;
         }
     }
 
@@ -1618,13 +1642,20 @@ plx.ViewInteractor.prototype.onMouseUp = function (ev) {
 
     clearTimeout(this._long_press_timer);
 
-    if (plx.CURRENT_OPERATION == plx.OP_ANNOTATE || plx.CURRENT_OPERATION == plx.OP_DELETE) {
-        if (this.dragging) {
-            this.aslice.saveAnnotation();
-            message('annotation completed');
-            this.dragging = false;
+    switch (plx.CURRENT_OPERATION) {
+        case plx.OP_ANNOTATE:
+        case plx.OP_DELETE:
 
-        }
+            if (this.dragging) {
+                this.aslice.saveAnnotation();
+                message('annotation completed');
+                this.dragging = false;
+
+            }
+            break;
+
+
+
     }
 };
 
@@ -1652,9 +1683,11 @@ plx.ViewInteractor.prototype.onWheel = function (ev) {
             slice = this.view.showPreviousSlice();
 
         }
-        else if (direction < 0) {
-            slice = this.view.showNextSlice();
+        else {
+            if (direction < 0) {
+                slice = this.view.showNextSlice();
 
+            }
         }
 
         message('slice: ' + slice);
@@ -1690,8 +1723,10 @@ plx.ViewInteractor.prototype.onTouchStart = function (ev) {
     if (touches.length == 1 && !this.zooming) {
         this.onSingleTouchStart(touches[0])
     }
-    else if (touches.length == 2) {
-        this.onDoubleTouchStart(touches);
+    else {
+        if (touches.length == 2) {
+            this.onDoubleTouchStart(touches);
+        }
     }
 };
 
@@ -1749,13 +1784,17 @@ plx.ViewInteractor.prototype.onTouchEnd = function (ev) {
         }
         this.zooming = false;
     }
-    else if (touches.length == 1 && this._ongoing_touches.length == 1) {
-        this.onOneOfTwoTouchEnd(touches[0], this._ongoing_touches[0]);
-        //still zooming until last finger is released
-    }
-    else if (touches.length == 2 && this._ongoing_touches.length == 0) {
-        this.onDoubleTouchEnd(touches);
-        this.zooming = false;
+    else {
+        if (touches.length == 1 && this._ongoing_touches.length == 1) {
+            this.onOneOfTwoTouchEnd(touches[0], this._ongoing_touches[0]);
+            //still zooming until last finger is released
+        }
+        else {
+            if (touches.length == 2 && this._ongoing_touches.length == 0) {
+                this.onDoubleTouchEnd(touches);
+                this.zooming = false;
+            }
+        }
     }
 };
 
@@ -1769,10 +1808,10 @@ plx.ViewInteractor.prototype._getMidpoint = function (arr) {
 plx.ViewInteractor.prototype._copyTouch = function (touch) {
     return {
         identifier: touch.identifier,
-        pageX: touch.pageX,
-        pageY: touch.pageY,
-        clientX: touch.clientX,
-        clientY: touch.clientY
+        pageX     : touch.pageX,
+        pageY     : touch.pageY,
+        clientX   : touch.clientX,
+        clientY   : touch.clientY
     };
 };
 
@@ -1829,7 +1868,7 @@ plx.ViewInteractor.prototype.onSingleTouchMove = function (touch) {
         clearTimeout(this._long_press_timer);
     }
 
-    switch(plx.CURRENT_OPERATION){
+    switch (plx.CURRENT_OPERATION) {
         case plx.OP_ANNOTATE:
         case plx.OP_DELETE:
             this.aslice.updateAnnotation(x, y);
