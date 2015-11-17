@@ -34,7 +34,7 @@ gui.SliceController.prototype._setup_slider = function(){
         message('slice: ' +index);
         VIEW.showSliceByIndex(index);
     });
-}
+};
 
 gui.SliceController.prototype.processNotification = function (data) {
     this.slider.noUiSlider.set(data.slice);

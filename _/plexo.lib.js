@@ -486,15 +486,25 @@ plx.Dataset.prototype.getPreviousSlice = function(index){
 
 };
 
+plx.Dataset.prototype.getFirstSlice = function(){
+    return this.slices[0];
+};
+
+plx.Dataset.prototype.getLastSlice = function(){
+    return this.slices[this.slices.length-1];
+
+};
+
 /*-----------------------------------------------------------------------------------------------
  Annotation Layer
  ------------------------------------------------------------------------------------------------*/
 /**
  * Represents the annotated slice. There can only be one at a time per slice.
  */
-plx.AnnotationLayer = function (slice_id) {
+plx.AnnotationLayer = function (slice) {
 
-    this.slice_id     = slice_id;
+    this.slice        = slice;
+    this.index        = slice.index;
     this.canvas       = document.createElement('canvas');
     this.ctx          = this.canvas.getContext('2d');
     this.imageData    = undefined;
@@ -754,8 +764,6 @@ plx.AnnotationLayer.prototype.updateAnnotation = function (curr_x, curr_y) {
 plx.AnnotationLayer.prototype.saveAnnotation = function () {
 
     this.processPixels();
-
-
     this.saveUndoStep();
     this.view.render();
 };
@@ -1204,21 +1212,24 @@ plx.AnnotationSet.prototype.save = function () {
     //  2. Writes the corresponding anset_url (so we can load this later on).
 };
 
-plx.AnnotationSet.prototype.getAnnotation = function (slice_id) {
+plx.AnnotationSet.prototype.getAnnotation = function (slice) {
 
     var aslice = undefined;
-    if (!(slice_id in this.annotations)) {
-        aslice                      = new plx.AnnotationLayer(slice_id);
-        this.annotations[slice_id] = aslice;
+    var key = slice.url; //uses the url as the key in this dictionary
+
+    if (!(key in this.annotations)) {
+        aslice                      = new plx.AnnotationLayer(slice);
+        this.annotations[key] = aslice;
     }
     else {
-        aslice = this.annotations[slice_id];
+        aslice = this.annotations[key];
     }
     return aslice;
 };
 
-plx.AnnotationSet.prototype.hasAnnotation = function (slice_id) {
-    return (slice_id in this.annotations);
+plx.AnnotationSet.prototype.hasAnnotation = function (slice) {
+    var key = slice.url; //uses the url as the key in this dictionary
+    return (key in this.annotations);
 };
 
 plx.AnnotationSet.prototype.getUsedLabels = function(){
@@ -1390,7 +1401,7 @@ plx.View.prototype.getCurrentAnnotationLayer = function () {
         this.aset = new plx.AnnotationSet('spine_phantom_1', 'dcantor', '1', 'labels_spine');
     }
     /*--------------------------------------------------------------------------------------*/
-    this.current_annotation = this.aset.getAnnotation(this.current_slice.filename); //for now the filename is the id.
+    this.current_annotation = this.aset.getAnnotation(this.current_slice); //for now the filename is the id.
     this.current_annotation.setView(this);
     return this.current_annotation;
 };

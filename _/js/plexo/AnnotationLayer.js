@@ -4,9 +4,10 @@
 /**
  * Represents the annotated slice. There can only be one at a time per slice.
  */
-plx.AnnotationLayer = function (slice_id) {
+plx.AnnotationLayer = function (slice) {
 
-    this.slice_id     = slice_id;
+    this.slice        = slice;
+    this.index        = slice.index;
     this.canvas       = document.createElement('canvas');
     this.ctx          = this.canvas.getContext('2d');
     this.imageData    = undefined;
@@ -266,8 +267,6 @@ plx.AnnotationLayer.prototype.updateAnnotation = function (curr_x, curr_y) {
 plx.AnnotationLayer.prototype.saveAnnotation = function () {
 
     this.processPixels();
-
-
     this.saveUndoStep();
     this.view.render();
 };

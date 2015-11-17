@@ -17,7 +17,8 @@
 }
 
 .noUi-handle-upper .noUi-tooltip {
-	bottom: -32px;
+	/*bottom: -32px;*/
+    top:-22px;
 }
 
 .noUi-tooltip:after {

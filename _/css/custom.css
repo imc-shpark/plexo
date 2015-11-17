@@ -246,7 +246,21 @@ border: 1px solid #ccc;
     font-family:"Open Sans" !important;
 }
 
-.popover .ul{
+.canvas-preview{
+    background-color: #ccc;
+    border: 1px solid #aaa;
+}
+@media (max-width:991px) {
+    .canvas-preview {
+        height: auto;
+        width: 150px;
+    }
+}
 
+@media (min-width:992px){
+    .canvas-preview{
+        height: auto;
+        width:200px;
+    }
 }
 

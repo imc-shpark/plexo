@@ -152,3 +152,12 @@ plx.Dataset.prototype.getPreviousSlice = function(index){
     return undefined;
 
 };
+
+plx.Dataset.prototype.getFirstSlice = function(){
+    return this.slices[0];
+};
+
+plx.Dataset.prototype.getLastSlice = function(){
+    return this.slices[this.slices.length-1];
+
+};

@@ -23,7 +23,7 @@
 	height: 100%;
 	position: relative;
 	z-index: 1; /* Fix 401 */
-	background: #ed5565;
+	background: #E1E4E9;
 }
 .noUi-origin {
 	position: absolute;
@@ -65,9 +65,10 @@
 }
 .noUi-horizontal .noUi-handle {
 	width: 34px;
-	height: 28px;
-	left: -17px;
-	top: -8px;
+	height: 32px;
+	left: -18px;
+	top: -11px;
+	border: 1px solid transparent;
 }
 .noUi-vertical {
 	width: 18px;
@@ -94,7 +95,7 @@
 }
 .noUi-origin {
 	border-radius: 0px 4px 4px 0px;
-	border: 2px solid rgb(225, 228, 233) !important;
+	border: 2px solid transparent; /*rgb(225, 228, 233) !important;*/
 }
 
 .noUi-target {
@@ -128,11 +129,11 @@
 	content: "";
 	display: block;
 	position: absolute;
-	height: 20px;
+	height: 22px;
 	width: 2px;
 	background: #ed5565;
-	left: 14px;
-	top: 2px;
+	left: 15px;
+	top: 3px;
 }
 
 .noUi-handle:hover:before,
@@ -141,11 +142,11 @@
 	content: "";
 	display: block;
 	position: absolute;
-	height: 20px;
-	width: 2px;
+	/*height: 20px;
+	width: 2px;*/
 	background: #AE3B47;
-	left: 14px;
-	top: 2px;
+	/*left: 14px;
+	top: 2px;*/
 }
 
 /*.noUi-handle:after {
@@ -194,4 +195,8 @@
 
 .noUi-margin-bottom { /*extra margin used when adding scales */
 	margin-bottom:45px !important;
+}
+
+.noUi-connect > .noUi-base  {
+	background: #ed5565;
 }

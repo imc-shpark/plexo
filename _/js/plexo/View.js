@@ -104,7 +104,7 @@ plx.View.prototype.getCurrentAnnotationLayer = function () {
         this.aset = new plx.AnnotationSet('spine_phantom_1', 'dcantor', '1', 'labels_spine');
     }
     /*--------------------------------------------------------------------------------------*/
-    this.current_annotation = this.aset.getAnnotation(this.current_slice.filename); //for now the filename is the id.
+    this.current_annotation = this.aset.getAnnotation(this.current_slice); //for now the filename is the id.
     this.current_annotation.setView(this);
     return this.current_annotation;
 };

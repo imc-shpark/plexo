@@ -28,21 +28,24 @@ plx.AnnotationSet.prototype.save = function () {
     //  2. Writes the corresponding anset_url (so we can load this later on).
 };
 
-plx.AnnotationSet.prototype.getAnnotation = function (slice_id) {
+plx.AnnotationSet.prototype.getAnnotation = function (slice) {
 
     var aslice = undefined;
-    if (!(slice_id in this.annotations)) {
-        aslice                      = new plx.AnnotationLayer(slice_id);
-        this.annotations[slice_id] = aslice;
+    var key = slice.url; //uses the url as the key in this dictionary
+
+    if (!(key in this.annotations)) {
+        aslice                      = new plx.AnnotationLayer(slice);
+        this.annotations[key] = aslice;
     }
     else {
-        aslice = this.annotations[slice_id];
+        aslice = this.annotations[key];
     }
     return aslice;
 };
 
-plx.AnnotationSet.prototype.hasAnnotation = function (slice_id) {
-    return (slice_id in this.annotations);
+plx.AnnotationSet.prototype.hasAnnotation = function (slice) {
+    var key = slice.url; //uses the url as the key in this dictionary
+    return (key in this.annotations);
 };
 
 plx.AnnotationSet.prototype.getUsedLabels = function(){
