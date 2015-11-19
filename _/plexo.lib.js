@@ -65,10 +65,10 @@ plx.EV_OPERATION_CHANGED = 'plx-ev-op-changed';
  ------------------------------------------------------------------------------------------------*/
 
 plx.hex2rgb = function (hex) {
-    hex   = hex.replace('#', '');
-    var r = parseInt(hex.substring(0, 2), 16);
-    var g = parseInt(hex.substring(2, 4), 16);
-    var b = parseInt(hex.substring(4, 6), 16);
+    var _hex   = hex.replace('#', '');
+    var r = parseInt(_hex.substring(0, 2), 16);
+    var g = parseInt(_hex.substring(2, 4), 16);
+    var b = parseInt(_hex.substring(4, 6), 16);
     return {'r': r, 'g': g, 'b': b};
 }
 
@@ -113,18 +113,19 @@ window.addEventListener('touchstart', function setHasTouch() {
  Labels
  ------------------------------------------------------------------------------------------------*/
 
-plx.Label = function(id, name, color){
+plx.Label = function(id, name, hexcolor){
     this.id = id;
     this.name = name;
-    this.color = color;
-    this.setColor(color);
+    this.color = hexcolor;
+    this.setColor(hexcolor);
 };
 
-plx.Label.prototype.setColor = function(color){
-    var rgb = plx.hex2rgb(color);
+plx.Label.prototype.setColor = function(hexcolor){
+    var rgb = plx.hex2rgb(hexcolor);
     this.r = rgb.r;
     this.g = rgb.g;
     this.b = rgb.b;
+    this.color = hexcolor;
 };
 
 
@@ -152,8 +153,14 @@ plx.LabelSet.prototype.getLabelByID = function (label_id) {
     return undefined;
 };
 
-plx.LabelSet.prototype.getLabels = function(){
-    return this.labels;
+plx.LabelSet.prototype.getLabelByName = function(label_name){
+    var N = this.labels.length;
+    for (var i = 0; i < N; i += 1) {
+        if (this.labels[i].name == label_name) {
+            return this.labels[i];
+        }
+    }
+    return undefined;
 };
 
 plx.LabelSet.prototype.getLabelByRGBColor = function(r,g,b){
@@ -170,6 +177,23 @@ plx.LabelSet.prototype.getLabelByRGBColor = function(r,g,b){
 };
 
 
+plx.LabelSet.prototype.getLabelByHexColor = function(label_hexcolor){
+    var N = this.labels.length;
+    for (var i = 0; i < N; i += 1) {
+        if (this.labels[i].color == label_hexcolor) {
+            return this.labels[i];
+        }
+    }
+    return undefined;
+};
+
+plx.LabelSet.prototype.getLabels = function(){
+    return this.labels;
+};
+
+
+
+
 
 /*-----------------------------------------------------------------------------------------------
  Brush
@@ -178,7 +202,6 @@ plx.Brush = function (size, opacity, type) {
     this.size     = size;
     this.opacity  = opacity;
     this.type     = type;
-    this.comp     = 'lighten';
     this.color    = "rgba(0,0,0," + opacity + ')';
     this.r        = 0;
     this.g        = 0;
@@ -494,6 +517,28 @@ plx.Dataset.prototype.getLastSlice = function(){
     return this.slices[this.slices.length-1];
 
 };
+
+plx.Dataset.prototype.getNumSlices = function(){
+    return this.slices.length;
+};
+
+plx.Dataset.prototype.getArrayPositionForIndex = function(index){
+
+    for (var i= 0, N = this.slices.length; i<N; i+=1){
+        if (this.slices[i].index == index){
+            return i;
+        }
+    }
+    return undefined;
+};
+
+plx.Dataset.prototype.getListIndices = function(){
+    var list = [];
+    for (var i= 0, N = this.slices.length; i<N; i+=1){
+        list.push(this.slices[i].index);
+    }
+    return list;
+}
 
 /*-----------------------------------------------------------------------------------------------
  Annotation Layer
@@ -911,6 +956,58 @@ plx.AnnotationLayer.prototype.processPixels = function () {
     plx.smoothingEnabled(this.ctx, false);
     this.ctx.putImageData(this.imageData, 0, 0); //updates the data in the canvas.
 };
+
+
+plx.AnnotationLayer.prototype.getImageDataForLabels = function(label_ids) {
+
+    var data = new Uint8ClampedArray(this.imageData.data); //copy
+
+    var list = [];
+
+    if (typeof(label_ids) == 'string') {
+        label_ids = [label_ids];
+    }
+
+    if (label_ids instanceof Array) {
+        for (var k = 0, N = label_ids.length; k < N; k += 1) {
+            list.push(plx.LABELS.getLabelByID(label_ids[k]));
+        }
+    }
+    else {
+        throw 'Error: AnnotationLayer.getImageDataForLabels, label_ids not valid';
+    }
+
+    function isPixelInList(r, g, b) {
+
+        if (r == 0 && g == 0 & b == 0) return false;
+
+        for (var l = 0, M = list.length; l < M; l += 1) {
+            if (r == list[l].r && g == list[l].g && b == list[l].b) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    var count = 0;
+
+    for (var i = 0, D = data.length; i < D; i += 4) {
+        var r = data[i], g = data[i + 1], b = data[i + 2];
+
+        if (!isPixelInList(r, g, b)) { // if not in the list and not zero
+            data[i]     = 0;
+            data[i + 1] = 0;
+            data[i + 2] = 0;
+            data[i + 3] = 0;
+        }
+
+    }
+
+    console.debug('number of pixels in set:'+count);
+
+    return new ImageData(data, this.imageData.width, this.imageData.height);
+};
+
 
 /*-----------------------------------------------------------------------------------------------
  Paint Bucket

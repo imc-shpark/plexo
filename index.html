@@ -242,42 +242,40 @@
 				<h3 class="modal-title">Propagate Labels</h3>
 			</div><!-- modal header -->
 			<div class="modal-body">
-				<div class="row hidden-xs">
+				<div class="row">
 
-					<div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 text-center">
-						<h4>From</h4>
-						<canvas id="from-canvas-id" class="canvas-preview"></canvas>
-					</div>
-					<div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 text-center">
-						<h4>Current</h4>
+					<div class="col-lg-4 col-md-4 col-sm-4 col-xs-12 text-center">
+						<h4>Current <small id="current-txt-id"></small></h4>
 						<canvas id="current-canvas-id" class="canvas-preview"></canvas>
 					</div>
-					<div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 text-center">
-						<h4>To</h4>
+					<div class="col-lg-4 col-md-4 col-sm-4 col-xs-12 text-center">
+						<h4>From <small id="from-txt-id"></small></h4>
+						<canvas id="from-canvas-id" class="canvas-preview"></canvas>
+					</div>
+					<div class="col-lg-4 col-md-4 col-sm-4 col-xs-12 text-center">
+						<h4>To <small id="to-txt-id"></small></h4>
 						<canvas id="to-canvas-id" class="canvas-preview"></canvas>
 					</div>
 				</div>
 				<div class="row">
-					<div class="col-xs-12">
-						<h4>Propagate to:</h4>
-						<div id="propagate-slider-id" class="noUi-margin-top"></div>
-					</div>
+						<div class="col-xs-12">
+							<div id="propagate-slider-id" class="noUi-margin-top noUi-margin-bottom"></div>
+						</div>
 				</div>
+
 				<div class="row">
 					<div class="col-xs-12">
-						<div class="text-center m-t-md">
-							<h4>Labels used in current slice</h4>
-						</div>
+							<h4>Select labels to propagate:</h4>
 						<div id='used-labels-div-id' class="vertical-scroller">
 							<select id="propagate-label-selector-id"></select>
 						</div>
-
 					</div>
 				</div>
 
+
 			</div><!-- modal body-->
 			<div class="modal-footer">
-				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+				<button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
 				<button id='btn-ok-propagate-id' type="button" class="btn btn-success" data-dismiss="modal">OK</button>
 			</div><!-- modal footer -->
 		</div><!-- modal content -->

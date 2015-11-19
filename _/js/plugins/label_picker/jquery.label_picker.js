@@ -2,7 +2,7 @@
  * Label Picker
  * By Diego Cantor
  *
- * Forked from https://github.com/tkrotoff/jquery-labelpicker
+ * Forked from https://github.com/tkrotoff/jquery-simplecolorpicker
  * by Tanguy Krotoff (MIT Licence).
  *
  */
@@ -146,6 +146,7 @@
                 //remove all selected
                 self.$select.children().each(function(){ $(this).removeAttr('selected')});
             }
+
             //add only those that have data-selected attribute.
             $(self.$colorList[0]).find('[data-selected=""]').each(
                 function(){

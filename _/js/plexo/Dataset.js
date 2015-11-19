@@ -161,3 +161,25 @@ plx.Dataset.prototype.getLastSlice = function(){
     return this.slices[this.slices.length-1];
 
 };
+
+plx.Dataset.prototype.getNumSlices = function(){
+    return this.slices.length;
+};
+
+plx.Dataset.prototype.getArrayPositionForIndex = function(index){
+
+    for (var i= 0, N = this.slices.length; i<N; i+=1){
+        if (this.slices[i].index == index){
+            return i;
+        }
+    }
+    return undefined;
+};
+
+plx.Dataset.prototype.getListIndices = function(){
+    var list = [];
+    for (var i= 0, N = this.slices.length; i<N; i+=1){
+        list.push(this.slices[i].index);
+    }
+    return list;
+}

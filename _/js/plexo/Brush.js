@@ -5,7 +5,6 @@ plx.Brush = function (size, opacity, type) {
     this.size     = size;
     this.opacity  = opacity;
     this.type     = type;
-    this.comp     = 'lighten';
     this.color    = "rgba(0,0,0," + opacity + ')';
     this.r        = 0;
     this.g        = 0;

@@ -2,18 +2,19 @@
  Labels
  ------------------------------------------------------------------------------------------------*/
 
-plx.Label = function(id, name, color){
+plx.Label = function(id, name, hexcolor){
     this.id = id;
     this.name = name;
-    this.color = color;
-    this.setColor(color);
+    this.color = hexcolor;
+    this.setColor(hexcolor);
 };
 
-plx.Label.prototype.setColor = function(color){
-    var rgb = plx.hex2rgb(color);
+plx.Label.prototype.setColor = function(hexcolor){
+    var rgb = plx.hex2rgb(hexcolor);
     this.r = rgb.r;
     this.g = rgb.g;
     this.b = rgb.b;
+    this.color = hexcolor;
 };
 
 
@@ -41,8 +42,14 @@ plx.LabelSet.prototype.getLabelByID = function (label_id) {
     return undefined;
 };
 
-plx.LabelSet.prototype.getLabels = function(){
-    return this.labels;
+plx.LabelSet.prototype.getLabelByName = function(label_name){
+    var N = this.labels.length;
+    for (var i = 0; i < N; i += 1) {
+        if (this.labels[i].name == label_name) {
+            return this.labels[i];
+        }
+    }
+    return undefined;
 };
 
 plx.LabelSet.prototype.getLabelByRGBColor = function(r,g,b){
@@ -57,4 +64,21 @@ plx.LabelSet.prototype.getLabelByRGBColor = function(r,g,b){
     }
     return undefined;
 };
+
+
+plx.LabelSet.prototype.getLabelByHexColor = function(label_hexcolor){
+    var N = this.labels.length;
+    for (var i = 0; i < N; i += 1) {
+        if (this.labels[i].color == label_hexcolor) {
+            return this.labels[i];
+        }
+    }
+    return undefined;
+};
+
+plx.LabelSet.prototype.getLabels = function(){
+    return this.labels;
+};
+
+
 

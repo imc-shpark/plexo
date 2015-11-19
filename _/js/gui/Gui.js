@@ -52,8 +52,8 @@ function initPlexo() {
 
     dataset = new plx.Dataset('data/ds_us_1', plx.Dataset.SELECT_INDEXED,
         {
-            'start': 1,
-            'end'  : 400,
+            'start': 200,
+            'end'  : 206,
             'step' : 1
         }
     );

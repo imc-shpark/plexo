@@ -13,12 +13,14 @@
 }
 
 .noUi-handle-lower .noUi-tooltip {
-	top: -22px;
+	top: -24px;
+    left:-2px;
 }
 
+
 .noUi-handle-upper .noUi-tooltip {
-	/*bottom: -32px;*/
-    top:-22px;
+	bottom: -21px;
+    left:-2px;
 }
 
 .noUi-tooltip:after {
@@ -36,6 +38,29 @@
     border-left: 10px solid transparent;
     border-right: 10px solid transparent;
     border-bottom: 0px;
+    margin: 0;
+    padding: 0;
+    left: 7px;
+    z-index: -1;
+
+}
+
+
+.noUi-handle-upper > .noUi-tooltip:after {
+    content: "";
+    position: absolute;
+    width: 0px;
+    height: 0px;
+    top: -5px;
+    -moz-border-top-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-bottom-colors: #ed5565;
+    -moz-border-left-colors: none;
+    border-image: none;
+    border-top: 0px;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 10px solid #ed5565;
     margin: 0;
     padding: 0;
     left: 7px;

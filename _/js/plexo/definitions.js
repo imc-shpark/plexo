@@ -42,10 +42,10 @@ plx.EV_OPERATION_CHANGED = 'plx-ev-op-changed';
  ------------------------------------------------------------------------------------------------*/
 
 plx.hex2rgb = function (hex) {
-    hex   = hex.replace('#', '');
-    var r = parseInt(hex.substring(0, 2), 16);
-    var g = parseInt(hex.substring(2, 4), 16);
-    var b = parseInt(hex.substring(4, 6), 16);
+    var _hex   = hex.replace('#', '');
+    var r = parseInt(_hex.substring(0, 2), 16);
+    var g = parseInt(_hex.substring(2, 4), 16);
+    var b = parseInt(_hex.substring(4, 6), 16);
     return {'r': r, 'g': g, 'b': b};
 }
 

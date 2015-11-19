@@ -414,3 +414,54 @@ plx.AnnotationLayer.prototype.processPixels = function () {
     plx.smoothingEnabled(this.ctx, false);
     this.ctx.putImageData(this.imageData, 0, 0); //updates the data in the canvas.
 };
+
+
+plx.AnnotationLayer.prototype.getImageDataForLabels = function(label_ids) {
+
+    var data = new Uint8ClampedArray(this.imageData.data); //copy
+
+    var list = [];
+
+    if (typeof(label_ids) == 'string') {
+        label_ids = [label_ids];
+    }
+
+    if (label_ids instanceof Array) {
+        for (var k = 0, N = label_ids.length; k < N; k += 1) {
+            list.push(plx.LABELS.getLabelByID(label_ids[k]));
+        }
+    }
+    else {
+        throw 'Error: AnnotationLayer.getImageDataForLabels, label_ids not valid';
+    }
+
+    function isPixelInList(r, g, b) {
+
+        if (r == 0 && g == 0 & b == 0) return false;
+
+        for (var l = 0, M = list.length; l < M; l += 1) {
+            if (r == list[l].r && g == list[l].g && b == list[l].b) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    var count = 0;
+
+    for (var i = 0, D = data.length; i < D; i += 4) {
+        var r = data[i], g = data[i + 1], b = data[i + 2];
+
+        if (!isPixelInList(r, g, b)) { // if not in the list and not zero
+            data[i]     = 0;
+            data[i + 1] = 0;
+            data[i + 2] = 0;
+            data[i + 3] = 0;
+        }
+
+    }
+
+    console.debug('number of pixels in set:'+count);
+
+    return new ImageData(data, this.imageData.width, this.imageData.height);
+};
