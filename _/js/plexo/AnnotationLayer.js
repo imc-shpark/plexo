@@ -1,3 +1,22 @@
+/**
+* This file is part of PLEXO
+*
+* Author: Diego Cantor
+*
+* PLEXO is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License version 3 as published by
+* the Free Software Foundation
+*
+* PLEXO is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+
 /*-----------------------------------------------------------------------------------------------
  Annotation Layer
  ------------------------------------------------------------------------------------------------*/
@@ -16,6 +35,8 @@ plx.AnnotationLayer = function (slice) {
     this.undo_history = [];
     this.redo_history = [];
     this.view         = undefined;
+
+
 };
 
 //Constants
@@ -26,6 +47,7 @@ plx.AnnotationLayer.LABEL_DISTANCE_TOLERANCE = 20;
  * @param view
  */
 plx.AnnotationLayer.prototype.setView = function (view) {
+    if (this.view == view) return;
     this.view = view;
 };
 
@@ -266,7 +288,7 @@ plx.AnnotationLayer.prototype.updateAnnotation = function (curr_x, curr_y) {
 
 plx.AnnotationLayer.prototype.saveAnnotation = function () {
 
-    this.processPixels();
+    this.removeInterpolation();
     this.saveUndoStep();
     this.view.render();
 };
@@ -368,7 +390,7 @@ plx.AnnotationLayer.prototype.getUsedLabels = function () {
  * This method UPDATES the current ImageData object of the annotation layer.
  *
  */
-plx.AnnotationLayer.prototype.processPixels = function () {
+plx.AnnotationLayer.prototype.removeInterpolation = function () {
 
     this.imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
 
@@ -408,13 +430,9 @@ plx.AnnotationLayer.prototype.processPixels = function () {
         data[i + 2] = selected.b;
 
     }
-
-    //console.log('used labels: ', labels);
-
     plx.smoothingEnabled(this.ctx, false);
     this.ctx.putImageData(this.imageData, 0, 0); //updates the data in the canvas.
 };
-
 
 plx.AnnotationLayer.prototype.getImageDataForLabels = function(label_ids) {
 
@@ -447,8 +465,6 @@ plx.AnnotationLayer.prototype.getImageDataForLabels = function(label_ids) {
         return false;
     }
 
-    var count = 0;
-
     for (var i = 0, D = data.length; i < D; i += 4) {
         var r = data[i], g = data[i + 1], b = data[i + 2];
 
@@ -461,7 +477,25 @@ plx.AnnotationLayer.prototype.getImageDataForLabels = function(label_ids) {
 
     }
 
-    console.debug('number of pixels in set:'+count);
-
     return new ImageData(data, this.imageData.width, this.imageData.height);
+};
+
+
+plx.AnnotationLayer.prototype.addAnnotationsFromCanvas = function(canvas){
+
+    var    width = this.slice.image.width;
+    var    height = this.slice.image.height;
+
+    //
+    this.canvas.width = width;
+    this.canvas.height = height;
+
+    plx.smoothingEnabled(this.ctx, false);
+    this.ctx.drawImage(this.canvas, 0,0, width, height);
+    this.ctx.drawImage(canvas, 0,0,width,height);
+
+    this.imageData = this.ctx.getImageData(0,0, width,height);
+
+
+    this.saveUndoStep();
 };

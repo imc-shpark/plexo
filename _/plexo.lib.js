@@ -1,4 +1,21 @@
 /**
+ * This file is part of PLEXO
+ *
+ * Author: Diego Cantor
+ *
+ * PLEXO is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as published by
+ * the Free Software Foundation
+ *
+ * PLEXO is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
+ */
+/**
 *  Plexo
 *  Created by Diego Cantor 
 *  (c) 2015 onwards
@@ -21,6 +38,23 @@
 
 
 
+/**
+ * This file is part of PLEXO
+ *
+ * Author: Diego Cantor
+ *
+ * PLEXO is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as published by
+ * the Free Software Foundation
+ *
+ * PLEXO is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
+ */
 var plx = plx || {};
 
 plx.PI2         = Math.PI * 2;
@@ -109,6 +143,23 @@ window.addEventListener('touchstart', function setHasTouch() {
 
 
 
+/**
+ * This file is part of PLEXO
+ *
+ * Author: Diego Cantor
+ *
+ * PLEXO is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as published by
+ * the Free Software Foundation
+ *
+ * PLEXO is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /*-----------------------------------------------------------------------------------------------
  Labels
  ------------------------------------------------------------------------------------------------*/
@@ -195,6 +246,23 @@ plx.LabelSet.prototype.getLabels = function(){
 
 
 
+/**
+ * This file is part of PLEXO
+ *
+ * Author: Diego Cantor
+ *
+ * PLEXO is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as published by
+ * the Free Software Foundation
+ *
+ * PLEXO is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /*-----------------------------------------------------------------------------------------------
  Brush
  ------------------------------------------------------------------------------------------------*/
@@ -245,6 +313,23 @@ plx.setGlobalBrush = function (brush) {
 };
 
 
+/**
+ * This file is part of PLEXO
+ *
+ * Author: Diego Cantor
+ *
+ * PLEXO is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as published by
+ * the Free Software Foundation
+ *
+ * PLEXO is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 /*-----------------------------------------------------------------------------------------------
  Eraser
@@ -259,6 +344,22 @@ plx.setGlobalEraser = function (eraser) {
     return plx.ERASER;
 };
 
+
+/**
+ * This file is part of PLEXO
+ *
+ * PLEXO is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as published by
+ * the Free Software Foundation
+ *
+ * PLEXO is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 /*-----------------------------------------------------------------------------------------------
  Slice
@@ -354,6 +455,23 @@ plx.Slice.prototype.updateLayer = function (view) {
 //};
 
 
+/**
+ * This file is part of PLEXO
+ *
+ * Author: Diego Cantor
+ *
+ * PLEXO is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as published by
+ * the Free Software Foundation
+ *
+ * PLEXO is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /*-----------------------------------------------------------------------------------------------
  Dataset
  ------------------------------------------------------------------------------------------------*/
@@ -412,7 +530,7 @@ plx.Dataset.prototype._populate = function () {
  */
 plx.Dataset.prototype._populateIndexed = function () {
 
-    var step  = 1 || this.options.step;
+    var step  = this.options.step;
     var start = this.options.start;
     var end   = this.options.end;
 
@@ -471,6 +589,11 @@ plx.Dataset.prototype.hasLoaded = function () {
     return (this.num_loaded == this.num_items);
 };
 
+/**
+ * Quick random access thanks to the _slicemap dictionary.
+ * @param index
+ * @returns a slice
+ */
 plx.Dataset.prototype.getSliceByIndex = function(index){
    return this._slicemap[index]; 
 };
@@ -538,7 +661,40 @@ plx.Dataset.prototype.getListIndices = function(){
         list.push(this.slices[i].index);
     }
     return list;
+};
+
+plx.Dataset.prototype.getIndexSublist = function (from, to){
+
+    var list = this.getListIndices();
+
+    var posFrom = list.indexOf(from);
+    var posTo   = list.indexOf(to);
+
+    if (posFrom == -1 || posTo == -1){
+        throw 'ERROR plx.Dataset.getIndices: indices do not exist';
+    }
+    return list.slice(posFrom, posTo+1);
+
 }
+
+/**
+* This file is part of PLEXO
+*
+* Author: Diego Cantor
+*
+* PLEXO is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License version 3 as published by
+* the Free Software Foundation
+*
+* PLEXO is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 
 /*-----------------------------------------------------------------------------------------------
  Annotation Layer
@@ -558,6 +714,8 @@ plx.AnnotationLayer = function (slice) {
     this.undo_history = [];
     this.redo_history = [];
     this.view         = undefined;
+
+
 };
 
 //Constants
@@ -568,6 +726,7 @@ plx.AnnotationLayer.LABEL_DISTANCE_TOLERANCE = 20;
  * @param view
  */
 plx.AnnotationLayer.prototype.setView = function (view) {
+    if (this.view == view) return;
     this.view = view;
 };
 
@@ -808,7 +967,7 @@ plx.AnnotationLayer.prototype.updateAnnotation = function (curr_x, curr_y) {
 
 plx.AnnotationLayer.prototype.saveAnnotation = function () {
 
-    this.processPixels();
+    this.removeInterpolation();
     this.saveUndoStep();
     this.view.render();
 };
@@ -910,7 +1069,7 @@ plx.AnnotationLayer.prototype.getUsedLabels = function () {
  * This method UPDATES the current ImageData object of the annotation layer.
  *
  */
-plx.AnnotationLayer.prototype.processPixels = function () {
+plx.AnnotationLayer.prototype.removeInterpolation = function () {
 
     this.imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
 
@@ -950,13 +1109,9 @@ plx.AnnotationLayer.prototype.processPixels = function () {
         data[i + 2] = selected.b;
 
     }
-
-    //console.log('used labels: ', labels);
-
     plx.smoothingEnabled(this.ctx, false);
     this.ctx.putImageData(this.imageData, 0, 0); //updates the data in the canvas.
 };
-
 
 plx.AnnotationLayer.prototype.getImageDataForLabels = function(label_ids) {
 
@@ -989,8 +1144,6 @@ plx.AnnotationLayer.prototype.getImageDataForLabels = function(label_ids) {
         return false;
     }
 
-    var count = 0;
-
     for (var i = 0, D = data.length; i < D; i += 4) {
         var r = data[i], g = data[i + 1], b = data[i + 2];
 
@@ -1003,12 +1156,47 @@ plx.AnnotationLayer.prototype.getImageDataForLabels = function(label_ids) {
 
     }
 
-    console.debug('number of pixels in set:'+count);
-
     return new ImageData(data, this.imageData.width, this.imageData.height);
 };
 
 
+plx.AnnotationLayer.prototype.addAnnotationsFromCanvas = function(canvas){
+
+    var    width = this.slice.image.width;
+    var    height = this.slice.image.height;
+
+    //
+    this.canvas.width = width;
+    this.canvas.height = height;
+
+    plx.smoothingEnabled(this.ctx, false);
+    this.ctx.drawImage(this.canvas, 0,0, width, height);
+    this.ctx.drawImage(canvas, 0,0,width,height);
+
+    this.imageData = this.ctx.getImageData(0,0, width,height);
+
+
+    this.saveUndoStep();
+};
+
+
+/**
+ * This file is part of PLEXO
+ *
+ * Author: Diego Cantor
+ *
+ * PLEXO is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as published by
+ * the Free Software Foundation
+ *
+ * PLEXO is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /*-----------------------------------------------------------------------------------------------
  Paint Bucket
  ------------------------------------------------------------------------------------------------*/
@@ -1227,6 +1415,23 @@ plx.PaintBucket.prototype._updateAnnotation = function (imdata) {
 //};
 
 
+/**
+ * This file is part of PLEXO
+ *
+ * Author: Diego Cantor
+ *
+ * PLEXO is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as published by
+ * the Free Software Foundation
+ *
+ * PLEXO is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /*-----------------------------------------------------------------------------------------------
  Zoom Object
  ------------------------------------------------------------------------------------------------*/
@@ -1279,6 +1484,23 @@ plx.Zoom.prototype.apply = function (ctx) {
 };
 
 
+/**
+ * This file is part of PLEXO
+ *
+ * Author: Diego Cantor
+ *
+ * PLEXO is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as published by
+ * the Free Software Foundation
+ *
+ * PLEXO is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /*-----------------------------------------------------------------------------------------------
  Annotation Set
  ------------------------------------------------------------------------------------------------*/
@@ -1324,6 +1546,7 @@ plx.AnnotationSet.prototype.getAnnotation = function (slice) {
     return aslice;
 };
 
+
 plx.AnnotationSet.prototype.hasAnnotation = function (slice) {
     var key = slice.url; //uses the url as the key in this dictionary
     return (key in this.annotations);
@@ -1339,6 +1562,23 @@ plx.AnnotationSet.prototype.getUsedLabels = function(){
 };
 
 
+/**
+ * This file is part of PLEXO
+ *
+ * Author: Diego Cantor
+ *
+ * PLEXO is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as published by
+ * the Free Software Foundation
+ *
+ * PLEXO is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /*-----------------------------------------------------------------------------------------------
  Renderer
  ------------------------------------------------------------------------------------------------*/
@@ -1405,7 +1645,7 @@ plx.View = function (canvas_id) {
     this.canvas             = canvas;
     this.ctx                = canvas.getContext("2d");
     this.dataset            = undefined;
-    this.aset               = undefined;
+    this.annotation_set     = undefined;
     this.interactor         = new plx.ViewInteractor(this);
     this.renderer           = new plx.Renderer(this);
     this.current_slice      = undefined;
@@ -1494,11 +1734,11 @@ plx.View.prototype.showPreviousSlice = function () {
 plx.View.prototype.getCurrentAnnotationLayer = function () {
 
     /*--------------------------------------------------------------------------------------*/
-    if (this.aset == undefined) { //@TODO: review hard code
-        this.aset = new plx.AnnotationSet('spine_phantom_1', 'dcantor', '1', 'labels_spine');
+    if (this.annotation_set == undefined) { //@TODO: review hard code
+        this.annotation_set = new plx.AnnotationSet('spine_phantom_1', 'dcantor', '1', 'labels_spine');
     }
     /*--------------------------------------------------------------------------------------*/
-    this.current_annotation = this.aset.getAnnotation(this.current_slice); //for now the filename is the id.
+    this.current_annotation = this.annotation_set.getAnnotation(this.current_slice); //for now the filename is the id.
     this.current_annotation.setView(this);
     return this.current_annotation;
 };
@@ -1523,6 +1763,23 @@ plx.View.prototype.redo = function () {
 
 
 
+/**
+ * This file is part of PLEXO
+ *
+ * Author: Diego Cantor
+ *
+ * PLEXO is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as published by
+ * the Free Software Foundation
+ *
+ * PLEXO is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /*-----------------------------------------------------------------------------------------------
  View Interactor
  ------------------------------------------------------------------------------------------------*/

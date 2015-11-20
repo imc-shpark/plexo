@@ -31,8 +31,8 @@ gui.DownloadAnnotationsDialog.prototype._setup_events = function(){
         list.appendChild(table);
         table.appendChild(tbody);
 
-        var annotations = self.view.aset.annotations;
-        var keys = self.view.aset.getKeys();
+        var annotations = self.view.annotation_set.annotations;
+        var keys = self.view.annotation_set.getKeys();
         for (var i= 0, N = keys.length; i<N; i+=1){
             if (annotations[keys[i]].isEmpty()){
                 continue;
@@ -75,8 +75,8 @@ gui.DownloadAnnotationsDialog.prototype.generateZipFile = function(){
 
     zip.file('labels.json', JSON.stringify(plx.LABELS));
 
-    var annotations = this.view.aset.annotations;
-    var _keys = this.view.aset.getKeys();
+    var annotations = this.view.annotation_set.annotations;
+    var _keys = this.view.annotation_set.getKeys();
     for (var i= 0, N = _keys.length; i<N; i+=1) {
         if (annotations[_keys[i]].isEmpty()) {
             continue;

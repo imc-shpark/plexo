@@ -1,3 +1,20 @@
+/**
+ * This file is part of PLEXO
+ *
+ * Author: Diego Cantor
+ *
+ * PLEXO is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as published by
+ * the Free Software Foundation
+ *
+ * PLEXO is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /*-----------------------------------------------------------------------------------------------
  Dataset
  ------------------------------------------------------------------------------------------------*/
@@ -56,7 +73,7 @@ plx.Dataset.prototype._populate = function () {
  */
 plx.Dataset.prototype._populateIndexed = function () {
 
-    var step  = 1 || this.options.step;
+    var step  = this.options.step;
     var start = this.options.start;
     var end   = this.options.end;
 
@@ -115,6 +132,11 @@ plx.Dataset.prototype.hasLoaded = function () {
     return (this.num_loaded == this.num_items);
 };
 
+/**
+ * Quick random access thanks to the _slicemap dictionary.
+ * @param index
+ * @returns a slice
+ */
 plx.Dataset.prototype.getSliceByIndex = function(index){
    return this._slicemap[index]; 
 };
@@ -182,4 +204,18 @@ plx.Dataset.prototype.getListIndices = function(){
         list.push(this.slices[i].index);
     }
     return list;
+};
+
+plx.Dataset.prototype.getIndexSublist = function (from, to){
+
+    var list = this.getListIndices();
+
+    var posFrom = list.indexOf(from);
+    var posTo   = list.indexOf(to);
+
+    if (posFrom == -1 || posTo == -1){
+        throw 'ERROR plx.Dataset.getIndices: indices do not exist';
+    }
+    return list.slice(posFrom, posTo+1);
+
 }

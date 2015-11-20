@@ -23,7 +23,7 @@
 	height: 100%;
 	position: relative;
 	z-index: 1; /* Fix 401 */
-	background: #E1E4E9;
+	background: #aeaeae;
 }
 .noUi-origin {
 	position: absolute;
@@ -83,12 +83,12 @@
 /* Styling;
  */
 .noUi-background {
-	background: #e1e4e9;
-	border: 2px solid #e1e4e9;
+	background: #AEAEAE;
+	border: 2px solid #a2a2a2;
 }
 
 .noUi-connect {
-	background: none repeat scroll 0 0 #ed5565;
+	background: none repeat scroll 0 0 #7a7a7a;
 	box-shadow: none;
 -webkit-transition: background 450ms;
 	transition: background 450ms;
@@ -114,7 +114,7 @@
 	cursor: n-resize;
 }
 .noUi-handle {
-	border: 0px solid #646464;
+	border: 0px solid #7a7a7a;
 	background: transparent;
 	cursor:pointer;
 }
@@ -131,7 +131,7 @@
 	position: absolute;
 	height: 22px;
 	width: 2px;
-	background: #ed5565;
+	background: #7a7a7a;
 	left: 15px;
 	top: 3px;
 }
@@ -144,7 +144,7 @@
 	position: absolute;
 	/*height: 20px;
 	width: 2px;*/
-	background: #AE3B47;
+	background: #292929;
 	/*left: 14px;
 	top: 2px;*/
 }
@@ -198,5 +198,5 @@
 }
 
 .noUi-connect > .noUi-base  {
-	background: #ed5565;
+	background: #7a7a7a;
 }

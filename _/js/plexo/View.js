@@ -11,7 +11,7 @@ plx.View = function (canvas_id) {
     this.canvas             = canvas;
     this.ctx                = canvas.getContext("2d");
     this.dataset            = undefined;
-    this.aset               = undefined;
+    this.annotation_set     = undefined;
     this.interactor         = new plx.ViewInteractor(this);
     this.renderer           = new plx.Renderer(this);
     this.current_slice      = undefined;
@@ -100,11 +100,11 @@ plx.View.prototype.showPreviousSlice = function () {
 plx.View.prototype.getCurrentAnnotationLayer = function () {
 
     /*--------------------------------------------------------------------------------------*/
-    if (this.aset == undefined) { //@TODO: review hard code
-        this.aset = new plx.AnnotationSet('spine_phantom_1', 'dcantor', '1', 'labels_spine');
+    if (this.annotation_set == undefined) { //@TODO: review hard code
+        this.annotation_set = new plx.AnnotationSet('spine_phantom_1', 'dcantor', '1', 'labels_spine');
     }
     /*--------------------------------------------------------------------------------------*/
-    this.current_annotation = this.aset.getAnnotation(this.current_slice); //for now the filename is the id.
+    this.current_annotation = this.annotation_set.getAnnotation(this.current_slice); //for now the filename is the id.
     this.current_annotation.setView(this);
     return this.current_annotation;
 };
