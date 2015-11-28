@@ -31,7 +31,7 @@
 <body class="top-navigation">
 <div id="wrapper">
 	<div id="page-wrapper" class="custom-background-color" style="min-height: 620px;">
-		<div class="row">
+		<div id='plexo-layout-header-id' class="row">
 			<nav class="navbar navbar-fixed-top custom-background-color custom-bottom-border" role="navigation">
 				<div class="navbar-header custom-color-navbar">
 					<button aria-controls="navbar" aria-expanded="false" data-target="#navbar" data-toggle="collapse" class="navbar-toggle collapsed" type="button">
@@ -68,8 +68,8 @@
 			</nav>
 		</div>
 		<!-- header row -->
-		<div class="row plexo-canvas-row">
-			<div class="col-lg-12 plexo-canvas-container">
+		<div id='plexo-layout-canvas-id' class="row plexo-canvas-row">
+			<div class="col-lg-12"> <!--plexo-canvas-container"-->
 				<div id="dataset-progressbar-container-id" class="progress progress-striped active">
 					<div id="dataset-progressbar-id" class="progress-bar progress-bar-info" role="progressbar"
 					     aria-valuenow="0" aria-value-min="0" aria-value-max="100" style="width:100%">
@@ -80,7 +80,7 @@
 			</div>
 		</div>
 		<!-- body row-->
-		<div class="row footer fixed plexo-footer">
+		<div id='plexo-layout-toolbar-id' class="row footer fixed plexo-footer">
 			<div class="row clearfix">
 				<div class="col-xs-12 col-sm-7 col-md-6 col-lg-6 no-padding">
 
@@ -109,6 +109,10 @@
 					<a id='btn-save-id' class="btn  btn-icon" href="#"
 					   data-toggle="modal"
 					   data-target="#download-annotations-modal-id"><i class="fa fa-download"></i>
+					</a>
+					<a id='btn-load-id' class="btn  btn-icon" href="#"
+					   data-toggle="modal"
+					   data-target="#load-annotations-modal-id"><i class="fa fa-upload"></i>
 					</a>
 
 				</div>
@@ -308,33 +312,82 @@
 	</div>
 </div>
 
+<div id="load-annotations-modal-id" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="">
+	<div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h3 class="modal-title">Load Annotations</h3>
+			</div><!-- modal header -->
+			<div class="modal-body">
+				<div class="row">
+					<div class="col-xs-12">
+
+					</div>
+				</div>
+				<div class="row">
+
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				<a id='btn-load-zip-id' type="button" class="btn btn-primary"><i class='fa fa-upload'></i> Load Zip</a>
+			</div>
+		</div>
+	</div>
+</div>
+
 <div id='alert-container-id'></div>
 
 <!-- Main scripts -->
-<script src="_/js/jquery-2.1.1.js"></script>
-<script src="_/js/bootstrap.js"></script>
+<script src="_/js/jquery/jquery-2.1.1.js"></script>
+<script src="_/js/bootstrap/bootstrap.js"></script>
 <!-- JQuery plugins -->
 <script src="_/js/plugins/metis_menu/jquery.metisMenu.js"></script>
 <script src="_/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
 <script src="_/js/plugins/simple_color_picker/jquery.simplecolorpicker.js"></script>
 <script src="_/js/plugins/label_picker/jquery.label_picker.js"></script>
 <!-- Other plugins -->
-<script src="_/js/inspinia.js"></script>
+<script src="_/js/plugins/inspinia/inspinia.js"></script>
 <script src="_/js/plugins/pace/pace.min.js"></script>
-<script src="_/js/plugins/bootstrap_tour/bootstrap-tour.min.js" ?></script>
+<script src="_/js/plugins/bootstrap_tour/bootstrap-tour.min.js"></script>
 <!-- No JQuery plugins -->
 <script src="_/js/plugins/no_ui_slider/wNumb.js"></script>
 <script src="_/js/plugins/no_ui_slider/nouislider.js"></script>
 <!-- Zip -->
 <script src="_/js/plugins/JSZip/jszip.min.js"></script>
 <script src="_/js/plugins/JSZip/FileSaver.js"></script>
-<!-- Plexo and GUI -->
-<script src="_/plexo.lib.js"></script>
-<script src="_/gui.lib.js"></script>
-<script src="_/js/tour.js"></script>
 
-<!--<script src="http://jsconsole.com/remote.js?D50BBFD8-2CD5-4E60-ADBD-7CD75B4A17E8"></script>-->
-<!--<script src="http://jsconsole.com/remote.js?FAE031CD-74A0-46D3-AE36-757BAB262BEA"></script>-->
+<!-- Plexo and GUI -->
+<!--<script src="_/js/plexo.lib.js"></script>-->
+<script src="_/js/plexo/definitions.js"></script>
+<script src="_/js/plexo/LabelSet.js"></script>
+<script src="_/js/plexo/Brush.js"></script>
+<script src="_/js/plexo/Eraser.js"></script>
+<script src="_/js/plexo/Slice.js"></script>
+<script src="_/js/plexo/Dataset.js"></script>
+<script src="_/js/plexo/AnnotationLayer.js"></script>
+<script src="_/js/plexo/PaintBucket.js"></script>
+<script src="_/js/plexo/Zoom.js"></script>
+<script src="_/js/plexo/AnnotationSet.js"></script>
+<script src="_/js/plexo/Renderer.js"></script>
+<script src="_/js/plexo/View.js"></script>
+<script src="_/js/plexo/ViewInteractor.js"></script>
+
+<!--<script src="_/js/gui.lib.js"></script>-->
+<script src="_/js/gui/definitions.js"></script>
+<script src="_/js/gui/Utilities.js"></script>
+<script src="_/js/gui/BrushDialog.js"></script>
+<script src="_/js/gui/EraserDialog.js"></script>
+<script src="_/js/gui/PropagateDialog.js"></script>
+<script src="_/js/gui/DownloadAnnotationsDialog.js"></script>
+<script src="_/js/gui/Keyboard.js"></script>
+<script src="_/js/gui/CoordinatesTracker.js"></script>
+<script src="_/js/gui/AlertController.js"></script>
+<script src="_/js/gui/SliceController.js"></script>
+<script src="_/js/gui/ToolbarController.js"></script>
+<script src="_/js/gui/Gui.js"></script>
+
+<script src="_/js/plugins/tour/tour.js"></script><!-- Plexo Tour -->
 <script>
 	initPlexo();
 

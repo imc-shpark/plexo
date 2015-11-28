@@ -100,8 +100,8 @@ plx.View.prototype.showPreviousSlice = function () {
 plx.View.prototype.getCurrentAnnotationLayer = function () {
 
     /*--------------------------------------------------------------------------------------*/
-    if (this.annotation_set == undefined) { //@TODO: review hard code
-        this.annotation_set = new plx.AnnotationSet('spine_phantom_1', 'dcantor', '1', 'labels_spine');
+    if (this.annotation_set == undefined) {
+        this.annotation_set = new plx.AnnotationSet(this);
     }
     /*--------------------------------------------------------------------------------------*/
     this.current_annotation = this.annotation_set.getAnnotation(this.current_slice); //for now the filename is the id.

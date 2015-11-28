@@ -39,8 +39,21 @@ plx.AnnotationLayer = function (slice) {
 
 };
 
+
+
 //Constants
 plx.AnnotationLayer.LABEL_DISTANCE_TOLERANCE = 20;
+
+plx.AnnotationLayer.prototype.getFilename = function() {
+    var url = this.slice.url;
+    url = 'A_' + url.substr(url.lastIndexOf('/')+1);
+    return url;
+
+};
+
+plx.AnnotationLayer.prototype.getDataURL = function(){
+    return this.canvas.toDataURL();
+};
 
 /**
  * Sets the reference of the view where this annotation layer will be displayed
