@@ -62,7 +62,15 @@ plx.Renderer.prototype.setCurrentStack = function (key) {
 
 plx.Renderer.prototype.update = function () {
     var stack = this.current;
+
+    if (stack == undefined){
+        this.view.ctx.clearRect(0,0, this.view.canvas.width, this.view.canvas.height);
+        return;
+    }
+
     for (var i = 0; i < stack.length; i += 1) {
         stack[i].updateLayer(this.view);
     }
+
+
 };

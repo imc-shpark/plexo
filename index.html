@@ -31,6 +31,7 @@
 <body class="top-navigation">
 <div id="wrapper">
 	<div id="page-wrapper" class="custom-background-color" style="min-height: 620px;">
+
 		<div id='plexo-layout-header-id' class="row">
 			<nav class="navbar navbar-fixed-top custom-background-color custom-bottom-border" role="navigation">
 				<div class="navbar-header custom-color-navbar">
@@ -42,7 +43,7 @@
 				<div class="navbar-collapse collapse" id="navbar">
 					<ul class="nav navbar-nav">
 						<li>
-							<a href="#"><i class="fa fa-database fa-lg"></i><span class="nav-label">Datasets</span></a>
+							<a id="datasets-menu-id"><i class="fa fa-database fa-lg"></i><span class="nav-label">Datasets</span></a>
 						</li>
 						<li>
 							<a href="#"><i class="fa fa-bullhorn fa-lg"></i><span class="nav-label">News</span> </a>
@@ -67,8 +68,90 @@
 				</div>
 			</nav>
 		</div>
-		<!-- header row -->
-		<div id='plexo-layout-canvas-id' class="row plexo-canvas-row">
+
+		<div id="plexo-layout-datasets-id" class="row plexo-canvas-row" style="display:none">
+			<div class="container">
+				<div class="row">
+					<div class="col-lg-12">
+						<h4 class="title-on-dark">Datasets</h4>
+
+						<div class="file-box">
+							<div class="file">
+								<a id='brain-dataset-link-id' href="#">
+									<span class="corner"></span>
+
+									<div class="image">
+										<img class="img-responsive"
+										     src="data/mri_brain_tumour/mri_brain_tumour_1.png"
+										     alt="image"></img>
+									</div>
+									<div class="file-name">
+										Brain Tumour Example
+										<br/>
+										<small>Added: Dec 7, 2015</small>
+									</div>
+								</a>
+
+							</div>
+
+						</div>
+						<div class="file-box">
+							<div class="file">
+								<a id='liver-dataset-link-id' href="#">
+									<span class="corner"></span>
+
+									<div class="image">
+										<img class="img-responsive"
+										     src="data/liver_metastases/liver_metastases_1.png"
+										     alt="image"></img>
+									</div>
+									<div class="file-name">
+										Liver metastases
+										<br/>
+										<small>Added: Dec 7, 2015</small>
+									</div>
+								</a>
+
+							</div>
+
+						</div>
+						<div class="file-box">
+							<div class="file">
+								<a id='spinal-dataset-link-id' href="#">
+									<span class="corner"></span>
+
+									<div class="image">
+										<img class="img-responsive"
+										     src="data/ds_us_1/ds_us_1_200.png"
+										     alt="image"></img>
+									</div>
+									<div class="file-name">
+										Spine Phantom
+										<br/>
+										<small>Added: Oct 9, 2015</small>
+									</div>
+								</a>
+
+							</div>
+
+						</div>
+
+
+					</div>
+
+				</div>
+				<div class="row">
+					<div class="col-lg-12">
+						<h4 class="title-on-dark">Open file in local system:</h4>
+						<a id="file-uploader-link-id" class="btn btn-primary">Select File</a>
+					</div>
+
+				</div>
+			</div>
+		</div><!-- datasets row -->
+
+		      <!-- header row -->
+		<div id='plexo-layout-canvas-id' class="row plexo-canvas-row" style="display:none">
 			<div class="col-lg-12"> <!--plexo-canvas-container"-->
 				<div id="dataset-progressbar-container-id" class="progress progress-striped active">
 					<div id="dataset-progressbar-id" class="progress-bar progress-bar-info" role="progressbar"
@@ -79,8 +162,8 @@
 				<canvas id="plexo-canvas-id"></canvas>
 			</div>
 		</div>
-		<!-- body row-->
-		<div id='plexo-layout-toolbar-id' class="row footer fixed plexo-footer">
+		      <!-- body row-->
+		<div id='plexo-layout-toolbar-id' class="row footer fixed plexo-footer" style="display:none">
 			<div class="row clearfix">
 				<div class="col-xs-12 col-sm-7 col-md-6 col-lg-6 no-padding">
 
@@ -132,7 +215,7 @@
 			</div>
 			<!-- status bar -->
 		</div>
-		<!--footer-->
+		      <!--footer-->
 	</div>
 	<!-- page wrapper-->
 </div>
@@ -249,27 +332,34 @@
 				<div class="row">
 
 					<div class="col-lg-4 col-md-4 col-sm-4 col-xs-12 text-center">
-						<h4>Current <small id="current-txt-id"></small></h4>
+						<h4>Current
+							<small id="current-txt-id"></small>
+						</h4>
 						<canvas id="current-canvas-id" class="canvas-preview"></canvas>
 					</div>
 					<div class="col-lg-4 col-md-4 col-sm-4 col-xs-12 text-center">
-						<h4>From <small id="from-txt-id"></small></h4>
+						<h4>From
+							<small id="from-txt-id"></small>
+						</h4>
 						<canvas id="from-canvas-id" class="canvas-preview"></canvas>
 					</div>
 					<div class="col-lg-4 col-md-4 col-sm-4 col-xs-12 text-center">
-						<h4>To <small id="to-txt-id"></small></h4>
+						<h4>To
+							<small id="to-txt-id"></small>
+						</h4>
 						<canvas id="to-canvas-id" class="canvas-preview"></canvas>
 					</div>
 				</div>
 				<div class="row">
-						<div class="col-xs-12">
-							<div id="propagate-slider-id" class="noUi-margin-top noUi-margin-bottom"></div>
-						</div>
+					<div class="col-xs-12">
+						<div id="propagate-slider-id" class="noUi-margin-top noUi-margin-bottom"></div>
+					</div>
 				</div>
 
 				<div class="row">
 					<div class="col-xs-12">
-							<h4>Select labels to propagate:</h4>
+						<h4>Select labels to propagate:</h4>
+
 						<div id='used-labels-div-id' class="vertical-scroller">
 							<select id="propagate-label-selector-id"></select>
 						</div>
@@ -340,7 +430,7 @@
 
 <!-- Main scripts -->
 <script src="_/js/jquery/jquery-2.1.1.js"></script>
-<script src="_/js/bootstrap/bootstrap.js"></script>
+<script src="_/js/bootstrap/bootstrap.min.js"></script>
 <!-- JQuery plugins -->
 <script src="_/js/plugins/metis_menu/jquery.metisMenu.js"></script>
 <script src="_/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
@@ -352,13 +442,14 @@
 <script src="_/js/plugins/bootstrap_tour/bootstrap-tour.min.js"></script>
 <!-- No JQuery plugins -->
 <script src="_/js/plugins/no_ui_slider/wNumb.js"></script>
-<script src="_/js/plugins/no_ui_slider/nouislider.js"></script>
+<script src="_/js/plugins/no_ui_slider/nouislider.min.js"></script>
 <!-- Zip -->
 <script src="_/js/plugins/JSZip/jszip.min.js"></script>
 <script src="_/js/plugins/JSZip/FileSaver.js"></script>
 
 <!-- Plexo and GUI -->
-<!--<script src="_/js/plexo.lib.js"></script>-->
+<script src="_/js/plexo.lib.js"></script>
+<!--
 <script src="_/js/plexo/definitions.js"></script>
 <script src="_/js/plexo/LabelSet.js"></script>
 <script src="_/js/plexo/Brush.js"></script>
@@ -372,8 +463,11 @@
 <script src="_/js/plexo/Renderer.js"></script>
 <script src="_/js/plexo/View.js"></script>
 <script src="_/js/plexo/ViewInteractor.js"></script>
+-->
 
-<!--<script src="_/js/gui.lib.js"></script>-->
+
+<script src="_/js/gui.lib.js"></script>
+<!--
 <script src="_/js/gui/definitions.js"></script>
 <script src="_/js/gui/Utilities.js"></script>
 <script src="_/js/gui/BrushDialog.js"></script>
@@ -386,11 +480,17 @@
 <script src="_/js/gui/SliceController.js"></script>
 <script src="_/js/gui/ToolbarController.js"></script>
 <script src="_/js/gui/Gui.js"></script>
+-->
 
 <script src="_/js/plugins/tour/tour.js"></script><!-- Plexo Tour -->
+<script>initPlexo();</script>
 <script>
-	initPlexo();
-
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+				(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+			m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+	ga('create', 'UA-71141208-1', 'auto');
+	ga('send', 'pageview');
 </script>
 </body>
 </html>

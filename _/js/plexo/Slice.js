@@ -20,25 +20,34 @@
 /**
  * Displays an image on a canvas
  */
-plx.Slice = function (dataset, filename, index) {
+plx.Slice = function (dataset, filename, index, file_object) {
 
     this.dataset  = dataset;
     this.filename = filename;
-    this.index     = index;
+    this.index    = index;
+    this.file_object = file_object;
 
-    this.url = this.dataset.url + '/' + this.filename;
-    this.image   = new Image();
+    this.url   = this.dataset.url + '/' + this.filename;
+    this.image = new Image();
 };
 
+plx.Slice.prototype.load_local = function () {
+    var slice = this;
 
+    var reader    = new FileReader();
+    reader.onload = function (e) {
+        slice.image.src = reader.result;
+        if (slice.dataset != undefined) {
+            slice.dataset.onLoadSlice(slice);
+        }
+    };
 
-/**
- * Loads he image to display and tries to display it
- * @param filename
- */
-plx.Slice.prototype.load = function () {
+    reader.readAsDataURL(this.file_object);
+
+};
+
+plx.Slice.prototype.load_remote = function () {
     var slice              = this;
-
     var xhr                = new XMLHttpRequest();
     xhr.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
@@ -48,11 +57,27 @@ plx.Slice.prototype.load = function () {
                 slice.dataset.onLoadSlice(slice);
             }
         }
-    }
+    };
 
     xhr.open('GET', slice.url + '?v=' + Math.random()); //no cache
     xhr.responseType = 'blob';
     xhr.send();
+};
+
+/**
+ * Loads he image to display and tries to display it
+ * @param filename
+ */
+plx.Slice.prototype.load = function () {
+
+    var select = this.dataset.select;
+
+    if (select == plx.Dataset.SELECT_LOCAL) {
+        this.load_local();
+    }
+    else {
+        this.load_remote();
+    }
 };
 
 /**

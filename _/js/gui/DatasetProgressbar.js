@@ -16,13 +16,27 @@
  * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*-----------------------------------------------------------------------------------------------
- Coordinates Tracker
- ------------------------------------------------------------------------------------------------*/
-gui.CoordinatesTracker = function (view) {
-    view.interactor.addObserver(this, plx.EV_COORDS_UPDATED);
+gui.DatasetProgressbar = function(view){
+  this.view = view;
+  this.bar =  $('#dataset-progress-bar-id');
+  this.container =  $('#dataset-progressbar-container-id');
+}
+
+gui.DatasetProgressbar.prototype.clear = function(){
+   this.bar.css('width', 0 + '%').attr('aria-valuenow', 0);
+   return this;
 };
 
-gui.CoordinatesTracker.prototype.processNotification = function (kind,data) {
-    document.getElementById('status-current-coordinates-id').innerHTML = 'x:' + plx.COORDINATES.X.toPrecision(3) + ', y:' + plx.COORDINATES.Y.toPrecision(3);
+gui.DatasetProgressbar.prototype.show = function(){
+    this.container.show();
+    return this;
+};
+
+gui.DatasetProgressbar.prototype.hide = function(){
+    this.container.hide();
+    return this;
+}
+
+gui.DatasetProgressbar.prototype.update = function(value){
+    this.bar.css('width', value + '%').attr('aria-valuenow', value);
 };

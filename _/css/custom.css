@@ -267,3 +267,10 @@ border: 1px solid #ccc;
     }
 }
 
+.file {
+    background-color:#c9c9c9;
+}
+
+.title-on-dark{
+    color:rgb(206,206,206)
+}

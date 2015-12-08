@@ -32,6 +32,7 @@
 //@koala-append "AlertController.js"
 //@koala-append "SliceController.js"
 //@koala-append "ToolbarController.js"
+//@koala-append "DatasetProgressbar.js"
 //@koala-append "Gui.js"
 
 
@@ -928,7 +929,7 @@ gui.CoordinatesTracker = function (view) {
     view.interactor.addObserver(this, plx.EV_COORDS_UPDATED);
 };
 
-gui.CoordinatesTracker.prototype.processNotification = function (data) {
+gui.CoordinatesTracker.prototype.processNotification = function (kind,data) {
     document.getElementById('status-current-coordinates-id').innerHTML = 'x:' + plx.COORDINATES.X.toPrecision(3) + ', y:' + plx.COORDINATES.Y.toPrecision(3);
 };
 
@@ -982,7 +983,7 @@ gui.AlertController.prototype.showAlert = function (title, message, alert_type) 
 };
 
 
-gui.AlertController.prototype.processNotification = function (data) {
+gui.AlertController.prototype.processNotification = function (kind, data) {
     this.showAlert(data.title, data.message, data.type);
 };
 
@@ -1010,8 +1011,8 @@ gui.AlertController.prototype.processNotification = function (data) {
 gui.SliceController = function (view) {
     this.view = view;
     this.slider = document.getElementById('dataset-slider-id');
-    this._setup_slider();
     view.interactor.addObserver(this, plx.EV_SLICE_CHANGED);
+    view.interactor.addObserver(this, plx.EV_DATASET_LOADED);
 };
 
 gui.SliceController.prototype._setup_slider = function(){
@@ -1019,6 +1020,10 @@ gui.SliceController.prototype._setup_slider = function(){
     var init_slice = this.view.dataset.options.start;
     var step_slice = this.view.dataset.options.step;
     var end_slice  = this.view.dataset.options.end;
+
+    if (this.slider.noUiSlider){
+        this.slider.noUiSlider.destroy();
+    }
 
     noUiSlider.create(this.slider, {
         start: init_slice,
@@ -1042,8 +1047,13 @@ gui.SliceController.prototype._setup_slider = function(){
     });
 };
 
-gui.SliceController.prototype.processNotification = function (data) {
-    this.slider.noUiSlider.set(data.slice);
+gui.SliceController.prototype.processNotification = function (kind, data) {
+    if (kind == plx.EV_SLICE_CHANGED) {
+        this.slider.noUiSlider.set(data.slice);
+    }
+    else if (kind == plx.EV_DATASET_LOADED){
+        this._setup_slider();
+    }
 };
 
 
@@ -1304,7 +1314,7 @@ gui.ToolbarController.prototype.update_selected_tool = function (last_used) {
     }
 };
 
-gui.ToolbarController.prototype.processNotification = function (data) {
+gui.ToolbarController.prototype.processNotification = function (kind,data) {
     var op = data.operation;
     this.update_selected_tool(op);
 };
@@ -1339,23 +1349,64 @@ gui.ToolbarController.prototype.update_eraser = function () {
  * You should have received a copy of the GNU General Public License
  * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+gui.DatasetProgressbar = function(view){
+  this.view = view;
+  this.bar =  $('#dataset-progress-bar-id');
+  this.container =  $('#dataset-progressbar-container-id');
+}
+
+gui.DatasetProgressbar.prototype.clear = function(){
+   this.bar.css('width', 0 + '%').attr('aria-valuenow', 0);
+   return this;
+};
+
+gui.DatasetProgressbar.prototype.show = function(){
+    this.container.show();
+    return this;
+};
+
+gui.DatasetProgressbar.prototype.hide = function(){
+    this.container.hide();
+    return this;
+}
+
+gui.DatasetProgressbar.prototype.update = function(value){
+    this.bar.css('width', value + '%').attr('aria-valuenow', value);
+};
+
+/**
+ * This file is part of PLEXO
+ *
+ * Author: Diego Cantor
+ *
+ * PLEXO is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as published by
+ * the Free Software Foundation
+ *
+ * PLEXO is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /*-----------------------------------------------------------------------------------------------
- DATA GATHERING METHODS
+ SETUP FUNCTIONS
  ------------------------------------------------------------------------------------------------*/
-function load_dataset_callback(dataset) {
 
-    var percentage = (dataset.num_loaded / dataset.num_items) * 100;
+function show_dataset_selection_layout(){
+    $('#plexo-layout-canvas-id').hide();
+    $('#plexo-layout-toolbar-id').hide();
+    $('#plexo-layout-datasets-id').fadeIn('slow');
+};
 
-    $('#dataset-progress-bar-id').css('width', percentage + '%').attr('aria-valuenow', percentage);
+function show_annotation_layout(){
+    $('#plexo-layout-canvas-id').fadeIn('slow');
+    $('#plexo-layout-toolbar-id').fadeIn('slow');
+    $('#plexo-layout-datasets-id').hide();
 
-    if (percentage == 100) {
-        $('#dataset-progressbar-container-id').fadeOut(1000, function () {
-            var sliceIdx = VIEW.showMiddleSlice();
-            gui.slice.slider.noUiSlider.set(sliceIdx);
-            VIEW.interactor.connectView();
-            update_canvas_size();
-        });
-    }
 };
 
 function setup_labels () {
@@ -1383,24 +1434,129 @@ function setup_labels () {
 
 };
 
+function setup_top_menu(){
+    $('#datasets-menu-id').click(function(){
+        $('#navbar').collapse('hide');
+        show_dataset_selection_layout();
+    });
+};
+
+function setup_file_uploader(){
+
+    //-------------------------------------------------------------------------------------
+    //@TODO: remove hardcode. This section must be generated automatically from a database
+    var spinal_dataset_link = $('#spinal-dataset-link-id');
+    spinal_dataset_link.click(function(){
+       ld_dataset('spinal-phantom');
+    });
+
+    var brain_dataset_link = $('#brain-dataset-link-id');
+    brain_dataset_link.click(function(){
+        ld_dataset('brain-example');
+    });
+
+    var liver_dataset_link = $('#liver-dataset-link-id');
+    liver_dataset_link.click(function(){
+        ld_dataset('liver-example');
+    });
+    //-------------------------------------------------------------------------------------
+
+    var selectDialogLink = $('#file-uploader-link-id');
+
+    if (window.File && window.FileReader && window.FileList && window.Blob) {
+        // Great success! All the File APIs are supported.
+    } else {
+        selectDialogLink.html('File API not supported in this browser');
+        selectDialogLink.off('click');
+        return;
+    }
+
+    var fileSelector = document.createElement('input');
+    fileSelector.id = 'file-uploader-dialog-id';
+    fileSelector.setAttribute('type', 'file');
+    selectDialogLink.click(function(){fileSelector.click(); return false; });
+
+
+    function handleFiles(ev){
+        var files = ev.target.files;
+        ld_dataset('local', files);
+    }
+
+    fileSelector.addEventListener('change', handleFiles, false);
+
+}
+
+
+/*-----------------------------------------------------------------------------------------------
+ LOAD DATASET
+ ------------------------------------------------------------------------------------------------*/
+function ld_dataset(kind, files){
+    VIEW.reset();
+    VIEW.render();
+
+    show_annotation_layout();
+
+
+    var dataset = undefined;
+
+    if (kind=='spinal-phantom'){
+        dataset = new plx.Dataset('data/ds_us_1', plx.Dataset.SELECT_INDEXED,{
+            'start': 50,
+            'end'  : 250,
+            'step' : 10
+            });
+    }
+    if (kind =='brain-example'){
+        dataset = new plx.Dataset('data/mri_brain_tumour', plx.Dataset.SELECT_INDEXED,{
+            'start': 1,
+            'end'  : 1,
+            'step' : 1
+        })
+    }
+    if (kind =='liver-example'){
+        dataset = new plx.Dataset('data/liver_metastases', plx.Dataset.SELECT_INDEXED,{
+            'start': 1,
+            'end'  : 1,
+            'step' : 1
+        })
+    }
+    else if (kind == 'local') {
+        dataset = new plx.Dataset('local', plx.Dataset.SELECT_LOCAL,{files:files });
+    }
+
+    gui.progressbar.clear().show();
+    VIEW.load(dataset, ld_dataset_callback);
+}
+
+function ld_dataset_callback(dataset) {
+    var percentage = (dataset.num_loaded / dataset.num_items) * 100;
+    gui.progressbar.update(percentage);
+
+    if (percentage == 100) {
+        gui.progressbar.container.fadeOut(1000, function () {
+            var sliceIdx = VIEW.showMiddleSlice();
+            gui.slice.slider.noUiSlider.set(sliceIdx);
+            VIEW.interactor.connectView();
+            update_canvas_size();
+        });
+    }
+};
+
+
 /*-----------------------------------------------------------------------------------------------
  MAIN
  ------------------------------------------------------------------------------------------------*/
 function initPlexo() {
 
+    show_dataset_selection_layout();
+
+    setup_file_uploader();
     setup_labels();
+    setup_top_menu();
     setup_keyboard();
 
-    dataset = new plx.Dataset('data/ds_us_1', plx.Dataset.SELECT_INDEXED,
-        {
-            'start': 1,
-            'end'  : 400,
-            'step' : 1
-        }
-    );
 
     VIEW = new plx.View('plexo-canvas-id');
-    VIEW.load(dataset, load_dataset_callback);
 
     gui.ctracker         = new gui.CoordinatesTracker(VIEW);
     gui.alert            = new gui.AlertController(VIEW);
@@ -1410,6 +1566,8 @@ function initPlexo() {
     gui.eraser_dialog    = new gui.EraserDialog(VIEW);
     gui.propagate_dialog = new gui.PropagateDialog(VIEW);
     gui.download_dialog  = new gui.DownloadAnnotationsDialog(VIEW);
+    gui.progressbar      = new gui.DatasetProgressbar(VIEW);
+
 
 };
 

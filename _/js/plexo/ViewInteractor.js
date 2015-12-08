@@ -76,7 +76,7 @@ plx.ViewInteractor.prototype.notify = function (kind, data) {
     } //no listeners for this
 
     for (var i = 0; i < list.length; i += 1) {
-        list[i].processNotification(data);
+        list[i].processNotification(kind,data);
     }
 };
 

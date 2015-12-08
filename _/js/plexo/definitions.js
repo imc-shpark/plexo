@@ -53,6 +53,7 @@ plx.setCurrentCoordinates = function (x, y) {
 plx.EV_SLICE_CHANGED     = 'plx-ev-slice-changed';
 plx.EV_COORDS_UPDATED    = 'plx-ev-coords-updated';
 plx.EV_OPERATION_CHANGED = 'plx-ev-op-changed';
+plx.EV_DATASET_LOADED    = 'plx-ev-dataset-loaded';
 
 /*-----------------------------------------------------------------------------------------------
  Utilities

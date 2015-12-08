@@ -47,6 +47,6 @@ gui.AlertController.prototype.showAlert = function (title, message, alert_type) 
 };
 
 
-gui.AlertController.prototype.processNotification = function (data) {
+gui.AlertController.prototype.processNotification = function (kind, data) {
     this.showAlert(data.title, data.message, data.type);
 };

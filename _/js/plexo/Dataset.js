@@ -35,9 +35,17 @@ plx.Dataset = function (url, select, options) {
     this._populate();
 };
 
+
+
+plx.Dataset.SELECT_LOCAL          = 'local';
 plx.Dataset.SELECT_ALL     = 'all';
 plx.Dataset.SELECT_SINGLE  = 'single';
 plx.Dataset.SELECT_INDEXED = 'indexed';
+
+
+plx.Dataset.prototype.setView = function(view){
+    this.view = view;
+};
 
 plx.Dataset.prototype._parseURL = function () {
     var link      = document.createElement('a');
@@ -58,6 +66,9 @@ plx.Dataset.prototype._populate = function () {
     switch (this.select) {
         case plx.Dataset.SELECT_INDEXED:
             this._populateIndexed();
+            break;
+        case plx.Dataset.SELECT_LOCAL:
+            this._populateLocal();
             break;
         default:
             throw ('plx.Dataset ERROR: kind of selection (' + this.source + ') unknown');
@@ -101,9 +112,25 @@ plx.Dataset.prototype._populateIndexed = function () {
 };
 
 
-plx.Dataset.prototype.addSlice = function(filename, index){
+plx.Dataset.prototype._populateLocal = function(){
+    var dataset = this;
+    var files = this.options.files;
 
-    var slice    = new plx.Slice(this, filename, index);
+    this.options.start = 1;
+    this.options.end = files.length;
+    this.step = 1;
+    this.num_items = files.length;
+    this.num_loaded = 0;
+
+    for (var i= 0, f; f = files[i]; i++){
+        this.addSlice(f.name, i+1, f); //one-based indexes rememeber
+    }
+};
+
+
+plx.Dataset.prototype.addSlice = function(filename, index, file_object){
+
+    var slice    = new plx.Slice(this, filename, index, file_object);
 
     //Update Internal Collections
     this.slices.push(slice);
@@ -112,8 +139,8 @@ plx.Dataset.prototype.addSlice = function(filename, index){
 };
 
 
-plx.Dataset.prototype.load = function (progress_callback) {
-    this.progress_callback = progress_callback;
+plx.Dataset.prototype.load = function (callback) {
+    this.progress_callback = callback;
     this.num_loaded        = 0;
     for (var i = 0; i < this.num_items; i++) {
         this.slices[i].load();
@@ -124,6 +151,7 @@ plx.Dataset.prototype.onLoadSlice = function (slice) {
     this.num_loaded++;
     if (this.num_loaded == this.num_items) {
         console.debug('all items loaded');
+        this.view.interactor.notify(plx.EV_DATASET_LOADED, this);
     }
     this.progress_callback(this);
 };

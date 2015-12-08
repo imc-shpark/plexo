@@ -18,6 +18,14 @@ plx.View = function (canvas_id) {
     this.current_annotation = undefined;
 };
 
+plx.View.prototype.reset = function(){
+    this.dataset            = undefined;
+    this.annotation_set     = undefined;
+    this.current_slice      = undefined;
+    this.current_annotation = undefined;
+    this.renderer           = new plx.Renderer(this);
+};
+
 plx.View.prototype.resizeTo = function (width, height) {
     this.canvas.width  = width;
     this.canvas.height = height;
@@ -25,6 +33,7 @@ plx.View.prototype.resizeTo = function (width, height) {
 
 plx.View.prototype.load = function (dataset, callback) {
     this.dataset = dataset;
+    dataset.setView(this);
     dataset.load(callback);
 };
 

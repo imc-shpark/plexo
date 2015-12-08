@@ -254,7 +254,7 @@ gui.ToolbarController.prototype.update_selected_tool = function (last_used) {
     }
 };
 
-gui.ToolbarController.prototype.processNotification = function (data) {
+gui.ToolbarController.prototype.processNotification = function (kind,data) {
     var op = data.operation;
     this.update_selected_tool(op);
 };

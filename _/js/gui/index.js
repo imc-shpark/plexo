@@ -32,6 +32,7 @@
 //@koala-append "AlertController.js"
 //@koala-append "SliceController.js"
 //@koala-append "ToolbarController.js"
+//@koala-append "DatasetProgressbar.js"
 //@koala-append "Gui.js"
 
 

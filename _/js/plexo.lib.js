@@ -93,6 +93,7 @@ plx.setCurrentCoordinates = function (x, y) {
 plx.EV_SLICE_CHANGED     = 'plx-ev-slice-changed';
 plx.EV_COORDS_UPDATED    = 'plx-ev-coords-updated';
 plx.EV_OPERATION_CHANGED = 'plx-ev-op-changed';
+plx.EV_DATASET_LOADED    = 'plx-ev-dataset-loaded';
 
 /*-----------------------------------------------------------------------------------------------
  Utilities
@@ -367,25 +368,34 @@ plx.setGlobalEraser = function (eraser) {
 /**
  * Displays an image on a canvas
  */
-plx.Slice = function (dataset, filename, index) {
+plx.Slice = function (dataset, filename, index, file_object) {
 
     this.dataset  = dataset;
     this.filename = filename;
-    this.index     = index;
+    this.index    = index;
+    this.file_object = file_object;
 
-    this.url = this.dataset.url + '/' + this.filename;
-    this.image   = new Image();
+    this.url   = this.dataset.url + '/' + this.filename;
+    this.image = new Image();
 };
 
+plx.Slice.prototype.load_local = function () {
+    var slice = this;
 
+    var reader    = new FileReader();
+    reader.onload = function (e) {
+        slice.image.src = reader.result;
+        if (slice.dataset != undefined) {
+            slice.dataset.onLoadSlice(slice);
+        }
+    };
 
-/**
- * Loads he image to display and tries to display it
- * @param filename
- */
-plx.Slice.prototype.load = function () {
+    reader.readAsDataURL(this.file_object);
+
+};
+
+plx.Slice.prototype.load_remote = function () {
     var slice              = this;
-
     var xhr                = new XMLHttpRequest();
     xhr.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
@@ -395,11 +405,27 @@ plx.Slice.prototype.load = function () {
                 slice.dataset.onLoadSlice(slice);
             }
         }
-    }
+    };
 
     xhr.open('GET', slice.url + '?v=' + Math.random()); //no cache
     xhr.responseType = 'blob';
     xhr.send();
+};
+
+/**
+ * Loads he image to display and tries to display it
+ * @param filename
+ */
+plx.Slice.prototype.load = function () {
+
+    var select = this.dataset.select;
+
+    if (select == plx.Dataset.SELECT_LOCAL) {
+        this.load_local();
+    }
+    else {
+        this.load_remote();
+    }
 };
 
 /**
@@ -492,9 +518,17 @@ plx.Dataset = function (url, select, options) {
     this._populate();
 };
 
+
+
+plx.Dataset.SELECT_LOCAL          = 'local';
 plx.Dataset.SELECT_ALL     = 'all';
 plx.Dataset.SELECT_SINGLE  = 'single';
 plx.Dataset.SELECT_INDEXED = 'indexed';
+
+
+plx.Dataset.prototype.setView = function(view){
+    this.view = view;
+};
 
 plx.Dataset.prototype._parseURL = function () {
     var link      = document.createElement('a');
@@ -515,6 +549,9 @@ plx.Dataset.prototype._populate = function () {
     switch (this.select) {
         case plx.Dataset.SELECT_INDEXED:
             this._populateIndexed();
+            break;
+        case plx.Dataset.SELECT_LOCAL:
+            this._populateLocal();
             break;
         default:
             throw ('plx.Dataset ERROR: kind of selection (' + this.source + ') unknown');
@@ -558,9 +595,25 @@ plx.Dataset.prototype._populateIndexed = function () {
 };
 
 
-plx.Dataset.prototype.addSlice = function(filename, index){
+plx.Dataset.prototype._populateLocal = function(){
+    var dataset = this;
+    var files = this.options.files;
 
-    var slice    = new plx.Slice(this, filename, index);
+    this.options.start = 1;
+    this.options.end = files.length;
+    this.step = 1;
+    this.num_items = files.length;
+    this.num_loaded = 0;
+
+    for (var i= 0, f; f = files[i]; i++){
+        this.addSlice(f.name, i+1, f); //one-based indexes rememeber
+    }
+};
+
+
+plx.Dataset.prototype.addSlice = function(filename, index, file_object){
+
+    var slice    = new plx.Slice(this, filename, index, file_object);
 
     //Update Internal Collections
     this.slices.push(slice);
@@ -569,8 +622,8 @@ plx.Dataset.prototype.addSlice = function(filename, index){
 };
 
 
-plx.Dataset.prototype.load = function (progress_callback) {
-    this.progress_callback = progress_callback;
+plx.Dataset.prototype.load = function (callback) {
+    this.progress_callback = callback;
     this.num_loaded        = 0;
     for (var i = 0; i < this.num_items; i++) {
         this.slices[i].load();
@@ -581,6 +634,7 @@ plx.Dataset.prototype.onLoadSlice = function (slice) {
     this.num_loaded++;
     if (this.num_loaded == this.num_items) {
         console.debug('all items loaded');
+        this.view.interactor.notify(plx.EV_DATASET_LOADED, this);
     }
     this.progress_callback(this);
 };
@@ -1700,9 +1754,17 @@ plx.Renderer.prototype.setCurrentStack = function (key) {
 
 plx.Renderer.prototype.update = function () {
     var stack = this.current;
+
+    if (stack == undefined){
+        this.view.ctx.clearRect(0,0, this.view.canvas.width, this.view.canvas.height);
+        return;
+    }
+
     for (var i = 0; i < stack.length; i += 1) {
         stack[i].updateLayer(this.view);
     }
+
+
 };
 
 
@@ -1726,6 +1788,14 @@ plx.View = function (canvas_id) {
     this.current_annotation = undefined;
 };
 
+plx.View.prototype.reset = function(){
+    this.dataset            = undefined;
+    this.annotation_set     = undefined;
+    this.current_slice      = undefined;
+    this.current_annotation = undefined;
+    this.renderer           = new plx.Renderer(this);
+};
+
 plx.View.prototype.resizeTo = function (width, height) {
     this.canvas.width  = width;
     this.canvas.height = height;
@@ -1733,6 +1803,7 @@ plx.View.prototype.resizeTo = function (width, height) {
 
 plx.View.prototype.load = function (dataset, callback) {
     this.dataset = dataset;
+    dataset.setView(this);
     dataset.load(callback);
 };
 
@@ -1915,7 +1986,7 @@ plx.ViewInteractor.prototype.notify = function (kind, data) {
     } //no listeners for this
 
     for (var i = 0; i < list.length; i += 1) {
-        list[i].processNotification(data);
+        list[i].processNotification(kind,data);
     }
 };
 
