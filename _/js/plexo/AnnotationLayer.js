@@ -98,6 +98,41 @@ plx.AnnotationLayer.prototype.clearAnnotations = function () {
 };
 
 /**
+ *
+ * @param image
+ */
+plx.AnnotationLayer.prototype.loadFromImageURL = function(imageURL){
+
+    this.clearAnnotations();
+
+
+    var self = this;
+    var view = this.view;
+    var width = view.canvas.width;
+    var height = view.canvas.height;
+
+    //necessary!
+    this.canvas.width  = view.canvas.width;
+    this.canvas.height = view.canvas.height;
+
+
+
+    var image = new Image();
+
+    image.onload = function(){
+
+        self.ctx.clearRect(0, 0, width, height);
+        self.ctx.drawImage(image,0,0);
+        self.imageData = self.ctx.getImageData(0, 0, width, height);
+        self.view.render();
+    };
+
+    image.src = imageURL; // This is necessary because loading images is asynchronous
+    //In other words, loading the image can take a bit, before it can be painted onto the cnavas.
+
+};
+
+/**
  * Creates a new undo step with the current content of the annotation context
  */
 plx.AnnotationLayer.prototype.saveUndoStep = function () {

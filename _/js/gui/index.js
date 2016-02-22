@@ -27,13 +27,16 @@
 //@koala-append "EraserDialog.js"
 //@koala-append "PropagateDialog.js"
 //@koala-append "DownloadAnnotationsDialog.js"
+//@koala-append "LoadAnnotationsDialog.js"
 //@koala-append "Keyboard.js"
 //@koala-append "CoordinatesTracker.js"
 //@koala-append "AlertController.js"
 //@koala-append "SliceController.js"
 //@koala-append "ToolbarController.js"
 //@koala-append "DatasetProgressbar.js"
+//@koala-append "Viewer3D.js"
 //@koala-append "Gui.js"
+
 
 
 

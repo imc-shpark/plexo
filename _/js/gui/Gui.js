@@ -15,6 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+
 /*-----------------------------------------------------------------------------------------------
  SETUP FUNCTIONS
  ------------------------------------------------------------------------------------------------*/
@@ -63,6 +65,7 @@ function setup_top_menu(){
         show_dataset_selection_layout();
     });
 };
+
 
 function setup_file_uploader(){
 
@@ -125,7 +128,7 @@ function ld_dataset(kind, files){
     if (kind=='spinal-phantom'){
         dataset = new plx.Dataset('data/ds_us_1', plx.Dataset.SELECT_INDEXED,{
             'start': 50,
-            'end'  : 250,
+            'end'  : 400,
             'step' : 10
             });
     }
@@ -189,7 +192,9 @@ function initPlexo() {
     gui.eraser_dialog    = new gui.EraserDialog(VIEW);
     gui.propagate_dialog = new gui.PropagateDialog(VIEW);
     gui.download_dialog  = new gui.DownloadAnnotationsDialog(VIEW);
+    gui.load_dialog      = new gui.LoadAnnotationsDialog(VIEW);
     gui.progressbar      = new gui.DatasetProgressbar(VIEW);
+    //gui.viewer3d         = new gui.Viewer3D(VIEW);
 
 
 };

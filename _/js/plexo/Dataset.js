@@ -37,7 +37,7 @@ plx.Dataset = function (url, select, options) {
 
 
 
-plx.Dataset.SELECT_LOCAL          = 'local';
+plx.Dataset.SELECT_LOCAL   = 'local';
 plx.Dataset.SELECT_ALL     = 'all';
 plx.Dataset.SELECT_SINGLE  = 'single';
 plx.Dataset.SELECT_INDEXED = 'indexed';
@@ -167,6 +167,16 @@ plx.Dataset.prototype.hasLoaded = function () {
  */
 plx.Dataset.prototype.getSliceByIndex = function(index){
    return this._slicemap[index]; 
+};
+
+plx.Dataset.prototype.getSliceByFilename = function(name){
+    var N = this.slices.length;
+    for(var i=0;i<N;i++){
+        if (this.slices[i].filename == name){
+            return this.slices[i];
+        }
+    }
+    return null;
 };
 
 

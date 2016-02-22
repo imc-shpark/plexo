@@ -27,13 +27,16 @@
 //@koala-append "EraserDialog.js"
 //@koala-append "PropagateDialog.js"
 //@koala-append "DownloadAnnotationsDialog.js"
+//@koala-append "LoadAnnotationsDialog.js"
 //@koala-append "Keyboard.js"
 //@koala-append "CoordinatesTracker.js"
 //@koala-append "AlertController.js"
 //@koala-append "SliceController.js"
 //@koala-append "ToolbarController.js"
 //@koala-append "DatasetProgressbar.js"
+//@koala-append "Viewer3D.js"
 //@koala-append "Gui.js"
+
 
 
 
@@ -742,7 +745,23 @@ gui.PropagateDialog.prototype.propagate = function () {
 
 
 
-
+/**
+ * This file is part of PLEXO
+ *
+ * Author: Diego Cantor
+ *
+ * PLEXO is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as published by
+ * the Free Software Foundation
+ *
+ * PLEXO is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
+ */
 gui.DownloadAnnotationsDialog = function(view){
     this.view = view;
     this._dialog               = $('#download-annotations-modal-id');
@@ -807,7 +826,154 @@ gui.DownloadAnnotationsDialog.prototype._setup_events = function(){
 
 gui.DownloadAnnotationsDialog.prototype.downloadZipFile = function(){
     this.view.annotation_set.save(plx.AnnotationSet.SAVE_DOWNLOAD);
+    this._dialog.modal('hide');
 };
+
+/**
+ * This file is part of PLEXO
+ *
+ * Author: Diego Cantor
+ *
+ * PLEXO is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as published by
+ * the Free Software Foundation
+ *
+ * PLEXO is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * Created by dcantor on 17/02/16.
+ */
+
+gui.LoadAnnotationsDialog = function(view){
+    this.view = view;
+    this._dialog = $('#load-annotations-modal-id');
+    this.btn_upload_zip = $('#btn-load-zip-id');
+    this.annotation_file = $('#annotation-file-id');
+    this.error_message = $('#annotation-load-error-id');
+    this.file = undefined;
+
+    this._setup_controls();
+    this._setup_events();
+
+};
+
+
+gui.LoadAnnotationsDialog.prototype._setup_controls = function(){
+    var self = this;
+
+    this.btn_upload_zip.click(function(){
+       self.uploadZipFile();
+    });
+
+
+    var loadAnnotationsLink = $('#load-annotations-link-id');
+
+    if (window.File && window.FileReader && window.FileList && window.Blob) {
+        // Great success! All the File APIs are supported.
+    } else {
+        loadAnnotationsLink.html('File API not supported in this browser');
+        loadAnnotationsLink.off('click');
+        return;
+    }
+
+    var fileSelector = document.createElement('input');
+    fileSelector.id = 'annotations-uploader-dialog-id';
+    fileSelector.setAttribute('type', 'file');
+    fileSelector.setAttribute('accept','.zip');
+    loadAnnotationsLink.click(function(){
+        self.error_message.empty();
+        self.annotation_file.empty();
+        fileSelector.click(); return false;
+    });
+
+
+    function handleFiles(ev){
+        var files = ev.target.files;
+        self.file = files[0];
+        self.annotation_file.html(files[0].name);
+    }
+
+    fileSelector.addEventListener('change', handleFiles, false);
+};
+
+gui.LoadAnnotationsDialog.prototype._setup_events = function(){
+    var self = this;
+
+    this._dialog.on('show.bs.modal', function () {
+        self.error_message.empty();
+        self.annotation_file.empty();
+    });
+}
+
+gui.LoadAnnotationsDialog.prototype.uploadZipFile = function(){
+
+    if (this.view.annotation_set == undefined){
+        this.view.annotation_set = new plx.AnnotationSet(this.view);
+    }
+
+    var reader = new FileReader();
+    var self = this;
+
+    var annotations = {};
+    var labels = undefined;
+
+    /**
+     * Parses the Zip file and extracts the labels and the set of PNG images corresponding
+     * to the annotations
+     */
+    reader.onload = function(e){
+        try {
+            var zip = new JSZip(e.target.result); // this event (e) contains the file tha has been read.
+            $.each(zip.files, function (index, zipEntry) {
+
+                if (zipEntry.name == "labels.json"){ //labels file
+                    labels = JSON.parse(zipEntry.asText());
+                }
+                else if (zipEntry.name.indexOf('A_') == 0){ //annotation file
+                    var arrayBufferView = zipEntry.asUint8Array();
+                    var blob = new Blob([arrayBufferView], {type: 'image/png'});
+                    var urlCreator = window.URL || window.webkitURL;
+                    var imageURL = urlCreator.createObjectURL(blob);
+                    annotations[zipEntry.name] = imageURL;
+                }
+            });
+
+            // Passes the unzipped objects to the annotation set for proper set up.
+            var payload = {'labels':labels, 'annotations': annotations};
+            self.view.annotation_set.load(payload, plx.AnnotationSet.LOAD_LOCAL);
+
+            // if there are any error messages we show them
+            var messages = self.view.annotation_set.getMessages();
+            if (messages.length>0) {
+                for (var i = 0; i < messages.length; i++) {
+                    self.error_message.append(messages[i] + '\n');
+                }
+            }
+            // otherwise the dialog is closed
+            else{
+                self._dialog.modal('hide');
+            }
+        }
+        catch(ex){
+            self.error_message.html('Error reading file ' + self.file.name+ ' : '+ ex.message);
+        }
+    };
+
+    reader.readAsArrayBuffer(self.file);
+};
+
+
+
+
+
+
 
 /**
  * This file is part of PLEXO
@@ -1392,6 +1558,86 @@ gui.DatasetProgressbar.prototype.update = function(value){
  * You should have received a copy of the GNU General Public License
  * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+gui.Viewer3D = function(view){
+    this.view = view;
+    this._viewer = document.getElementById('viewer3d');
+    this._setup_events();
+    this._setup_webgl();
+};
+
+//Implements draggable behaviour
+gui.Viewer3D.prototype._setup_events = function(){
+
+    var viewer = this._viewer;
+    var jqviewer = $('#viewer3d');
+    var dragging = false;
+    var offsetX = 0;
+    var offsetY = 0;
+
+    viewer.onmousedown = function(e){
+        dragging =true;
+        var pos = jqviewer.position();
+        offsetX = e.clientX -  pos.left;
+        offsetY = e.clientY - pos.top;
+
+        if (offsetY > 20){
+            dragging = false;
+        }
+    };
+
+    viewer.onmousemove = function(e){
+        if (!dragging) return;
+        this.style.top =  (e.clientY - offsetY)+'px';
+        this.style.left = (e.clientX - offsetX)+'px';
+    };
+
+    viewer.onmouseup = function(e){
+        dragging = false;
+    };
+
+    viewer.onmouseleave = function(e){
+        dragging=false;
+    }
+};
+
+gui.Viewer3D.prototype._setup_webgl = function(){
+    var nview = new nucleo.View('viewer3d-canvas');
+    nview.scene.toys.floor.setGrid(10,2);
+    nview.start();
+
+    var ncamera = nview.getCurrentCamera();
+    ncamera.setType(nucleo.Camera.TYPE.ORBITING);
+    ncamera.setPosition(0,3,15);
+    ncamera.setFocalPoint(0,3,0);
+
+    this.nview = nview;
+    this.ncamera = ncamera;
+
+
+};
+
+
+
+/**
+ * This file is part of PLEXO
+ *
+ * Author: Diego Cantor
+ *
+ * PLEXO is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as published by
+ * the Free Software Foundation
+ *
+ * PLEXO is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+
 /*-----------------------------------------------------------------------------------------------
  SETUP FUNCTIONS
  ------------------------------------------------------------------------------------------------*/
@@ -1440,6 +1686,7 @@ function setup_top_menu(){
         show_dataset_selection_layout();
     });
 };
+
 
 function setup_file_uploader(){
 
@@ -1502,7 +1749,7 @@ function ld_dataset(kind, files){
     if (kind=='spinal-phantom'){
         dataset = new plx.Dataset('data/ds_us_1', plx.Dataset.SELECT_INDEXED,{
             'start': 50,
-            'end'  : 250,
+            'end'  : 400,
             'step' : 10
             });
     }
@@ -1566,7 +1813,9 @@ function initPlexo() {
     gui.eraser_dialog    = new gui.EraserDialog(VIEW);
     gui.propagate_dialog = new gui.PropagateDialog(VIEW);
     gui.download_dialog  = new gui.DownloadAnnotationsDialog(VIEW);
+    gui.load_dialog      = new gui.LoadAnnotationsDialog(VIEW);
     gui.progressbar      = new gui.DatasetProgressbar(VIEW);
+    //gui.viewer3d         = new gui.Viewer3D(VIEW);
 
 
 };

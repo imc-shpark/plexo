@@ -23,6 +23,7 @@
 	<link href="_/css/plugins/no_ui_slider/nouislider.tooltips.plexo.css" rel="stylesheet">
 	<link href="_/css/plugins/no_ui_slider/nouislider.plexo.css" rel="stylesheet">
 
+
 	<link href="_/css/animate.css" rel="stylesheet">
 	<link href="_/css/style.css" rel="stylesheet">
 	<link href="_/css/custom.css" rel="stylesheet">
@@ -55,7 +56,7 @@
 							<a href="#"><i class="fa fa-facebook fa-lg"></i><span class="nav-label">Follow us</span> </a>
 						</li>
 						<li>
-							<a href="#"><i class="fa fa-info fa-lg"></i><span class="nav-label">About us</span> </a>
+							<a href="https://www.linkedin.com/in/diegocantor" target="_blank"><i class="fa fa-info fa-lg"></i><span class="nav-label">Who, me?</span> </a>
 						</li>
 					</ul>
 					<ul class="nav navbar-top-links navbar-right">
@@ -409,24 +410,36 @@
 				<h3 class="modal-title">Load Annotations</h3>
 			</div><!-- modal header -->
 			<div class="modal-body">
-				<div class="row">
-					<div class="col-xs-12">
-
+				<div class ="row">
+					<div class="col-xs-10 col-xs-offset-2 alert-danger">
+						<div id="annotation-load-error-id"></div>
 					</div>
 				</div>
 				<div class="row">
+					<div class="col-xs-2">
+						<a id="load-annotations-link-id" class="btn btn-primary">Select File</a>
 
+					</div>
+					<div class="col-xs-10">
+						<div id="annotation-file-id"></div>
+					</div>
 				</div>
 			</div>
+
 			<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-				<a id='btn-load-zip-id' type="button" class="btn btn-primary"><i class='fa fa-upload'></i> Load Zip</a>
+				<a id='btn-load-zip-id' type="button" class="btn btn-primary"><i class='fa fa-upload' ></i> Load Zip</a>
+
+
 			</div>
 		</div>
 	</div>
 </div>
 
 <div id='alert-container-id'></div>
+<!--<div id='viewer3d' class='viewer3d'>-->
+<!--<canvas id='viewer3d-canvas'></canvas>-->
+<!--</div>-->
 
 <!-- Main scripts -->
 <script src="_/js/jquery/jquery-2.1.1.js"></script>
@@ -436,6 +449,7 @@
 <script src="_/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
 <script src="_/js/plugins/simple_color_picker/jquery.simplecolorpicker.js"></script>
 <script src="_/js/plugins/label_picker/jquery.label_picker.js"></script>
+
 <!-- Other plugins -->
 <script src="_/js/plugins/inspinia/inspinia.js"></script>
 <script src="_/js/plugins/pace/pace.min.js"></script>
@@ -448,6 +462,7 @@
 <script src="_/js/plugins/JSZip/FileSaver.js"></script>
 
 <!-- Plexo and GUI -->
+<script src="_/js/nucleo.min.js"></script>
 <script src="_/js/plexo.lib.js"></script>
 <!--
 <script src="_/js/plexo/definitions.js"></script>

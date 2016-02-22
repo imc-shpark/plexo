@@ -274,3 +274,22 @@ border: 1px solid #ccc;
 .title-on-dark{
     color:rgb(206,206,206)
 }
+
+.viewer3d{
+    position:absolute;
+    top:150px;
+    left:150px;
+    width:300px;
+    height:300px;
+    border: 1px solid #333;
+    background-color: #191919;
+}
+
+.viewer3d canvas{
+    position:relative;
+    top:30px;
+    left:0px;
+    width:299px;
+    height:280px;
+    background: #ccc;
+}

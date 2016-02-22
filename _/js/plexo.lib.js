@@ -520,7 +520,7 @@ plx.Dataset = function (url, select, options) {
 
 
 
-plx.Dataset.SELECT_LOCAL          = 'local';
+plx.Dataset.SELECT_LOCAL   = 'local';
 plx.Dataset.SELECT_ALL     = 'all';
 plx.Dataset.SELECT_SINGLE  = 'single';
 plx.Dataset.SELECT_INDEXED = 'indexed';
@@ -650,6 +650,16 @@ plx.Dataset.prototype.hasLoaded = function () {
  */
 plx.Dataset.prototype.getSliceByIndex = function(index){
    return this._slicemap[index]; 
+};
+
+plx.Dataset.prototype.getSliceByFilename = function(name){
+    var N = this.slices.length;
+    for(var i=0;i<N;i++){
+        if (this.slices[i].filename == name){
+            return this.slices[i];
+        }
+    }
+    return null;
 };
 
 
@@ -828,6 +838,41 @@ plx.AnnotationLayer.prototype.clearAnnotations = function () {
     this.imageData    = undefined;
     this.undo_history = [];
     this.redo_history = [];
+};
+
+/**
+ *
+ * @param image
+ */
+plx.AnnotationLayer.prototype.loadFromImageURL = function(imageURL){
+
+    this.clearAnnotations();
+
+
+    var self = this;
+    var view = this.view;
+    var width = view.canvas.width;
+    var height = view.canvas.height;
+
+    //necessary!
+    this.canvas.width  = view.canvas.width;
+    this.canvas.height = view.canvas.height;
+
+
+
+    var image = new Image();
+
+    image.onload = function(){
+
+        self.ctx.clearRect(0, 0, width, height);
+        self.ctx.drawImage(image,0,0);
+        self.imageData = self.ctx.getImageData(0, 0, width, height);
+        self.view.render();
+    };
+
+    image.src = imageURL; // This is necessary because loading images is asynchronous
+    //In other words, loading the image can take a bit, before it can be painted onto the cnavas.
+
 };
 
 /**
@@ -1574,12 +1619,14 @@ plx.Zoom.prototype.apply = function (ctx) {
 plx.AnnotationSet = function (view) {
     this.view = view;
     this.annotations = {}; //dictionary containing the slice-uri, annotation slice object pairing.
+    this.messages = []; //save error messages for display if the AnnotationSet had issues loading.
 };
 
 //Static constants
 plx.AnnotationSet.SAVE_PREVIEW = 'PREVIEW';
 plx.AnnotationSet.SAVE_DOWNLOAD = 'DOWLOAD';
 plx.AnnotationSet.SAVE_DROPBOX = 'DROPBOX';
+plx.AnnotationSet.LOAD_LOCAL = 'LOAD_LOCAL';
 
 
 /**
@@ -1590,14 +1637,61 @@ plx.AnnotationSet.prototype.getKeys = function () {
     return Object.keys(this.annotations).sort();
 };
 
-plx.AnnotationSet.load = function (anset_url) {
-    //loads an annotationset given the corresponding JSON file URL
-    // the JSON file contains:
-    //    the location of the dataset
-    //    the user identifier
-    //    the location of the annotated set
-    //    the location of the label set
+/**
+* Loads an annotation set
+*/
+plx.AnnotationSet.prototype.load = function (payload,_type) {
+
+    this.messages = []; //clear messages
+
+    switch(_type){
+        case plx.AnnotationSet.LOAD_LOCAL: this.loadLocal(payload); break;
+        default: this.loadLocal(payload);
+    }
+
 };
+
+plx.AnnotationSet.prototype.loadLocal = function(payload){
+
+    this.messages = [];
+
+    var labels = payload.labels;
+    var annotations = payload.annotations;
+    this._createAnnotationLayers(labels,annotations);
+
+};
+
+/**
+ * Creates the annotation layers. Used in AnnotationSet.loadLocal
+ *
+ * @param annotations
+ * @private
+ */
+plx.AnnotationSet.prototype._createAnnotationLayers = function(labels, annotations){
+
+    for(f in annotations){
+        var slice_filename = f.substr(2, f.length);
+        var slice = this.view.dataset.getSliceByFilename(slice_filename);
+        if (slice == null){
+            this.messages.push('No slice was found for annotation '+f);
+        }
+        else{
+            console.debug('Annotation ',f,' loaded for ', slice.filename);
+
+            var imageURL = annotations[f];
+            var an_layer = this.getAnnotation(slice);
+            an_layer.loadFromImageURL(imageURL);
+            this.view.showSlice(slice);
+
+        }
+
+    }
+
+};
+
+plx.AnnotationSet.prototype.getMessages = function(){
+    return this.messages;
+}
 
 plx.AnnotationSet.prototype.save = function (type, options) {
 
