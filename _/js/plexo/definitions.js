@@ -84,7 +84,6 @@ plx.rgb2hex = function (R, G, B) {
 plx.smoothingEnabled = function (ctx, flag) {
     ctx.imageSmoothingEnabled       = flag;
     ctx.mozImageSmoothingEnabled    = flag;
-    ctx.webkitImageSmoothingEnabled = flag;
     ctx.msImageSmoothingEnabled     = flag;
 }
 

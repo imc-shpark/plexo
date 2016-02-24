@@ -169,10 +169,21 @@ plx.Dataset.prototype.getSliceByIndex = function(index){
    return this._slicemap[index]; 
 };
 
-plx.Dataset.prototype.getSliceByFilename = function(name){
+plx.Dataset.prototype.getSliceByFilename = function(fname){
     var N = this.slices.length;
     for(var i=0;i<N;i++){
-        if (this.slices[i].filename == name){
+        if (this.slices[i].filename == fname){
+            return this.slices[i];
+        }
+    }
+    return null;
+};
+
+
+plx.Dataset.prototype.getSliceByName = function(name){
+    var N = this.slices.length;
+    for(var i=0;i<N;i++){
+        if (this.slices[i].name == name){
             return this.slices[i];
         }
     }

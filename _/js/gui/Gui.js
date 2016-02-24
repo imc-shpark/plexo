@@ -220,6 +220,14 @@ function update_canvas_size() {
      */
     function calculateAspectRatioFit(srcWidth, srcHeight, maxWidth, maxHeight) {
 
+        if (srcWidth == 0){
+            srcWidth = maxWidth;
+        }
+
+        if (srcHeight == 0){
+            srcHeight = maxHeight;
+        }
+
         var ratio = Math.min(maxWidth / srcWidth, maxHeight / srcHeight);
         return {width: Math.floor(srcWidth * ratio), height: Math.floor(srcHeight * ratio)};
     }
@@ -234,6 +242,7 @@ function update_canvas_size() {
     var ratio  = calculateAspectRatioFit(view.current_slice.image.width,
         view.current_slice.image.height,
         widthWindow, hAvailable);
+
     var height = ratio.height;
     var width  = ratio.width;
 
@@ -256,6 +265,30 @@ function update_canvas_size() {
     }
     else if (widthWindow == width) {
         $(view.canvas).css('left', 0);
+    }
+
+    if (view.hasVideo()){
+        var can_video = view.video_delegate.canvas;
+        can_video.width  = width;
+        can_video.height = height;
+
+        can_video.style.setProperty('width', width+'px', 'important');
+        can_video.style.setProperty('height', height+'px', 'important');
+
+        if (hAvailable > height) {
+            $(can_video).css('top', Math.ceil((hAvailable - height) / 2));
+        }
+        else if (hAvailable == height) {
+            $(can_video).css('top', 0);
+        }
+
+        if (widthWindow > width) {
+            $(can_video).css('left', Math.ceil((widthWindow - width) / 2));
+        }
+        else if (widthWindow == width) {
+            $(can_video).css('left', 0);
+        }
+        $(can_video).css('z-index','-1');
     }
 
     view.render();

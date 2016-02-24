@@ -24,25 +24,42 @@ plx.Slice = function (dataset, filename, index, file_object) {
 
     this.dataset  = dataset;
     this.filename = filename;
+    this.name     = filename.replace(/\.[^/.]+$/,"");
+
     this.index    = index;
     this.file_object = file_object;
-
     this.url   = this.dataset.url + '/' + this.filename;
     this.image = new Image();
+
+    this.hasVideo = plx.VideoDelegate.canPlay(filename);
+
+    if (this.hasVideo){
+        this.video_delegate = new plx.VideoDelegate(this, this.file_object);
+    }
+
+
 };
 
 plx.Slice.prototype.load_local = function () {
+
     var slice = this;
 
-    var reader    = new FileReader();
-    reader.onload = function (e) {
-        slice.image.src = reader.result;
-        if (slice.dataset != undefined) {
-            slice.dataset.onLoadSlice(slice);
-        }
-    };
+    if (this.hasVideo){
+        this.video_delegate.load();
+        slice.dataset.onLoadSlice(slice);
+    }
+    else {
 
-    reader.readAsDataURL(this.file_object);
+        var reader    = new FileReader();
+        reader.onload = function (e) {
+            slice.image.src = reader.result;
+            if (slice.dataset != undefined) {
+                slice.dataset.onLoadSlice(slice);
+            }
+        };
+        reader.readAsDataURL(this.file_object);
+    }
+
 
 };
 
@@ -70,13 +87,9 @@ plx.Slice.prototype.load_remote = function () {
  */
 plx.Slice.prototype.load = function () {
 
-    var select = this.dataset.select;
-
-    if (select == plx.Dataset.SELECT_LOCAL) {
-        this.load_local();
-    }
-    else {
-        this.load_remote();
+    switch(this.dataset.select){
+        case plx.Dataset.SELECT_LOCAL: this.load_local();break;
+        default: this.load_remote(); break;
     }
 };
 
@@ -88,11 +101,13 @@ plx.Slice.prototype.isCurrent = function (view) {
     return view.current_slice == this;
 };
 
+
+
 plx.Slice.prototype.updateLayer = function (view) {
 
-    var ctx = view.ctx;
+    var ctx = view.ctx, width, height;
 
-    /*----------------------------------------------------------*/
+    //----------------------------------------------------------
     // ALL CANVAS OPERATIONS OCCUR IN ORIGINAL IMAGE COORDINATES
     // Regardless of the current scaling of the canvas through CSS
     //
@@ -100,9 +115,19 @@ plx.Slice.prototype.updateLayer = function (view) {
     //
     // WHEREAS:
     // Canvas properties width and height -> determine buffer operations
-    /*----------------------------------------------------------*/
-    var width  = this.image.width;
-    var height = this.image.height;
+    //----------------------------------------------------------
+    if (this.image.width >0)  {
+        width  = this.image.width;
+    }
+    else{
+       // width = 500; //view.canvas.width;
+    }
+    if (this.image.height>0)  {
+        height = this.image.height;
+    }
+    else{
+       // height = 500; //view.canvas.height;
+    }
 
     view.canvas.width = width;  //this resets the canvas state (content, transform, styles, etc).
     view.canvas.height = height;
@@ -114,8 +139,14 @@ plx.Slice.prototype.updateLayer = function (view) {
         plx.zoom.apply(ctx);
     }
 
+
+
     plx.smoothingEnabled(ctx, false);
-    ctx.drawImage(this.image, 0, 0, width, height);
+
+    if (!view.hasVideo()) {
+        ctx.drawImage(this.image, 0, 0, width, height);
+    }
+
     //this._debugZooom(ctx);
 
 };

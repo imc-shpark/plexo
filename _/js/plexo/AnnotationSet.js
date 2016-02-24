@@ -72,13 +72,14 @@ plx.AnnotationSet.prototype.loadLocal = function(payload){
 plx.AnnotationSet.prototype._createAnnotationLayers = function(labels, annotations){
 
     for(f in annotations){
-        var slice_filename = f.substr(2, f.length);
-        var slice = this.view.dataset.getSliceByFilename(slice_filename);
+        var slice_name = f.substr(2, f.length);
+        slice_name = slice_name.replace(/\.[^/.]+$/,"");
+        var slice = this.view.dataset.getSliceByName(slice_name);
         if (slice == null){
             this.messages.push('No slice was found for annotation '+f);
         }
         else{
-            console.debug('Annotation ',f,' loaded for ', slice.filename);
+            console.debug('Annotation ',f,' loaded for ', slice.name);
 
             var imageURL = annotations[f];
             var an_layer = this.getAnnotation(slice);

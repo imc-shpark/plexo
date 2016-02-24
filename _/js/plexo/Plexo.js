@@ -27,6 +27,7 @@
 //@koala-append "Brush.js"
 //@koala-append "Eraser.js"
 //@koala-append "Slice.js"
+//@koala-append "VideoDelegate.js"
 //@koala-append "Dataset.js"
 //@koala-append "AnnotationLayer.js"
 //@koala-append "PaintBucket.js"

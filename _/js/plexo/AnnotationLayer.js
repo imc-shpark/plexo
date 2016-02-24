@@ -47,6 +47,10 @@ plx.AnnotationLayer.LABEL_DISTANCE_TOLERANCE = 20;
 plx.AnnotationLayer.prototype.getFilename = function() {
     var url = this.slice.url;
     url = 'A_' + url.substr(url.lastIndexOf('/')+1);
+    ext = url.split('.').pop();
+    if (ext != 'png'){
+        url = url.substr(0, url.lastIndexOf('.')) + '.png';
+    }
     return url;
 
 };
@@ -328,7 +332,9 @@ plx.AnnotationLayer.prototype.updateAnnotation = function (curr_x, curr_y) {
 
     view.ctx.globalAlpha = 1;
     view.ctx.clearRect(0, 0, width, height);
-    view.ctx.drawImage(view.current_slice.image, 0, 0, width, height);
+    if (!view.hasVideo()) {
+        view.ctx.drawImage(view.current_slice.image, 0, 0, width, height);
+    }
 
     view.ctx.globalAlpha = plx.BRUSH.opacity;
     view.ctx.drawImage(this.canvas, 0, 0, width, height);

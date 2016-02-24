@@ -16,7 +16,12 @@ plx.View = function (canvas_id) {
     this.renderer           = new plx.Renderer(this);
     this.current_slice      = undefined;
     this.current_annotation = undefined;
+    this.video_delegate     = undefined;
 };
+
+plx.View.prototype.hasVideo = function(){
+    return (this.video_delegate != undefined);
+}
 
 plx.View.prototype.reset = function(){
     this.dataset            = undefined;
@@ -135,4 +140,5 @@ plx.View.prototype.redo = function () {
     }
     return successFlag;  //false if nothing to redo
 };
+
 

@@ -108,9 +108,7 @@ gui.LoadAnnotationsDialog.prototype.uploadZipFile = function(){
                 else if (zipEntry.name.indexOf('A_') == 0){ //annotation file
                     var arrayBufferView = zipEntry.asUint8Array();
                     var blob = new Blob([arrayBufferView], {type: 'image/png'});
-                    var urlCreator = window.URL || window.webkitURL;
-                    var imageURL = urlCreator.createObjectURL(blob);
-                    annotations[zipEntry.name] = imageURL;
+                    annotations[zipEntry.name] = window.URL.createObjectURL(blob);2
                 }
             });
 

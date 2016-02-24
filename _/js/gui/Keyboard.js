@@ -36,6 +36,10 @@ function setup_keyboard() {
             gui.toolbar.update_selected_tool(plx.OP_ANNOTATE);
         }
 
+        if (letter == 'p' && VIEW.hasVideo()){
+            VIEW.video_delegate.toggle();
+        }
+
     };
 
     document.onkeydown = function (event) {

@@ -27,6 +27,7 @@
 //@koala-append "Brush.js"
 //@koala-append "Eraser.js"
 //@koala-append "Slice.js"
+//@koala-append "VideoDelegate.js"
 //@koala-append "Dataset.js"
 //@koala-append "AnnotationLayer.js"
 //@koala-append "PaintBucket.js"
@@ -124,7 +125,6 @@ plx.rgb2hex = function (R, G, B) {
 plx.smoothingEnabled = function (ctx, flag) {
     ctx.imageSmoothingEnabled       = flag;
     ctx.mozImageSmoothingEnabled    = flag;
-    ctx.webkitImageSmoothingEnabled = flag;
     ctx.msImageSmoothingEnabled     = flag;
 }
 
@@ -372,25 +372,42 @@ plx.Slice = function (dataset, filename, index, file_object) {
 
     this.dataset  = dataset;
     this.filename = filename;
+    this.name     = filename.replace(/\.[^/.]+$/,"");
+
     this.index    = index;
     this.file_object = file_object;
-
     this.url   = this.dataset.url + '/' + this.filename;
     this.image = new Image();
+
+    this.hasVideo = plx.VideoDelegate.canPlay(filename);
+
+    if (this.hasVideo){
+        this.video_delegate = new plx.VideoDelegate(this, this.file_object);
+    }
+
+
 };
 
 plx.Slice.prototype.load_local = function () {
+
     var slice = this;
 
-    var reader    = new FileReader();
-    reader.onload = function (e) {
-        slice.image.src = reader.result;
-        if (slice.dataset != undefined) {
-            slice.dataset.onLoadSlice(slice);
-        }
-    };
+    if (this.hasVideo){
+        this.video_delegate.load();
+        slice.dataset.onLoadSlice(slice);
+    }
+    else {
 
-    reader.readAsDataURL(this.file_object);
+        var reader    = new FileReader();
+        reader.onload = function (e) {
+            slice.image.src = reader.result;
+            if (slice.dataset != undefined) {
+                slice.dataset.onLoadSlice(slice);
+            }
+        };
+        reader.readAsDataURL(this.file_object);
+    }
+
 
 };
 
@@ -418,13 +435,9 @@ plx.Slice.prototype.load_remote = function () {
  */
 plx.Slice.prototype.load = function () {
 
-    var select = this.dataset.select;
-
-    if (select == plx.Dataset.SELECT_LOCAL) {
-        this.load_local();
-    }
-    else {
-        this.load_remote();
+    switch(this.dataset.select){
+        case plx.Dataset.SELECT_LOCAL: this.load_local();break;
+        default: this.load_remote(); break;
     }
 };
 
@@ -436,11 +449,13 @@ plx.Slice.prototype.isCurrent = function (view) {
     return view.current_slice == this;
 };
 
+
+
 plx.Slice.prototype.updateLayer = function (view) {
 
-    var ctx = view.ctx;
+    var ctx = view.ctx, width, height;
 
-    /*----------------------------------------------------------*/
+    //----------------------------------------------------------
     // ALL CANVAS OPERATIONS OCCUR IN ORIGINAL IMAGE COORDINATES
     // Regardless of the current scaling of the canvas through CSS
     //
@@ -448,9 +463,19 @@ plx.Slice.prototype.updateLayer = function (view) {
     //
     // WHEREAS:
     // Canvas properties width and height -> determine buffer operations
-    /*----------------------------------------------------------*/
-    var width  = this.image.width;
-    var height = this.image.height;
+    //----------------------------------------------------------
+    if (this.image.width >0)  {
+        width  = this.image.width;
+    }
+    else{
+       // width = 500; //view.canvas.width;
+    }
+    if (this.image.height>0)  {
+        height = this.image.height;
+    }
+    else{
+       // height = 500; //view.canvas.height;
+    }
 
     view.canvas.width = width;  //this resets the canvas state (content, transform, styles, etc).
     view.canvas.height = height;
@@ -462,8 +487,14 @@ plx.Slice.prototype.updateLayer = function (view) {
         plx.zoom.apply(ctx);
     }
 
+
+
     plx.smoothingEnabled(ctx, false);
-    ctx.drawImage(this.image, 0, 0, width, height);
+
+    if (!view.hasVideo()) {
+        ctx.drawImage(this.image, 0, 0, width, height);
+    }
+
     //this._debugZooom(ctx);
 
 };
@@ -479,6 +510,100 @@ plx.Slice.prototype.updateLayer = function (view) {
 //    ctx.arc(p2[0], p2[1], 5, 0, plx.PI2);
 //    ctx.fill();
 //};
+
+
+/**
+ * This file is part of PLEXO
+ *
+ * PLEXO is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as published by
+ * the Free Software Foundation
+ *
+ * PLEXO is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+plx.VideoDelegate = function (slice, file_object) {
+
+    this.slice       = slice;
+    this.file_object = file_object;
+    this.canvas      = document.getElementById('plexo-video-id');
+    this.ctx         = this.canvas.getContext("2d");
+
+};
+
+/**
+ * Check if the filename is a video that can be played by the delegate
+ * @param filename
+ * @returns {boolean}
+ */
+plx.VideoDelegate.canPlay = function (filename) {
+    var extension = filename.split('.').pop().toLowerCase();
+    return (extension == 'mp4');
+};
+
+/**
+ * Creates the DOM video element
+ */
+plx.VideoDelegate.prototype.load = function () {
+
+    var slice    = this.slice;
+    var videoURL = window.URL.createObjectURL(this.file_object);
+
+    var video = document.createElement('video');
+    //getElementById('plexo-video-id');
+    video.src  = videoURL;
+    video.loop = true;
+
+    video.addEventListener("loadedmetadata", function (e) {
+        slice.image.width  = this.videoWidth;
+        slice.image.height = this.videoHeight;
+    }, false);
+
+    var self = this;
+    video.addEventListener('play', function () {
+        self._video_callback();
+    }, false);
+
+    this.video = video;
+
+    this.slice.dataset.view.video_delegate = this; //shortcut
+    message('video ready. Use [p] to play/pause')
+};
+
+plx.VideoDelegate.prototype.toggle = function () {
+    if (this.video.paused) {
+        this.video.play();
+        message('playing video');
+    }
+    else {
+        this.video.pause();
+        message('video paused');
+    }
+};
+
+plx.VideoDelegate.prototype._video_callback = function () {
+    var self = this;
+    if (this.video.paused) return;
+    this.renderFrame();
+    setTimeout(function () {self._video_callback();}, 0);
+};
+
+plx.VideoDelegate.prototype.renderFrame = function () {
+
+    this.canvas.width = this.slice.image.width;
+    this.canvas.height = this.slice.image.height;
+
+    if (plx.zoom) {
+        plx.zoom.apply(this.ctx);
+    }
+    this.ctx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+};
 
 
 /**
@@ -652,10 +777,21 @@ plx.Dataset.prototype.getSliceByIndex = function(index){
    return this._slicemap[index]; 
 };
 
-plx.Dataset.prototype.getSliceByFilename = function(name){
+plx.Dataset.prototype.getSliceByFilename = function(fname){
     var N = this.slices.length;
     for(var i=0;i<N;i++){
-        if (this.slices[i].filename == name){
+        if (this.slices[i].filename == fname){
+            return this.slices[i];
+        }
+    }
+    return null;
+};
+
+
+plx.Dataset.prototype.getSliceByName = function(name){
+    var N = this.slices.length;
+    for(var i=0;i<N;i++){
+        if (this.slices[i].name == name){
             return this.slices[i];
         }
     }
@@ -790,6 +926,10 @@ plx.AnnotationLayer.LABEL_DISTANCE_TOLERANCE = 20;
 plx.AnnotationLayer.prototype.getFilename = function() {
     var url = this.slice.url;
     url = 'A_' + url.substr(url.lastIndexOf('/')+1);
+    ext = url.split('.').pop();
+    if (ext != 'png'){
+        url = url.substr(0, url.lastIndexOf('.')) + '.png';
+    }
     return url;
 
 };
@@ -1071,7 +1211,9 @@ plx.AnnotationLayer.prototype.updateAnnotation = function (curr_x, curr_y) {
 
     view.ctx.globalAlpha = 1;
     view.ctx.clearRect(0, 0, width, height);
-    view.ctx.drawImage(view.current_slice.image, 0, 0, width, height);
+    if (!view.hasVideo()) {
+        view.ctx.drawImage(view.current_slice.image, 0, 0, width, height);
+    }
 
     view.ctx.globalAlpha = plx.BRUSH.opacity;
     view.ctx.drawImage(this.canvas, 0, 0, width, height);
@@ -1670,13 +1812,14 @@ plx.AnnotationSet.prototype.loadLocal = function(payload){
 plx.AnnotationSet.prototype._createAnnotationLayers = function(labels, annotations){
 
     for(f in annotations){
-        var slice_filename = f.substr(2, f.length);
-        var slice = this.view.dataset.getSliceByFilename(slice_filename);
+        var slice_name = f.substr(2, f.length);
+        slice_name = slice_name.replace(/\.[^/.]+$/,"");
+        var slice = this.view.dataset.getSliceByName(slice_name);
         if (slice == null){
             this.messages.push('No slice was found for annotation '+f);
         }
         else{
-            console.debug('Annotation ',f,' loaded for ', slice.filename);
+            console.debug('Annotation ',f,' loaded for ', slice.name);
 
             var imageURL = annotations[f];
             var an_layer = this.getAnnotation(slice);
@@ -1880,7 +2023,12 @@ plx.View = function (canvas_id) {
     this.renderer           = new plx.Renderer(this);
     this.current_slice      = undefined;
     this.current_annotation = undefined;
+    this.video_delegate     = undefined;
 };
+
+plx.View.prototype.hasVideo = function(){
+    return (this.video_delegate != undefined);
+}
 
 plx.View.prototype.reset = function(){
     this.dataset            = undefined;
@@ -1999,6 +2147,7 @@ plx.View.prototype.redo = function () {
     }
     return successFlag;  //false if nothing to redo
 };
+
 
 
 
