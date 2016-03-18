@@ -94,7 +94,7 @@ plx.AnnotationSet.prototype._createAnnotationLayers = function(labels, annotatio
 
 plx.AnnotationSet.prototype.getMessages = function(){
     return this.messages;
-}
+};
 
 plx.AnnotationSet.prototype.save = function (type, options) {
 

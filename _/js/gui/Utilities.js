@@ -30,8 +30,7 @@ function draw_checkboard_canvas(canvas, nRow, nCol) {
     var pattern    = ctx.createPattern(p, "repeat");
     ctx.fillStyle  = pattern;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-};
-
+}
 function dozoom(x,y,scale){
     plx.zoom.setFocus(x,y);
     plx.zoom.setScaleTouch(scale);

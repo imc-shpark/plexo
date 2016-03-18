@@ -97,8 +97,7 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
             imdata.data[pos * 4 + 2] = 0;
             imdata.data[pos * 4 + 3] = 0;
         }
-    };
-
+    }
     function test(x, y) { //check if the color is not any of the labels or zero
         var pos = (y * width) + x;
 
@@ -112,8 +111,7 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
         else {
            return false;
         }
-    };
-
+    }
     var queue = [{'xMin': x, 'xMax': x, 'y': y, 'direction': null, 'extendLeft': true, 'extendRight': true}];
 
     paint(x, y);

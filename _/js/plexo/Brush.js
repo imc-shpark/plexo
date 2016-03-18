@@ -53,6 +53,12 @@ plx.Brush.prototype.setLabelID = function (label_id) {
     this.label_id = label.id;
 };
 
+plx.Brush.prototype.getLabelName = function(){
+    var label = plx.LABELS.getLabelByID(this.label_id);
+    return label.name;
+
+};
+
 plx.Brush.prototype.setLabelByIndex = function (label_index) {
     var label     = plx.LABELS.getLabelByIndex(label_index);
     this.setColor(label.color);

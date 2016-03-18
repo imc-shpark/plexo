@@ -21,7 +21,7 @@ plx.View = function (canvas_id) {
 
 plx.View.prototype.hasVideo = function(){
     return (this.video_delegate != undefined);
-}
+};
 
 plx.View.prototype.reset = function(){
     this.dataset            = undefined;

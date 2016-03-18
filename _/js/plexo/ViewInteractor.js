@@ -127,7 +127,7 @@ plx.ViewInteractor.prototype.action_paintBucket_long_press = function (x, y, del
     }
 
     this._long_press_timer = window.setTimeout(deferred_execution, delay);
-}
+};
 
 plx.ViewInteractor.prototype.action_panning = function (x, y) {
     plx.zoom.setFocus(x, y);
@@ -156,7 +156,7 @@ plx.ViewInteractor.prototype.action_zooming = function (scale, mouseOrTouch) {
             message('Error: unknown type of zooming');
         }
     }
-}
+};
 
 plx.ViewInteractor.prototype.onKeyUp = function(ev){
     if (ev.keyCode == 17 && plx.CURRENT_OPERATION == plx.OP_PANNING){
@@ -450,7 +450,7 @@ plx.ViewInteractor.prototype.onSingleTouchStart = function (touch) {
             break;
     }
 
-    plx.setCurrentCoordinates(x, y)
+    plx.setCurrentCoordinates(x, y);
     this.notify(plx.EV_COORDS_UPDATED);
 };
 

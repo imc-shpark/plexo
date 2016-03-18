@@ -79,7 +79,7 @@ gui.LoadAnnotationsDialog.prototype._setup_events = function(){
         self.error_message.empty();
         self.annotation_file.empty();
     });
-}
+};
 
 gui.LoadAnnotationsDialog.prototype.uploadZipFile = function(){
 

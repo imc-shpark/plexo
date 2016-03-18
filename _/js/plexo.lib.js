@@ -87,7 +87,7 @@ plx.setCurrentOperation = function (operation) {
 plx.setCurrentCoordinates = function (x, y) {
     plx.COORDINATES.X = x;
     plx.COORDINATES.Y = y;
-}
+};
 /*-----------------------------------------------------------------------------------------------
  EVENTS
  ------------------------------------------------------------------------------------------------*/
@@ -106,7 +106,7 @@ plx.hex2rgb = function (hex) {
     var g = parseInt(_hex.substring(2, 4), 16);
     var b = parseInt(_hex.substring(4, 6), 16);
     return {'r': r, 'g': g, 'b': b};
-}
+};
 
 plx.rgb2hex = function (R, G, B) {
     function toHex(n) {
@@ -126,12 +126,11 @@ plx.smoothingEnabled = function (ctx, flag) {
     ctx.imageSmoothingEnabled       = flag;
     ctx.mozImageSmoothingEnabled    = flag;
     ctx.msImageSmoothingEnabled     = flag;
-}
+};
 
 function message(text) {
     document.getElementById('status-message-id').innerHTML = text;
-};
-
+}
 /**
  * Detects if the device is touch-enabled
  */
@@ -180,10 +179,39 @@ plx.Label.prototype.setColor = function(hexcolor){
     this.color = hexcolor;
 };
 
-
-plx.LabelSet = function(labels){
-    this.labels = labels;
+/**
+ * Creates a label set
+ * @param labels
+ * @param json_object can populate a LabelSet using a JSON object. Useful to load different label sets
+ * @constructor
+ *
+ * The format of the JSON file is (example):
+ *
+ * object {
+ *      "labels":[
+ *      {"id":1,  "name":"the_name_1",  "color":"#ffffff"},
+ *      {"id":2,  "name":"the_name_2",  "color":"#ababab"},
+ *      ...
+ *      ]
+ * }
+ */
+plx.LabelSet = function(labels, json_object){
+    if (json_object != undefined){
+        this.labels = [];
+        var lbls = json_object.labels;
+        var N = lbls.length;
+        for (var i=0;i<N;i++){
+            var lbl = lbls[i];
+            var label = new plx.Label(lbl.id, lbl.name,lbl.color);
+            this.labels.push(label);
+        }
+    }
+    else{
+        this.labels = labels;
+    }
 };
+
+
 
 plx.LabelSet.prototype.getLabelByIndex = function (label_index) {
 
@@ -300,6 +328,12 @@ plx.Brush.prototype.setLabelID = function (label_id) {
     var label     = plx.LABELS.getLabelByID(label_id);
     this.setColor(label.color);
     this.label_id = label.id;
+};
+
+plx.Brush.prototype.getLabelName = function(){
+    var label = plx.LABELS.getLabelByID(this.label_id);
+    return label.name;
+
 };
 
 plx.Brush.prototype.setLabelByIndex = function (label_index) {
@@ -875,7 +909,7 @@ plx.Dataset.prototype.getIndexSublist = function (from, to){
     }
     return list.slice(posFrom, posTo+1);
 
-}
+};
 
 /**
 * This file is part of PLEXO
@@ -1533,8 +1567,7 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
             imdata.data[pos * 4 + 2] = 0;
             imdata.data[pos * 4 + 3] = 0;
         }
-    };
-
+    }
     function test(x, y) { //check if the color is not any of the labels or zero
         var pos = (y * width) + x;
 
@@ -1548,8 +1581,7 @@ plx.PaintBucket.prototype.fill = function (x, y, replacement_color) {
         else {
            return false;
         }
-    };
-
+    }
     var queue = [{'xMin': x, 'xMax': x, 'y': y, 'direction': null, 'extendLeft': true, 'extendRight': true}];
 
     paint(x, y);
@@ -1834,7 +1866,7 @@ plx.AnnotationSet.prototype._createAnnotationLayers = function(labels, annotatio
 
 plx.AnnotationSet.prototype.getMessages = function(){
     return this.messages;
-}
+};
 
 plx.AnnotationSet.prototype.save = function (type, options) {
 
@@ -2028,7 +2060,7 @@ plx.View = function (canvas_id) {
 
 plx.View.prototype.hasVideo = function(){
     return (this.video_delegate != undefined);
-}
+};
 
 plx.View.prototype.reset = function(){
     this.dataset            = undefined;
@@ -2280,7 +2312,7 @@ plx.ViewInteractor.prototype.action_paintBucket_long_press = function (x, y, del
     }
 
     this._long_press_timer = window.setTimeout(deferred_execution, delay);
-}
+};
 
 plx.ViewInteractor.prototype.action_panning = function (x, y) {
     plx.zoom.setFocus(x, y);
@@ -2309,7 +2341,7 @@ plx.ViewInteractor.prototype.action_zooming = function (scale, mouseOrTouch) {
             message('Error: unknown type of zooming');
         }
     }
-}
+};
 
 plx.ViewInteractor.prototype.onKeyUp = function(ev){
     if (ev.keyCode == 17 && plx.CURRENT_OPERATION == plx.OP_PANNING){
@@ -2603,7 +2635,7 @@ plx.ViewInteractor.prototype.onSingleTouchStart = function (touch) {
             break;
     }
 
-    plx.setCurrentCoordinates(x, y)
+    plx.setCurrentCoordinates(x, y);
     this.notify(plx.EV_COORDS_UPDATED);
 };
 

@@ -130,4 +130,4 @@ gui.EraserDialog.prototype.select = function(){
         gui.toolbar.update_eraser();
         gui.toolbar.update_selected_tool(plx.OP_DELETE);
     }
-}
+};

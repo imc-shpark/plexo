@@ -267,4 +267,4 @@ plx.Dataset.prototype.getIndexSublist = function (from, to){
     }
     return list.slice(posFrom, posTo+1);
 
-}
+};

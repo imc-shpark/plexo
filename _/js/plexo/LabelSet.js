@@ -34,10 +34,39 @@ plx.Label.prototype.setColor = function(hexcolor){
     this.color = hexcolor;
 };
 
-
-plx.LabelSet = function(labels){
-    this.labels = labels;
+/**
+ * Creates a label set
+ * @param labels
+ * @param json_object can populate a LabelSet using a JSON object. Useful to load different label sets
+ * @constructor
+ *
+ * The format of the JSON file is (example):
+ *
+ * object {
+ *      "labels":[
+ *      {"id":1,  "name":"the_name_1",  "color":"#ffffff"},
+ *      {"id":2,  "name":"the_name_2",  "color":"#ababab"},
+ *      ...
+ *      ]
+ * }
+ */
+plx.LabelSet = function(labels, json_object){
+    if (json_object != undefined){
+        this.labels = [];
+        var lbls = json_object.labels;
+        var N = lbls.length;
+        for (var i=0;i<N;i++){
+            var lbl = lbls[i];
+            var label = new plx.Label(lbl.id, lbl.name,lbl.color);
+            this.labels.push(label);
+        }
+    }
+    else{
+        this.labels = labels;
+    }
 };
+
+
 
 plx.LabelSet.prototype.getLabelByIndex = function (label_index) {
 

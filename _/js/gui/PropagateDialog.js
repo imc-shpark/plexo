@@ -282,7 +282,7 @@ gui.PropagateDialog.prototype._clear_canvas = function () {
         this.propagate_ctx.clearRect(0, 0, this.imageData.width, this.imageData.height);
     }
     this.imageData = undefined;
-}
+};
 
 gui.PropagateDialog.prototype.propagate = function () {
 

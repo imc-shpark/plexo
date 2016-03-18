@@ -51,7 +51,7 @@ gui.SliceController.prototype._setup_slider = function(){
     });
 
     this.slider.noUiSlider.on('slide', function(values, handle){
-        var index = parseInt(values[handle])
+        var index = parseInt(values[handle]);
         message('slice: ' +index);
         VIEW.showSliceByIndex(index);
     });

@@ -27,6 +27,7 @@ gui.ToolbarController = function (view) {
 gui.ToolbarController.prototype._setup = function () {
     var controller = this;
 
+    this.btn_labels       = $('#btn-labels-id');
     this.btn_brush        = $('#btn-brush-id');
     this.btn_eraser       = $('#btn-eraser-id');
     this.btn_undo         = $('#btn-undo-id');
@@ -34,7 +35,7 @@ gui.ToolbarController.prototype._setup = function () {
     this.btn_paint_bucket = $('#btn-paint-bucket-id');
     this.btn_zoom         = $('#btn-zoom-id');
     this.btn_propagate    = $('#btn-propagate-id');
-    this.btn_save         = $('#btn-save-id');
+
 
     this._setup_brush_button();
     this._setup_paint_bucket_button();
@@ -67,7 +68,6 @@ gui.ToolbarController.prototype._touchOrClick = function(button, delegate){
         if (button.touched === true) return;
         delegate();
     });
-
     button.addEventListener('touchend', function(event){
         event.preventDefault();
         event.stopPropagation();
@@ -76,6 +76,7 @@ gui.ToolbarController.prototype._touchOrClick = function(button, delegate){
 
     });
 };
+
 
 gui.ToolbarController.prototype._setup_brush_button = function () {
 
@@ -204,8 +205,7 @@ gui.ToolbarController.prototype._setup_propagate_button = function(){
         else{
             $('#label-propagation-modal-id').modal('show');
         }
-    };
-
+    }
     this._touchOrClick(controller.btn_propagate, show_propagate_dialog);
 
     /*this.btn_propagate[0].addEventListener('click', function(event){
@@ -260,9 +260,9 @@ gui.ToolbarController.prototype.processNotification = function (kind,data) {
 };
 
 gui.ToolbarController.prototype.update_brush = function () {
-    this.btn_brush.css('color', BRUSH.color + ' !important');
+    this.btn_brush.css('color', BRUSH.color);
     var label = plx.LABELS.getLabelByID(BRUSH.label_id);
-    $('#status-current-label-id').html(label.id +':'
+    $('#status-current-label-id').html(label.id +' : '
         +label.name
         +'  (' + BRUSH.size + ', ' + BRUSH.type + ', ' + BRUSH.getHexColor() + ')');
 };

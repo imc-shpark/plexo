@@ -46,7 +46,7 @@ plx.setCurrentOperation = function (operation) {
 plx.setCurrentCoordinates = function (x, y) {
     plx.COORDINATES.X = x;
     plx.COORDINATES.Y = y;
-}
+};
 /*-----------------------------------------------------------------------------------------------
  EVENTS
  ------------------------------------------------------------------------------------------------*/
@@ -65,7 +65,7 @@ plx.hex2rgb = function (hex) {
     var g = parseInt(_hex.substring(2, 4), 16);
     var b = parseInt(_hex.substring(4, 6), 16);
     return {'r': r, 'g': g, 'b': b};
-}
+};
 
 plx.rgb2hex = function (R, G, B) {
     function toHex(n) {
@@ -85,12 +85,11 @@ plx.smoothingEnabled = function (ctx, flag) {
     ctx.imageSmoothingEnabled       = flag;
     ctx.mozImageSmoothingEnabled    = flag;
     ctx.msImageSmoothingEnabled     = flag;
-}
+};
 
 function message(text) {
     document.getElementById('status-message-id').innerHTML = text;
-};
-
+}
 /**
  * Detects if the device is touch-enabled
  */

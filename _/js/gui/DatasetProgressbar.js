@@ -20,7 +20,7 @@ gui.DatasetProgressbar = function(view){
   this.view = view;
   this.bar =  $('#dataset-progress-bar-id');
   this.container =  $('#dataset-progressbar-container-id');
-}
+};
 
 gui.DatasetProgressbar.prototype.clear = function(){
    this.bar.css('width', 0 + '%').attr('aria-valuenow', 0);
@@ -35,7 +35,7 @@ gui.DatasetProgressbar.prototype.show = function(){
 gui.DatasetProgressbar.prototype.hide = function(){
     this.container.hide();
     return this;
-}
+};
 
 gui.DatasetProgressbar.prototype.update = function(value){
     this.bar.css('width', value + '%').attr('aria-valuenow', value);

@@ -21,20 +21,18 @@
  SETUP FUNCTIONS
  ------------------------------------------------------------------------------------------------*/
 
-function show_dataset_selection_layout(){
+function show_dataset_selection_layout() {
     $('#plexo-layout-canvas-id').hide();
     $('#plexo-layout-toolbar-id').hide();
     $('#plexo-layout-datasets-id').fadeIn('slow');
-};
-
-function show_annotation_layout(){
+}
+function show_annotation_layout() {
     $('#plexo-layout-canvas-id').fadeIn('slow');
     $('#plexo-layout-toolbar-id').fadeIn('slow');
     $('#plexo-layout-datasets-id').hide();
 
-};
-
-function setup_labels () {
+}
+function setup_labels() {
 
     var palette = [
         "#ac725e", "#d06b64", "#f83a22", "#fa573c", "#ff7537", "#ffad46", "#42d692",
@@ -47,7 +45,7 @@ function setup_labels () {
     var labels     = [];
 
     for (var i = 0; i < num_labels; i += 1) {
-        var label = new plx.Label((i+1), 'label-'+(i+1), palette[i]);
+        var label = new plx.Label((i + 1), 'label-' + (i + 1), palette[i]);
         labels.push(label);
     }
 
@@ -57,32 +55,29 @@ function setup_labels () {
 
     BRUSH.setLabelID(LABELS[0].id);
 
-};
-
-function setup_top_menu(){
-    $('#datasets-menu-id').click(function(){
+}
+function setup_top_menu() {
+    $('#datasets-menu-id').click(function () {
         $('#navbar').collapse('hide');
         show_dataset_selection_layout();
     });
-};
-
-
-function setup_file_uploader(){
+}
+function setup_file_uploader() {
 
     //-------------------------------------------------------------------------------------
     //@TODO: remove hardcode. This section must be generated automatically from a database
     var spinal_dataset_link = $('#spinal-dataset-link-id');
-    spinal_dataset_link.click(function(){
-       ld_dataset('spinal-phantom');
+    spinal_dataset_link.click(function () {
+        ld_dataset('spinal-phantom');
     });
 
     var brain_dataset_link = $('#brain-dataset-link-id');
-    brain_dataset_link.click(function(){
+    brain_dataset_link.click(function () {
         ld_dataset('brain-example');
     });
 
     var liver_dataset_link = $('#liver-dataset-link-id');
-    liver_dataset_link.click(function(){
+    liver_dataset_link.click(function () {
         ld_dataset('liver-example');
     });
     //-------------------------------------------------------------------------------------
@@ -91,19 +86,22 @@ function setup_file_uploader(){
 
     if (window.File && window.FileReader && window.FileList && window.Blob) {
         // Great success! All the File APIs are supported.
-    } else {
+    }
+    else {
         selectDialogLink.html('File API not supported in this browser');
         selectDialogLink.off('click');
         return;
     }
 
     var fileSelector = document.createElement('input');
-    fileSelector.id = 'file-uploader-dialog-id';
+    fileSelector.id  = 'file-uploader-dialog-id';
     fileSelector.setAttribute('type', 'file');
-    selectDialogLink.click(function(){fileSelector.click(); return false; });
+    selectDialogLink.click(function () {
+        fileSelector.click();
+        return false;
+    });
 
-
-    function handleFiles(ev){
+    function handleFiles(ev) {
         var files = ev.target.files;
         ld_dataset('local', files);
     }
@@ -112,42 +110,42 @@ function setup_file_uploader(){
 
 }
 
-
 /*-----------------------------------------------------------------------------------------------
  LOAD DATASET
  ------------------------------------------------------------------------------------------------*/
-function ld_dataset(kind, files){
+function ld_dataset(kind, files) {
     VIEW.reset();
     VIEW.render();
 
     show_annotation_layout();
 
-
     var dataset = undefined;
 
-    if (kind=='spinal-phantom'){
-        dataset = new plx.Dataset('data/ds_us_1', plx.Dataset.SELECT_INDEXED,{
-            'start': 50,
+    if (kind == 'spinal-phantom') {
+        dataset = new plx.Dataset('data/ds_us_1', plx.Dataset.SELECT_INDEXED, {
+            'start': 1,
             'end'  : 400,
-            'step' : 10
-            });
+            'step' : 1
+        });
     }
-    if (kind =='brain-example'){
-        dataset = new plx.Dataset('data/mri_brain_tumour', plx.Dataset.SELECT_INDEXED,{
+    if (kind == 'brain-example') {
+        dataset = new plx.Dataset('data/mri_brain_tumour', plx.Dataset.SELECT_INDEXED, {
             'start': 1,
             'end'  : 1,
             'step' : 1
         })
     }
-    if (kind =='liver-example'){
-        dataset = new plx.Dataset('data/liver_metastases', plx.Dataset.SELECT_INDEXED,{
+    if (kind == 'liver-example') {
+        dataset = new plx.Dataset('data/liver_metastases', plx.Dataset.SELECT_INDEXED, {
             'start': 1,
             'end'  : 1,
             'step' : 1
         })
     }
-    else if (kind == 'local') {
-        dataset = new plx.Dataset('local', plx.Dataset.SELECT_LOCAL,{files:files });
+    else {
+        if (kind == 'local') {
+            dataset = new plx.Dataset('local', plx.Dataset.SELECT_LOCAL, {files: files});
+        }
     }
 
     gui.progressbar.clear().show();
@@ -166,9 +164,7 @@ function ld_dataset_callback(dataset) {
             update_canvas_size();
         });
     }
-};
-
-
+}
 /*-----------------------------------------------------------------------------------------------
  MAIN
  ------------------------------------------------------------------------------------------------*/
@@ -180,7 +176,6 @@ function initPlexo() {
     setup_labels();
     setup_top_menu();
     setup_keyboard();
-
 
     VIEW = new plx.View('plexo-canvas-id');
 
@@ -196,13 +191,13 @@ function initPlexo() {
     gui.progressbar      = new gui.DatasetProgressbar(VIEW);
     //gui.viewer3d         = new gui.Viewer3D(VIEW);
 
-
-};
-
+}
 /*-----------------------------------------------------------------------------------------------
  GLOBAL METHODS - WINDOW OBJECT
  ------------------------------------------------------------------------------------------------*/
 function update_canvas_size() {
+
+    if (VIEW == undefined) return;
 
     if (!VIEW.dataset.hasLoaded() || VIEW.current_slice == undefined) {
         return;
@@ -220,11 +215,11 @@ function update_canvas_size() {
      */
     function calculateAspectRatioFit(srcWidth, srcHeight, maxWidth, maxHeight) {
 
-        if (srcWidth == 0){
+        if (srcWidth == 0) {
             srcWidth = maxWidth;
         }
 
-        if (srcHeight == 0){
+        if (srcHeight == 0) {
             srcHeight = maxHeight;
         }
 
@@ -239,7 +234,7 @@ function update_canvas_size() {
     var widthWindow  = $(window).width();
     var hAvailable   = heightWindow - (heightNavBar + heightFooter);
 
-    var ratio  = calculateAspectRatioFit(view.current_slice.image.width,
+    var ratio = calculateAspectRatioFit(view.current_slice.image.width,
         view.current_slice.image.height,
         widthWindow, hAvailable);
 
@@ -256,44 +251,51 @@ function update_canvas_size() {
     if (hAvailable > height) {
         $(view.canvas).css('top', Math.ceil((hAvailable - height) / 2));
     }
-    else if (hAvailable == height) {
-        $(view.canvas).css('top', 0);
+    else {
+        if (hAvailable == height) {
+            $(view.canvas).css('top', 0);
+        }
     }
 
     if (widthWindow > width) {
         $(view.canvas).css('left', Math.ceil((widthWindow - width) / 2));
     }
-    else if (widthWindow == width) {
-        $(view.canvas).css('left', 0);
+    else {
+        if (widthWindow == width) {
+            $(view.canvas).css('left', 0);
+        }
     }
 
-    if (view.hasVideo()){
-        var can_video = view.video_delegate.canvas;
+    if (view.hasVideo()) {
+        var can_video    = view.video_delegate.canvas;
         can_video.width  = width;
         can_video.height = height;
 
-        can_video.style.setProperty('width', width+'px', 'important');
-        can_video.style.setProperty('height', height+'px', 'important');
+        can_video.style.setProperty('width', width + 'px', 'important');
+        can_video.style.setProperty('height', height + 'px', 'important');
 
         if (hAvailable > height) {
             $(can_video).css('top', Math.ceil((hAvailable - height) / 2));
         }
-        else if (hAvailable == height) {
-            $(can_video).css('top', 0);
+        else {
+            if (hAvailable == height) {
+                $(can_video).css('top', 0);
+            }
         }
 
         if (widthWindow > width) {
             $(can_video).css('left', Math.ceil((widthWindow - width) / 2));
         }
-        else if (widthWindow == width) {
-            $(can_video).css('left', 0);
+        else {
+            if (widthWindow == width) {
+                $(can_video).css('left', 0);
+            }
         }
-        $(can_video).css('z-index','-1');
+        $(can_video).css('z-index', '-1');
     }
 
     view.render();
-};
-
+}
 /**
  * Resizes the view only AFTER the user is done resizing the window
  *
@@ -329,7 +331,6 @@ $(function () {
     });
 });
 
-
 /**
  * Deactivate global touch events (tested on ipad so far)
  */
@@ -337,8 +338,8 @@ document.body.ontouchmove = function (event) {
     if (event.touches.length >= 2) {
         event.preventDefault();
     }
-    else{
-        if (event.target.id == 'page-wrapper'){
+    else {
+        if (event.target.id == 'page-wrapper') {
             event.preventDefault();
             event.stopPropagation();
         }

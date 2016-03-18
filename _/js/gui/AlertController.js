@@ -40,8 +40,7 @@ gui.AlertController.prototype.showAlert = function (title, message, alert_type) 
          $(element).fadeOut('slow', function(){
              $(this).alert('close');
          });
-    };
-
+    }
     window.setTimeout(function(){closeAlert(alert);}, 3000);
 
 };

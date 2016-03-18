@@ -174,8 +174,6 @@
 			<div class="row clearfix">
 				<div class="col-xs-12 col-sm-7 col-md-6 col-lg-6 no-padding">
 
-					<button id='btn-labels-id' class="btn btn-icon"><i class="fa fa-tag"></i></button>
-
 					<button id='btn-brush-id' class="btn btn-colored-icon"
 					        data-toggle="modal" data-target="#brush-options-modal-id">
 						<i class="fa fa-paint-brush"></i>
@@ -200,8 +198,7 @@
 					   data-toggle="modal"
 					   data-target="#download-annotations-modal-id"><i class="fa fa-download"></i>
 					</a>
-					<a id='btn-load-id' class="btn  btn-icon" href="#"javascript string replace
-					   data-toggle="modal"
+					<a id='btn-load-id' class="btn  btn-icon" href="#"  data-toggle="modal"
 					   data-target="#load-annotations-modal-id"><i class="fa fa-upload"></i>
 					</a>
 					<a id='link-tour-id' href="#" class="btn btn-icon"><i class="fa fa-question-circle"></i></a>
@@ -229,6 +226,7 @@
 	<!-- page wrapper-->
 </div>
 <!--wrapper -->
+
 <div id="brush-options-modal-id" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="">
 	<div class="modal-dialog modal-lg">
 		<div class="modal-content">
@@ -284,7 +282,7 @@
 			</div>
 			<!-- modal body -->
 			<div class="modal-footer">
-
+				<a id="load-labels-link-id" class="btn btn-default"><i class="fa fa-tag"></i>  Load Labels</a>
 				<button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
 
 			</div>
@@ -385,7 +383,6 @@
 	</div><!-- modal dialog -->
 </div>
 <!-- modal propagation labels -->
-
 <div id="download-annotations-modal-id" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="">
 	<div class="modal-dialog modal-lg">
 		<div class="modal-content">
@@ -411,7 +408,7 @@
 		</div>
 	</div>
 </div>
-
+<!-- modal download annotations -->
 <div id="load-annotations-modal-id" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="">
 	<div class="modal-dialog modal-lg">
 		<div class="modal-content">
@@ -444,6 +441,8 @@
 		</div>
 	</div>
 </div>
+<!-- modal load annotations -->
+
 
 <div id='alert-container-id'></div>
 <!--<div id='viewer3d' class='viewer3d'>-->
@@ -468,40 +467,15 @@
 <!-- Zip -->
 <script src="_/js/plugins/JSZip/jszip.min.js"></script>
 <script src="_/js/plugins/JSZip/FileSaver.js"></script>
-<!-- Plexo and GUI -->
-<script src="_/js/nucleo.min.js"></script>
-<script src="_/js/plexo.lib.js"></script>
-<!--
-<script src="_/js/plexo/definitions.js"></script>
-<script src="_/js/plexo/LabelSet.js"></script>
-<script src="_/js/plexo/Brush.js"></script>
-<script src="_/js/plexo/Eraser.js"></script>
-<script src="_/js/plexo/Slice.js"></script>
-<script src="_/js/plexo/Dataset.js"></script>
-<script src="_/js/plexo/AnnotationLayer.js"></script>
-<script src="_/js/plexo/PaintBucket.js"></script>
-<script src="_/js/plexo/Zoom.js"></script>
-<script src="_/js/plexo/AnnotationSet.js"></script>
-<script src="_/js/plexo/Renderer.js"></script>
-<script src="_/js/plexo/View.js"></script>
-<script src="_/js/plexo/ViewInteractor.js"></script>
--->
 
+<!--<script src="_/js/nucleo.min.js"></script> -->
+
+<!-- Plexo and GUI -->
+<!-- we use koala to create one file for plexo and for gui -->
+<script src="_/js/plexo.lib.js"></script>
 <script src="_/js/gui.lib.js"></script>
-<!--
-<script src="_/js/gui/definitions.js"></script>
-<script src="_/js/gui/Utilities.js"></script>
-<script src="_/js/gui/BrushDialog.js"></script>
-<script src="_/js/gui/EraserDialog.js"></script>
-<script src="_/js/gui/PropagateDialog.js"></script>
-<script src="_/js/gui/DownloadAnnotationsDialog.js"></script>
-<script src="_/js/gui/Keyboard.js"></script>
-<script src="_/js/gui/CoordinatesTracker.js"></script>
-<script src="_/js/gui/AlertController.js"></script>
-<script src="_/js/gui/SliceController.js"></script>
-<script src="_/js/gui/ToolbarController.js"></script>
-<script src="_/js/gui/Gui.js"></script>
--->
+<!-- we use koala to create one file for plexo and for gui -->
+
 
 <script src="_/js/plugins/tour/tour.js"></script><!-- Plexo Tour -->
 <script>initPlexo();</script>

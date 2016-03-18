@@ -94,4 +94,4 @@ function setup_keyboard() {
         }
 
     };
-};
+}

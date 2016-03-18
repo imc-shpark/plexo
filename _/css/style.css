@@ -1030,9 +1030,9 @@ button.dim:active:before {
   background-color: #d1dade;
   color: #5e5e5e;
   font-family: 'Open Sans';
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
-  padding: 3px 8px;
+  padding: 3px 8px 5px 8px;
   text-shadow: none;
 }
 .badge {

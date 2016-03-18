@@ -26,7 +26,9 @@ gui.BrushDialog = function (view) {
     this._brush_size_slider    = document.getElementById('brush-size-slider-id');
     this._brush_opacity_slider = document.getElementById('brush-opacity-slider-id');
     this._current_label_text   = $('#current-label-text-id');
+    this.btn_load_labels       = $('#btn-load-labels-id');
     this._setup_controls();
+    this._setup_load_labels();
     this._setup_events();
 };
 
@@ -81,6 +83,40 @@ gui.BrushDialog.prototype._setup_controls = function () {
         BRUSH.setOpacity(value);
         brush_dialog.update_brush_preview();
     });
+
+
+};
+
+gui.BrushDialog.prototype._setup_load_labels = function(){
+
+    var self = this;
+
+    var loadLabelsLink = $('#load-labels-link-id');
+
+    if (window.File && window.FileReader && window.FileList && window.Blob) {
+        // Great success! All the File APIs are supported.
+    } else {
+        loadLabelsLink.html('File API not supported in this browser');
+        loadLabelsLink.off('click');
+        return;
+    }
+
+    var fileSelector = document.createElement('input');
+    fileSelector.id = 'labels-uploader-dialog-id';
+    fileSelector.setAttribute('type', 'file');
+    fileSelector.setAttribute('accept','.json');
+    loadLabelsLink.click(function(){
+        fileSelector.click(); return false;
+    });
+
+
+    function handleFiles(ev){
+        var files = ev.target.files;
+        self.file = files[0];
+        self.loadLabels();
+    }
+
+    fileSelector.addEventListener('change', handleFiles, false);
 };
 
 gui.BrushDialog.prototype._setup_events = function () {
@@ -157,7 +193,7 @@ gui.BrushDialog.prototype.update_color_picker = function () {
     widget.simplecolorpicker().on('change', function () {
         var current_label_id = $(this).find(':selected').text();
         BRUSH.setLabelID(current_label_id);
-        brush_dialog._current_label_text.html(BRUSH.label_id);
+        brush_dialog._current_label_text.html(BRUSH.getLabelName());
         brush_dialog.update_brush_preview();
     });
 
@@ -165,10 +201,10 @@ gui.BrushDialog.prototype.update_color_picker = function () {
 
     if (BRUSH.label_id == undefined) {
         BRUSH.setLabelID(LABELS[0].id);
-        this._current_label_text.html(BRUSH.label_id);
+        this._current_label_text.html(BRUSH.getLabelName());
     }
     else {
-        this._current_label_text.html(BRUSH.label_id);
+        this._current_label_text.html(BRUSH.getLabelName());
     }
 
     if (gui.toolbar) {
@@ -182,5 +218,25 @@ gui.BrushDialog.prototype.select = function () {
         gui.toolbar.update_brush();
         gui.toolbar.update_selected_tool(plx.OP_ANNOTATE);
     }
-}
+};
 
+gui.BrushDialog.prototype.loadLabels = function(){
+    var reader = new FileReader();
+    var self = this;
+
+    reader.onload = function(e){
+        try{
+            var json_object = JSON.parse(e.target.result);
+
+            plx.LABELS = new plx.LabelSet(undefined, json_object);
+            LABELS = plx.LABELS.getLabels();
+            self.update_color_picker();
+        }
+        catch(ex){
+            alert('Error reading file ' + self.file.name+ ' : '+ ex.message);
+        }
+
+    };
+
+    reader.readAsText(self.file);
+};

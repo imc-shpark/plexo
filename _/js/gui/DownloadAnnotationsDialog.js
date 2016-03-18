@@ -29,7 +29,7 @@ gui.DownloadAnnotationsDialog.prototype._setup_controls = function(){
     this.btn_download_zip.click(function(){
         self.downloadZipFile();
     });
-}
+};
 
 gui.DownloadAnnotationsDialog.prototype._setup_events = function(){
     var self = this;
