@@ -34,11 +34,29 @@ function setup_keyboard() {
             plx.setCurrentOperation(plx.OP_ANNOTATE);
             gui.toolbar.update_brush();
             gui.toolbar.update_selected_tool(plx.OP_ANNOTATE);
+            return;
         }
 
         if (letter == 'p' && VIEW.hasVideo()){
             VIEW.video_delegate.toggle();
+            return;
         }
+
+
+        var slice = undefined;
+        if (VIEW && (event.keyCode == 37 || event.keyCode == 38)){
+            slice = VIEW.showPreviousSlice();
+        }
+        else if (VIEW && (event.keyCode == 39 || event.keyCode == 40)){
+            slice = VIEW.showNextSlice();
+        }
+
+        if (slice){
+            message('slice: ' + slice);
+            VIEW.render();
+            VIEW.interactor.notify(plx.EV_SLICE_CHANGED, {'slice': slice}); //updates slider
+        }
+
 
     };
 

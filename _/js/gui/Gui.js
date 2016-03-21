@@ -17,11 +17,79 @@
  */
 
 
+var DATASETS = [
+    {
+        'title':'Spine Phantom #1',
+        'name':'spinal-phantom',
+        'data':'data/ds_us_1',
+        'type': plx.Dataset.SELECT_INDEXED,
+        'start':1,
+        'end':400,
+        'step':5,
+        'date':'Oct 9, 2015',
+        'thumbnail':'data/ds_us_1/ds_us_1_200.png'
+    },
+    {
+        'title':'Spine G',
+        'name':'spine-g',
+        'data':'data/ds_us_goli',
+        'type':plx.Dataset.SELECT_INDEXED,
+        'start':1,
+        'end':660,
+        'step':5,
+        'date':'March 21, 2015',
+        'thumbnail':'data/ds_us_goli/ds_us_goli_330.png'
+
+    },
+    {
+        'title':'Spine J',
+        'name':'spine-j',
+        'data':'data/ds_us_jay',
+        'type':plx.Dataset.SELECT_INDEXED,
+        'start':1,
+        'end':920,
+        'step':5,
+        'date':'March 21, 2015',
+        'thumbnail':'data/ds_us_jay/ds_us_jay_450.png'
+
+    },
+    {
+        'title':'Brain Tumour Example',
+        'name':'brain-example',
+        'data':'data/mri_brain_tumour',
+        'type': plx.Dataset.SELECT_INDEXED,
+        'start':1,
+        'end':1,
+        'step':1,
+        'date':'Dec 7, 2015',
+        'thumbnail':'data/mri_brain_tumour/mri_brain_tumour_1.png'
+    },
+    {
+        'title':'Liver Metastases Example',
+        'name':'liver-example',
+        'data':'data/liver_metastases',
+        'type':plx.Dataset.SELECT_INDEXED,
+        'start':1,
+        'end':1,
+        'step':1,
+        'date':'Dec 7, 2015',
+        'thumbnail':'data/liver_metastases/liver_metastases_1.png'
+
+    }
+
+
+];
+
+
 /*-----------------------------------------------------------------------------------------------
  SETUP FUNCTIONS
  ------------------------------------------------------------------------------------------------*/
 
 function show_dataset_selection_layout() {
+
+    if (VIEW) VIEW.reset(); // important! removes all the information in memory from the view when we are about to
+                  // select a new dataset
+
     $('#plexo-layout-canvas-id').hide();
     $('#plexo-layout-toolbar-id').hide();
     $('#plexo-layout-datasets-id').fadeIn('slow');
@@ -31,7 +99,37 @@ function show_annotation_layout() {
     $('#plexo-layout-toolbar-id').fadeIn('slow');
     $('#plexo-layout-datasets-id').hide();
 
+};
+
+function populate_selection_layout(){
+
+
+    var ds_panel = $('#dataset-selection-panel-id');
+
+    ds_panel.empty();
+
+    var N = DATASETS.length;
+
+    for(var i=0;i<N;i++){
+        var ds = DATASETS[i];
+
+        var ds_template = $('#dataset-selection-template-id').html(); //reads the text
+        var st= $(ds_template); //converts to a JQuery object
+        var link_name = ds.name+'-link-id';
+
+        st.find('#template-link').attr('id',link_name);
+        st.find('#template-title').removeAttr('id','').html(ds.title +'<br/><small>Added: '+ds.date+'</small>');
+        st.find('#template-image').attr('src',ds.thumbnail);
+        ds_panel.append(st);
+
+        var link = $('#'+link_name);
+        link.click({ds:ds}, function(e){ //binding the appropriate object to the click action
+            load_dataset(e.data.ds);
+        })
+    }
+
 }
+
 function setup_labels() {
 
     var palette = [
@@ -50,37 +148,18 @@ function setup_labels() {
     }
 
     plx.LABELS = new plx.LabelSet(labels);
+    var labels = plx.LABELS.getLabels();
+    BRUSH.setLabelID(labels[0].id);
+};
 
-    LABELS = plx.LABELS.getLabels();
-
-    BRUSH.setLabelID(LABELS[0].id);
-
-}
 function setup_top_menu() {
     $('#datasets-menu-id').click(function () {
         $('#navbar').collapse('hide');
         show_dataset_selection_layout();
     });
-}
+};
+
 function setup_file_uploader() {
-
-    //-------------------------------------------------------------------------------------
-    //@TODO: remove hardcode. This section must be generated automatically from a database
-    var spinal_dataset_link = $('#spinal-dataset-link-id');
-    spinal_dataset_link.click(function () {
-        ld_dataset('spinal-phantom');
-    });
-
-    var brain_dataset_link = $('#brain-dataset-link-id');
-    brain_dataset_link.click(function () {
-        ld_dataset('brain-example');
-    });
-
-    var liver_dataset_link = $('#liver-dataset-link-id');
-    liver_dataset_link.click(function () {
-        ld_dataset('liver-example');
-    });
-    //-------------------------------------------------------------------------------------
 
     var selectDialogLink = $('#file-uploader-link-id');
 
@@ -103,7 +182,7 @@ function setup_file_uploader() {
 
     function handleFiles(ev) {
         var files = ev.target.files;
-        ld_dataset('local', files);
+        load_dataset('local', files);
     }
 
     fileSelector.addEventListener('change', handleFiles, false);
@@ -113,39 +192,24 @@ function setup_file_uploader() {
 /*-----------------------------------------------------------------------------------------------
  LOAD DATASET
  ------------------------------------------------------------------------------------------------*/
-function ld_dataset(kind, files) {
+function load_dataset(ds, files) {
     VIEW.reset();
     VIEW.render();
 
+    console.debug(ds);
     show_annotation_layout();
 
     var dataset = undefined;
 
-    if (kind == 'spinal-phantom') {
-        dataset = new plx.Dataset('data/ds_us_1', plx.Dataset.SELECT_INDEXED, {
-            'start': 1,
-            'end'  : 400,
-            'step' : 1
+    if (ds == 'local') {
+        dataset = new plx.Dataset('local', plx.Dataset.SELECT_LOCAL, {files: files});
+    }
+    else{
+        dataset = new plx.Dataset(ds.data, ds.type,{
+            'start':ds.start,
+            'end':ds.end,
+            'step':ds.step
         });
-    }
-    if (kind == 'brain-example') {
-        dataset = new plx.Dataset('data/mri_brain_tumour', plx.Dataset.SELECT_INDEXED, {
-            'start': 1,
-            'end'  : 1,
-            'step' : 1
-        })
-    }
-    if (kind == 'liver-example') {
-        dataset = new plx.Dataset('data/liver_metastases', plx.Dataset.SELECT_INDEXED, {
-            'start': 1,
-            'end'  : 1,
-            'step' : 1
-        })
-    }
-    else {
-        if (kind == 'local') {
-            dataset = new plx.Dataset('local', plx.Dataset.SELECT_LOCAL, {files: files});
-        }
     }
 
     gui.progressbar.clear().show();
@@ -170,6 +234,7 @@ function ld_dataset_callback(dataset) {
  ------------------------------------------------------------------------------------------------*/
 function initPlexo() {
 
+    populate_selection_layout();
     show_dataset_selection_layout();
 
     setup_file_uploader();

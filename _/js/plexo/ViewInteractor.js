@@ -54,6 +54,7 @@ plx.ViewInteractor.prototype.connectView = function () {
 
     document.onkeyup = function (ev) { interactor.onKeyUp(ev);}
 
+
 };
 
 plx.ViewInteractor.prototype.addObserver = function (observer, kind) {
@@ -164,6 +165,8 @@ plx.ViewInteractor.prototype.onKeyUp = function(ev){
         this.notify(plx.EV_OPERATION_CHANGED, {'operation': this.last_operation});
     }
 };
+
+
 
 plx.ViewInteractor.prototype.onDoubleClick = function (ev) {
     ev.preventDefault();

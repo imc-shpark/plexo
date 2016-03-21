@@ -181,7 +181,7 @@ gui.BrushDialog.prototype.update_brush_preview = function () {
 gui.BrushDialog.prototype.update_color_picker = function () {
 
     var brush_dialog = this;
-    var labels       = LABELS;
+    var labels       = plx.LABELS.getLabels();
     var widget       = $('#brush-color-id');
 
     //Custom code to setup the color picker
@@ -200,7 +200,7 @@ gui.BrushDialog.prototype.update_color_picker = function () {
     //Setting the current label id
 
     if (BRUSH.label_id == undefined) {
-        BRUSH.setLabelID(LABELS[0].id);
+        BRUSH.setLabelID(labels[0].id);
         this._current_label_text.html(BRUSH.getLabelName());
     }
     else {
@@ -229,7 +229,6 @@ gui.BrushDialog.prototype.loadLabels = function(){
             var json_object = JSON.parse(e.target.result);
 
             plx.LABELS = new plx.LabelSet(undefined, json_object);
-            LABELS = plx.LABELS.getLabels();
             self.update_color_picker();
         }
         catch(ex){

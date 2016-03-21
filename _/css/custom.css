@@ -116,6 +116,12 @@
     width:100%;
 }
 
+#plexo-tool-shape-id{
+    position:relative;
+    height:100%;
+    width:100%;
+}
+
 video{}
 #plexo-video-id {
     position:absolute;

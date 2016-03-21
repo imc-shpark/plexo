@@ -16,10 +16,8 @@
  * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var VIEW, BRUSH, ERASER, LABELS;
+var VIEW, BRUSH, ERASER;
 
 BRUSH  = plx.setGlobalBrush(new plx.Brush(5, 0.5, 'round'));
 ERASER = plx.setGlobalEraser(new plx.Eraser(10));
-LABELS = {};
-
 var gui = {} || gui; //gui namespace
