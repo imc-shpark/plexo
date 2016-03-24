@@ -1,0 +1,7 @@
+{"labels":[
+  {"id":1,"name":"transverse process","color":"#4986e7","r":73,"g":134,"b":231},
+  {"id":2,"name":"spinous process","color":"#a47ae2","r":164,"g":122,"b":226},
+  {"id":3,"name":"lamina","color":"#b3dc6c","r":179,"g":220,"b":108},
+  {"id":4,"name":"facet joints","color":"#fbe983","r":251,"g":233,"b":131}
+]
+}

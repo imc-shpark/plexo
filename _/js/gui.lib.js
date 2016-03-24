@@ -1718,7 +1718,8 @@ var DATASETS = [
         'end':400,
         'step':5,
         'date':'Oct 9, 2015',
-        'thumbnail':'data/ds_us_1/ds_us_1_200.png'
+        'thumbnail':'data/ds_us_1/ds_us_1_200.png',
+        'labels':'data/spine_labels.json'
     },
     {
         'title':'Spine G',
@@ -1729,7 +1730,8 @@ var DATASETS = [
         'end':660,
         'step':5,
         'date':'March 21, 2015',
-        'thumbnail':'data/ds_us_goli/ds_us_goli_330.png'
+        'thumbnail':'data/ds_us_goli/ds_us_goli_330.png',
+        'labels':'data/spine_labels.json'
 
     },
     {
@@ -1741,7 +1743,8 @@ var DATASETS = [
         'end':920,
         'step':5,
         'date':'March 21, 2015',
-        'thumbnail':'data/ds_us_jay/ds_us_jay_450.png'
+        'thumbnail':'data/ds_us_jay/ds_us_jay_450.png',
+        'labels':'data/spine_labels.json'
 
     },
     {
@@ -1772,6 +1775,13 @@ var DATASETS = [
 ];
 
 
+function load_labels(url){
+    $.getJSON(url, function(data){
+        plx.LABELS = new plx.LabelSet(undefined, data);
+    });
+
+};
+
 /*-----------------------------------------------------------------------------------------------
  SETUP FUNCTIONS
  ------------------------------------------------------------------------------------------------*/
@@ -1783,14 +1793,30 @@ function show_dataset_selection_layout() {
 
     $('#plexo-layout-canvas-id').hide();
     $('#plexo-layout-toolbar-id').hide();
+
+    $('#plexo-layout-tutorials-id').hide();
     $('#plexo-layout-datasets-id').fadeIn('slow');
+    $(document.body).css('overflow-y','auto');
 }
 function show_annotation_layout() {
     $('#plexo-layout-canvas-id').fadeIn('slow');
     $('#plexo-layout-toolbar-id').fadeIn('slow');
+
     $('#plexo-layout-datasets-id').hide();
+    $('#plexo-layout-tutorials-id').hide();
+    $(document.body).css('overflow-y','hidden');
 
 };
+
+function show_tutorials_layout(){
+    $('#plexo-layout-canvas-id').hide();
+    $('#plexo-layout-toolbar-id').hide();
+    $('#plexo-layout-datasets-id').hide();
+
+    $('#plexo-layout-tutorials-id').load('tutorial/tutorial.html');
+    $(document.body).css('overflow-y','auto');
+    $('#plexo-layout-tutorials-id').fadeIn('slow');
+}
 
 function populate_selection_layout(){
 
@@ -1821,7 +1847,7 @@ function populate_selection_layout(){
 
 }
 
-function setup_labels() {
+function setup_standard_labels() {
 
     var palette = [
         "#ac725e", "#d06b64", "#f83a22", "#fa573c", "#ff7537", "#ffad46", "#42d692",
@@ -1848,6 +1874,11 @@ function setup_top_menu() {
         $('#navbar').collapse('hide');
         show_dataset_selection_layout();
     });
+
+    $('#tutorials-menu-id').click(function(){
+        $('#navbar').collapse('hide');
+        show_tutorials_layout();
+    })
 };
 
 function setup_file_uploader() {
@@ -1883,17 +1914,23 @@ function setup_file_uploader() {
 /*-----------------------------------------------------------------------------------------------
  LOAD DATASET
  ------------------------------------------------------------------------------------------------*/
+/**
+ * The ds object is a json object that describes the dataset to be loaded. See the
+ * global variable DATASETS
+ *
+ */
 function load_dataset(ds, files) {
     VIEW.reset();
     VIEW.render();
 
-    console.debug(ds);
+    //console.debug(ds);
     show_annotation_layout();
 
     var dataset = undefined;
 
     if (ds == 'local') {
         dataset = new plx.Dataset('local', plx.Dataset.SELECT_LOCAL, {files: files});
+        setup_standard_labels();
     }
     else{
         dataset = new plx.Dataset(ds.data, ds.type,{
@@ -1901,6 +1938,13 @@ function load_dataset(ds, files) {
             'end':ds.end,
             'step':ds.step
         });
+
+        if (ds.labels){
+            load_labels(ds.labels);
+        }
+        else{
+            setup_standard_labels();
+        }
     }
 
     gui.progressbar.clear().show();
@@ -1927,11 +1971,10 @@ function initPlexo() {
 
     populate_selection_layout();
     show_dataset_selection_layout();
-
     setup_file_uploader();
-    setup_labels();
     setup_top_menu();
     setup_keyboard();
+    setup_standard_labels();
 
     VIEW = new plx.View('plexo-canvas-id');
 
