@@ -37,7 +37,7 @@ var DATASETS = [
         'type':plx.Dataset.SELECT_INDEXED,
         'start':1,
         'end':660,
-        'step':5,
+        'step':10,
         'date':'March 21, 2015',
         'thumbnail':'data/ds_us_goli/ds_us_goli_330.png',
         'labels':'data/spine_labels.json'
@@ -50,7 +50,7 @@ var DATASETS = [
         'type':plx.Dataset.SELECT_INDEXED,
         'start':1,
         'end':920,
-        'step':5,
+        'step':15,
         'date':'March 21, 2015',
         'thumbnail':'data/ds_us_jay/ds_us_jay_450.png',
         'labels':'data/spine_labels.json'
@@ -87,7 +87,11 @@ var DATASETS = [
 function load_labels(url){
     $.getJSON(url, function(data){
         plx.LABELS = new plx.LabelSet(undefined, data);
+        var labels = plx.LABELS.getLabels();
+        BRUSH.setLabelID(labels[0].id);
     });
+
+
 
 };
 

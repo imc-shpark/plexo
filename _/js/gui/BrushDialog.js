@@ -229,6 +229,8 @@ gui.BrushDialog.prototype.loadLabels = function(){
             var json_object = JSON.parse(e.target.result);
 
             plx.LABELS = new plx.LabelSet(undefined, json_object);
+            var labels = plx.LABELS.getLabels();
+            BRUSH.setLabelID(labels[0].id);
             self.update_color_picker();
         }
         catch(ex){

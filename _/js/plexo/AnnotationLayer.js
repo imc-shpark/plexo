@@ -43,6 +43,7 @@ plx.AnnotationLayer = function (slice) {
 
 //Constants
 plx.AnnotationLayer.LABEL_DISTANCE_TOLERANCE = 20;
+plx.AnnotationLayer.UNDO_SIZE = 3; //number of operations to remember
 
 plx.AnnotationLayer.prototype.getFilename = function() {
     var url = this.slice.url;
@@ -141,6 +142,14 @@ plx.AnnotationLayer.prototype.loadFromImageURL = function(imageURL){
  */
 plx.AnnotationLayer.prototype.saveUndoStep = function () {
     this.undo_history.push(this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height));
+
+    console.debug('saving op for undo. current history size ['+this.undo_history.length+']');
+
+    if (this.undo_history.length>plx.AnnotationLayer.UNDO_SIZE){
+        this.undo_history.shift(); //forget the oldest memory
+        console.debug('forgetting oldest memory. New size ['+this.undo_history.length+']');
+    }
+
 };
 
 /**

@@ -164,11 +164,14 @@ plx.AnnotationSet.prototype.getAnnotation = function (slice) {
 
     if (!(key in this.annotations)) {
         aslice                = new plx.AnnotationLayer(slice);
+        aslice.setView(this.view); //fixes bug on loading annotations dialog
+
         this.annotations[key] = aslice;
     }
     else {
         aslice = this.annotations[key];
     }
+
     return aslice;
 };
 

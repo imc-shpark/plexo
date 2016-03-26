@@ -338,6 +338,8 @@ gui.BrushDialog.prototype.loadLabels = function(){
             var json_object = JSON.parse(e.target.result);
 
             plx.LABELS = new plx.LabelSet(undefined, json_object);
+            var labels = plx.LABELS.getLabels();
+            BRUSH.setLabelID(labels[0].id);
             self.update_color_picker();
         }
         catch(ex){
@@ -1728,7 +1730,7 @@ var DATASETS = [
         'type':plx.Dataset.SELECT_INDEXED,
         'start':1,
         'end':660,
-        'step':5,
+        'step':10,
         'date':'March 21, 2015',
         'thumbnail':'data/ds_us_goli/ds_us_goli_330.png',
         'labels':'data/spine_labels.json'
@@ -1741,7 +1743,7 @@ var DATASETS = [
         'type':plx.Dataset.SELECT_INDEXED,
         'start':1,
         'end':920,
-        'step':5,
+        'step':15,
         'date':'March 21, 2015',
         'thumbnail':'data/ds_us_jay/ds_us_jay_450.png',
         'labels':'data/spine_labels.json'
@@ -1778,7 +1780,11 @@ var DATASETS = [
 function load_labels(url){
     $.getJSON(url, function(data){
         plx.LABELS = new plx.LabelSet(undefined, data);
+        var labels = plx.LABELS.getLabels();
+        BRUSH.setLabelID(labels[0].id);
     });
+
+
 
 };
 

@@ -52,7 +52,11 @@ plx.ViewInteractor.prototype.connectView = function () {
     canvas.addEventListener('touchend', function (ev) { interactor.onTouchEnd(ev); }, false);
 
 
+    canvas.addEventListener('contextmenu',function(ev){ ev.preventDefault();});
+
     document.onkeyup = function (ev) { interactor.onKeyUp(ev);}
+
+
 
 
 };
@@ -178,13 +182,23 @@ plx.ViewInteractor.prototype.onDoubleClick = function (ev) {
 };
 
 plx.ViewInteractor.prototype.onMouseDown = function (ev) {
+
+    ev.preventDefault();
+
     this.initX = plx.COORDINATES.X;
     this.initY = plx.COORDINATES.Y;
 
     var coords = this._getCanvasCoordinates(ev.clientX, ev.clientY);
 
-
     this.action_paintBucket_long_press(coords[0], coords[1], 1000);
+
+    if (ev.which == 3 && plx.CURRENT_OPERATION == plx.OP_ANNOTATE){ //ADDED FEATURE (Suggested by JBaxter, delete with right click):
+        plx.setCurrentOperation(plx.OP_DELETE);
+        this._brief_mouse_deletion = true;
+    }
+    else{
+        this._brief_mouse_deletion = false;
+    }
 
     switch (plx.CURRENT_OPERATION) {
         case plx.OP_ANNOTATE:
@@ -256,9 +270,11 @@ plx.ViewInteractor.prototype.onMouseUp = function (ev) {
 
             }
             break;
+    }
 
-
-
+    if (plx.CURRENT_OPERATION == plx.OP_DELETE && this._brief_mouse_deletion){
+        plx.setCurrentOperation(plx.OP_ANNOTATE);
+        this._brief_mouse_deletion = false;
     }
 };
 
