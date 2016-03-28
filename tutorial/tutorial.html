@@ -17,7 +17,8 @@
 	<link href="../_/css/animate.css" rel="stylesheet">
 	<link href="../_/css/style.css" rel="stylesheet">
 	<link href="../_/css/custom.css" rel="stylesheet">
-	<link href="../_/css/tutorial.css" rel="stylesheet">
+
+	<link href="../tutorial/css/tutorial.css" rel="stylesheet">
 	<link href="../tutorial/css/desert.css" rel="stylesheet">
 
 	<script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
@@ -46,7 +47,7 @@
 
 			<h2>The toolbar</h2>
 			<figure>
-				<img src="tutorial/img/toolbar.png"/>
+				<img src="tutorial/img/toolbar.png" class="img-responsive"/>
 				<figcaption>Plexo's toolbar</figcaption>
 			</figure>
 
@@ -87,14 +88,14 @@
 				the first label in the active palette will be selected. The selected label appears in the status bar, as shown in the following figure:
 			</p>
 			<figure>
-				<img src="tutorial/img/selected_label.png"/>
+				<img src="tutorial/img/selected_label.png" class="img-responsive"/>
 				<figcaption>Selecting the brush for the first time activates the first available label</figcaption>
 			</figure>
 			<p>The label can be changed using the numeric keys 1-9, which will allow quick switching between the first nine labels. Otherwise,
 			   the label can be changed by double-clicking/double-tapping on the brush button. This will open up the brush options dialog:</p>
 
 			<figure>
-				<img src="tutorial/img/brush_options.png"/>
+				<img src="tutorial/img/brush_options.png" class="img-responsive"/>
 				<figcaption>
 					Brush options. The size, shape and opacity of the current brush can be set. Also, the complete label set
 					is available here. This palette can be customized for each dataset with a label set definition file in JSON format (Load Labels option).
@@ -106,28 +107,24 @@
 			<h2>Defining your own label set (Loading Labels)</h2>
 
 			<p>A customized labelset can be specified in a JSON format as shown in the snippet below:</p>
-			<pre class="prettyprint">
-			<code>
-				{
-					"labels": [
-						{
-							"id": 1,
-							"name": "transverse process",
-							"color": "#4986e7"
-						},
+			<pre class="prettyprint"><code>{
+	"labels": [
+		{
+			"id": 1,
+			"name": "transverse process",
+			"color": "#4986e7"
+		},
 
-						{
-							"id": 2,
-							"name": "spinous process",
-							"color": "#a47ae2"
-						},
+		{
+			"id": 2,
+			"name": "spinous process",
+			"color": "#a47ae2"
+		},
 
-						...
+		...
 
-					]
-				}
-			</code>
-		</pre>
+	]
+}</code></pre>
 
 			<p> The expected format for customized labels in JSON is an object that contains a list named <b>labels</b>.
 				Each element of this list is an object with three attributes: <u>id</u>, <u>name</u>, and <u>color</u>.
