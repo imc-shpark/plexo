@@ -18,13 +18,8 @@
 
 gui.DatasetProgressbar = function(view){
   this.view = view;
-  this.bar =  $('#dataset-progress-bar-id');
+  this.bar =  $('#dataset-progressbar-id');
   this.container =  $('#dataset-progressbar-container-id');
-};
-
-gui.DatasetProgressbar.prototype.clear = function(){
-   this.bar.css('width', 0 + '%').attr('aria-valuenow', 0);
-   return this;
 };
 
 gui.DatasetProgressbar.prototype.show = function(){
@@ -39,4 +34,10 @@ gui.DatasetProgressbar.prototype.hide = function(){
 
 gui.DatasetProgressbar.prototype.update = function(value){
     this.bar.css('width', value + '%').attr('aria-valuenow', value);
+    this.bar.html(Math.round(value)+'%');
+};
+
+gui.DatasetProgressbar.prototype.clear = function(){
+    this.bar.css('width', 0 + '%').attr('aria-valuenow', 0);
+    return this;
 };

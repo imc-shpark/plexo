@@ -332,3 +332,7 @@ border: 1px solid #ccc;
     height:280px;
     background: #ccc;
 }
+
+#dataset-progressbar-container-id{
+    background-color:#191919 !important;
+}

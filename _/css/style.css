@@ -3867,7 +3867,7 @@ table.table-mail tr td {
   background-color: #1c84c6;
 }
 .progress-bar-info {
-  background-color: #52c85a;
+  background-color: rgba(71, 164, 81, 0.8);
 }
 .progress-bar-warning {
   background-color: #f8ac59;
@@ -7995,6 +7995,8 @@ body.md-skin {
   position: fixed;
   display: none;
 }
+
+
 @media (min-width: 768px) {
   #page-wrapper {
     position: inherit;
