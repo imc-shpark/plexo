@@ -1,0 +1,8 @@
+figure img{
+    margin:auto;
+    display:block;
+}
+
+figcaption{
+    font-style: italic;
+}
