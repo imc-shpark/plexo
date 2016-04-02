@@ -1,4 +1,4 @@
-## Plexo: an online tool for medical image segmentation
+## Plexo: an online tool to annotate medical images
 
 Welcome to Plexo, an online tool for medical image segmentation. Please visit my [online demo] (http://plexo.link) where you 
 will find some toy examples. Plexo is distributed under the GNU General Public License version 3.
