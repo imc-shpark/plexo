@@ -1,4 +1,7 @@
 /**
+ * Created by dcantor on 14/04/16.
+ */
+/**
  * This file is part of PLEXO
  *
  * Author: Diego Cantor
@@ -16,10 +19,16 @@
  * along with PLEXO.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var VIEW, BRUSH, ERASER;
+/**
+ * A reader parses a file and creates a dataset
+ * @constructor
+ */
+gui.reader.MetaImageReader = function(){
 
-BRUSH  = plx.setGlobalBrush(new plx.Brush(5, 0.5, 'round'));
-ERASER = plx.setGlobalEraser(new plx.Eraser(10));
+};
 
-var gui = {} || gui; //gui namespace
-gui.reader = {} || gui.reader; //gui.reader namespace
+gui.reader.MetaImageReader.prototype.read = function(file_object){
+
+    //@TODO: read the file object and creates an ordered list of png files corresponding to the series  defined in the mha file.
+
+};

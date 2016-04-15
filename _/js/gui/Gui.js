@@ -22,10 +22,10 @@ var DATASETS = [
         'title':'Spine Phantom #1',
         'name':'spinal-phantom',
         'data':'data/ds_us_1',
-        'type': plx.Dataset.SELECT_INDEXED,
+        'type': plx.Dataset.STORAGE_REMOTE,
         'start':1,
         'end':400,
-        'step':5,
+        'step':1,
         'date':'Oct 9, 2015',
         'thumbnail':'data/ds_us_1/ds_us_1_200.png',
         'labels':'data/spine_labels.json'
@@ -34,7 +34,7 @@ var DATASETS = [
         'title':'Spine G',
         'name':'spine-g',
         'data':'data/ds_us_goli',
-        'type':plx.Dataset.SELECT_INDEXED,
+        'type':plx.Dataset.STORAGE_REMOTE,
         'start':1,
         'end':660,
         'step':10,
@@ -47,7 +47,7 @@ var DATASETS = [
         'title':'Spine J',
         'name':'spine-j',
         'data':'data/ds_us_jay',
-        'type':plx.Dataset.SELECT_INDEXED,
+        'type':plx.Dataset.STORAGE_REMOTE,
         'start':1,
         'end':920,
         'step':15,
@@ -60,7 +60,7 @@ var DATASETS = [
         'title':'Brain Tumour Example',
         'name':'brain-example',
         'data':'data/mri_brain_tumour',
-        'type': plx.Dataset.SELECT_INDEXED,
+        'type': plx.Dataset.STORAGE_REMOTE,
         'start':1,
         'end':1,
         'step':1,
@@ -71,7 +71,7 @@ var DATASETS = [
         'title':'Liver Metastases Example',
         'name':'liver-example',
         'data':'data/liver_metastases',
-        'type':plx.Dataset.SELECT_INDEXED,
+        'type':plx.Dataset.STORAGE_REMOTE,
         'start':1,
         'end':1,
         'step':1,
@@ -101,8 +101,10 @@ function load_labels(url){
 
 function show_dataset_selection_layout() {
 
+
     if (VIEW) VIEW.reset(); // important! removes all the information in memory from the view when we are about to
-                  // select a new dataset
+        // select a new dataset
+
 
     $('#plexo-layout-canvas-id').hide();
     $('#plexo-layout-toolbar-id').hide();
@@ -110,7 +112,8 @@ function show_dataset_selection_layout() {
     $('#plexo-layout-tutorials-id').hide();
     $('#plexo-layout-datasets-id').fadeIn('slow');
     $(document.body).css('overflow-y','auto');
-}
+};
+
 function show_annotation_layout() {
     $('#plexo-layout-canvas-id').fadeIn('slow');
     $('#plexo-layout-toolbar-id').fadeIn('slow');
@@ -217,12 +220,17 @@ function setup_file_uploader() {
 
     function handleFiles(ev) {
         var files = ev.target.files;
+
+        /*
+        * @TODO: check the type of file and invoke the appropriate reader. The reader must return
+        * an array of png files. We should be able to read zip, mha for instance.
+        */
+
         load_dataset('local', files);
     }
 
     fileSelector.addEventListener('change', handleFiles, false);
-
-}
+};
 
 /*-----------------------------------------------------------------------------------------------
  LOAD DATASET
@@ -242,7 +250,7 @@ function load_dataset(ds, files) {
     var dataset = undefined;
 
     if (ds == 'local') {
-        dataset = new plx.Dataset('local', plx.Dataset.SELECT_LOCAL, {files: files});
+        dataset = new plx.Dataset('local', plx.Dataset.STORAGE_LOCAL, {files: files});
         setup_standard_labels();
     }
     else{
@@ -261,7 +269,10 @@ function load_dataset(ds, files) {
     }
 
     gui.progressbar.clear().show();
-    VIEW.load(dataset, ld_dataset_callback);
+
+    VIEW.load(dataset, ld_dataset_callback); //The view is internally notified as the dataset is progressive loaded
+                                             //Every time that a new slice is loaded, the ld_dataset_callback is invoked
+                                             //This allows the gui to update the progress bar.
 }
 
 function ld_dataset_callback(dataset) {
@@ -303,10 +314,18 @@ function initPlexo() {
     gui.progressbar      = new gui.DatasetProgressbar(VIEW);
     //gui.viewer3d         = new gui.Viewer3D(VIEW);
 
-}
+};
+
 /*-----------------------------------------------------------------------------------------------
- GLOBAL METHODS - WINDOW OBJECT
+ - UGLY (BUT CONVENIENT) GUI HACKS - LETS KEEP IT TO A MINIMUM HERE
  ------------------------------------------------------------------------------------------------*/
+/*-----------------------------------------------------------------------------------------------
+ * AUTOMATICALLY RESIZE CANVAS SIZE TO WINDOW SIZE (OR IPAD ORIENTATION).
+ *
+ * Resizes the view only AFTER the user is done resizing the window
+ *
+ * @see http://alvarotrigo.com/blog/firing-resize-event-only-once-when-resizing-is-finished/
+ -----------------------------------------------------------------------------------------------*/
 function update_canvas_size() {
 
     if (VIEW == undefined) return;
@@ -408,22 +427,29 @@ function update_canvas_size() {
 
     view.render();
 }
-/**
+
+
+/*-----------------------------------------------------------------------------------------------
+ * INSERT DELAY TO RESIZE CANVAS
+ *
  * Resizes the view only AFTER the user is done resizing the window
  *
  * @see http://alvarotrigo.com/blog/firing-resize-event-only-once-when-resizing-is-finished/
- */
+ -----------------------------------------------------------------------------------------------*/
 var resize_timeout_id;
 window.addEventListener('resize', function () {
     clearTimeout(resize_timeout_id);
     resize_timeout_id = setTimeout(update_canvas_size, 500);
 });
 
-/**
+
+/*-----------------------------------------------------------------------------------------------*/
+/* CENTER MODAL DIALOGS:
+ *
  * Center modal dialogs in screen
  * Credit for this elegant solution to keep the modals centered goes to Cory LaViska
  * http://www.abeautifulsite.net/vertically-centering-bootstrap-modals/
- */
+ *-----------------------------------------------------------------------------------------------*/
 $(function () {
     function reposition() {
         var modal  = $(this),
@@ -443,9 +469,11 @@ $(function () {
     });
 });
 
-/**
+/*-----------------------------------------------------------------------------------------------
+ * DEACTIVATE REGIONS OF THE INTERFACE THAT SHOULD NOT REACT TO TOUCH:
+ *
  * Deactivate global touch events (tested on ipad so far)
- */
+ *-----------------------------------------------------------------------------------------------*/
 document.body.ontouchmove = function (event) {
     if (event.touches.length >= 2) {
         event.preventDefault();

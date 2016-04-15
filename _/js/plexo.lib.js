@@ -422,6 +422,9 @@ plx.Slice = function (dataset, filename, index, file_object) {
 
 };
 
+/**
+ * Loads the slice from a local file. In most cases the file is a png file.
+ */
 plx.Slice.prototype.load_local = function () {
 
     var slice = this;
@@ -469,8 +472,8 @@ plx.Slice.prototype.load_remote = function () {
  */
 plx.Slice.prototype.load = function () {
 
-    switch(this.dataset.select){
-        case plx.Dataset.SELECT_LOCAL: this.load_local();break;
+    switch(this.dataset.storage){
+        case plx.Dataset.STORAGE_LOCAL: this.load_local();break;
         default: this.load_remote(); break;
     }
 };
@@ -661,11 +664,11 @@ plx.VideoDelegate.prototype.renderFrame = function () {
  Dataset
  ------------------------------------------------------------------------------------------------*/
 
-plx.Dataset = function (url, select, options) {
+plx.Dataset = function (url, storage, options) {
 
     this.url = url;
 
-    this.select  = select;
+    this.storage = storage;
     this.options = options;
     this.slices  = []; //to do set operations
     
@@ -679,11 +682,8 @@ plx.Dataset = function (url, select, options) {
 
 
 
-plx.Dataset.SELECT_LOCAL   = 'local';
-plx.Dataset.SELECT_ALL     = 'all';
-plx.Dataset.SELECT_SINGLE  = 'single';
-plx.Dataset.SELECT_INDEXED = 'indexed';
-
+plx.Dataset.STORAGE_LOCAL  = 'LOCAL';
+plx.Dataset.STORAGE_REMOTE = 'REMOTE';
 
 plx.Dataset.prototype.setView = function(view){
     this.view = view;
@@ -703,13 +703,18 @@ plx.Dataset.prototype._parseURL = function () {
     this.name =  this.url.substr(this.url.lastIndexOf('/') + 1);
 };
 
+/**
+ * Internal method that populates a dataset. Called in the constructor. The type of storage (LOCAL or REMOTE)
+ * determines how the dataset is created. In any case, the task is delegated to each slice.
+ * @private
+ */
 plx.Dataset.prototype._populate = function () {
 
-    switch (this.select) {
-        case plx.Dataset.SELECT_INDEXED:
-            this._populateIndexed();
+    switch (this.storage) {
+        case plx.Dataset.STORAGE_REMOTE:
+            this._populateRemote();
             break;
-        case plx.Dataset.SELECT_LOCAL:
+        case plx.Dataset.STORAGE_LOCAL:
             this._populateLocal();
             break;
         default:
@@ -718,13 +723,11 @@ plx.Dataset.prototype._populate = function () {
 };
 
 /**
- * Look for files in the given dataset folder (url) whose name is equal to the dataset with the suffix '_i.png</i>
- * where 'i' is a number.
- *
- * An indexed dataset requires a start, step and end parameters to be passed in the options (see constructor).
- *
+ * Uses the options passed as a parameter to the constructor of the dataset
+ * to construct one url (filename) per slice. Then calls addSlice which will use ajax to
+ * populate itself with the provided url (image).
  */
-plx.Dataset.prototype._populateIndexed = function () {
+plx.Dataset.prototype._populateRemote = function () {
 
     var step  = this.options.step;
     var start = this.options.start;
@@ -744,7 +747,7 @@ plx.Dataset.prototype._populateIndexed = function () {
     for (var index = start; index <= end; index = index + step) {
 
         var filename = baseurl.substr(baseurl.lastIndexOf('/') + 1) + '_' + index + '.png';
-        this.addSlice(filename, index);
+        this.addSlice(filename, index); //loads a slice from the filename
     }
 
     this.num_items  = this.slices.length;
@@ -753,7 +756,13 @@ plx.Dataset.prototype._populateIndexed = function () {
     console.debug('dataset url: ' + this.url + ', number items: ' + this.num_items);
 };
 
-
+/**
+ * Assumes that a list of HTML5 File objects have been passed as part of the parameters
+ * (options.files) in the constructor of the dataset.
+ * Uses such list to populate slices. In turn, each slice useas a FileReader to load the
+ * image from the given file.
+ * @private
+ */
 plx.Dataset.prototype._populateLocal = function(){
     var dataset = this;
     var files = this.options.files;
@@ -765,7 +774,7 @@ plx.Dataset.prototype._populateLocal = function(){
     this.num_loaded = 0;
 
     for (var i= 0, f; f = files[i]; i++){
-        this.addSlice(f.name, i+1, f); //one-based indexes rememeber
+        this.addSlice(f.name, i+1, f); // Loads a slice with the HTML5 File object, one-based indexes rememeber
     }
 };
 

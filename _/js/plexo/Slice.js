@@ -40,6 +40,9 @@ plx.Slice = function (dataset, filename, index, file_object) {
 
 };
 
+/**
+ * Loads the slice from a local file. In most cases the file is a png file.
+ */
 plx.Slice.prototype.load_local = function () {
 
     var slice = this;
@@ -87,8 +90,8 @@ plx.Slice.prototype.load_remote = function () {
  */
 plx.Slice.prototype.load = function () {
 
-    switch(this.dataset.select){
-        case plx.Dataset.SELECT_LOCAL: this.load_local();break;
+    switch(this.dataset.storage){
+        case plx.Dataset.STORAGE_LOCAL: this.load_local();break;
         default: this.load_remote(); break;
     }
 };
