@@ -128,8 +128,9 @@ plx.Dataset.prototype._populateLocal = function(){
     this.num_items = files.length;
     this.num_loaded = 0;
 
-    for (var i= 0, f; f = files[i]; i++){
-        this.addSlice(f.name, i+1, f); // Loads a slice with the HTML5 File object, one-based indexes rememeber
+    for (var i= 0, f; file = files[i]; i++){
+        this.addSlice(file.name, i+1, file); // Loads a slice with the HTML5 File object, one-based indexes rememeber
+                                             // file can also be a HTML5 Image
     }
 };
 

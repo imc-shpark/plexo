@@ -36,6 +36,7 @@
 //@koala-append "DatasetProgressbar.js"
 //@koala-append "Viewer3D.js"
 //@koala-append "Gui.js"
+//@koala-append "reader/ReaderManager.js"
 //@koala-append "reader/MetaImageReader.js"
 
 

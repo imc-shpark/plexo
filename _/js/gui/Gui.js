@@ -219,14 +219,54 @@ function setup_file_uploader() {
     });
 
     function handleFiles(ev) {
+
         var files = ev.target.files;
+        var N = files.length;
 
-        /*
-        * @TODO: check the type of file and invoke the appropriate reader. The reader must return
-        * an array of png files. We should be able to read zip, mha for instance.
-        */
+        var ext = files[0].name.substr(files[0].name.lastIndexOf('.')+1);
 
-        load_dataset('local', files);
+        //-----------------------------------------------------------------------------------
+        //handle special cases:
+        //-----------------------------------------------------------------------------------
+        if (N == 1 && (ext == 'mp4' || ext == 'png')){
+            load_dataset('local', files);
+            return;
+        }
+        else if (N > 1 && ext == 'png'){
+            var all_png = false;
+            //check that all the files are png
+            for (var i; i<N;i+=1){
+                var this_ext = files[i].name.substr(files[i].name.lastIndexOf('.')+1);
+                all_png = (ext == this_ext);
+            }
+            if (all_png){
+                load_dataset('local', files)
+            }
+            else{
+                alert('Please select only one type of file to load at once');
+            }
+            return;
+
+        }
+
+        //-----------------------------------------------------------------------------------
+        // STANDARD CASE
+        // This should be the standard case. At some point we need to get rid of special cases and use
+        //this mechanism.
+        //-----------------------------------------------------------------------------------
+        var reader_callback = function(image_list){
+            load_dataset('local',image_list);
+        };
+
+
+        for (var j=0;j<N;j+=1){
+            var file = files[j];
+            var ext = file.name.substr(file.name.lastIndexOf('.')+1);
+            var reader = gui.reader.ReaderManager.getInstance().getReader(ext);
+            if (reader) {
+                reader.read(file,reader_callback);
+            }
+        }
     }
 
     fileSelector.addEventListener('change', handleFiles, false);

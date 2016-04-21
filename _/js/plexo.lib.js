@@ -405,7 +405,15 @@ plx.setGlobalEraser = function (eraser) {
 plx.Slice = function (dataset, filename, index, file_object) {
 
     this.dataset  = dataset;
-    this.filename = filename;
+
+
+    if (filename.trim().length == 0){
+        this.filename = 'slice_'+index;
+    }
+    else{
+        this.filename = filename;
+    }
+
     this.name     = filename.replace(/\.[^/.]+$/,"");
 
     this.index    = index;
@@ -424,6 +432,7 @@ plx.Slice = function (dataset, filename, index, file_object) {
 
 /**
  * Loads the slice from a local file. In most cases the file is a png file.
+ *
  */
 plx.Slice.prototype.load_local = function () {
 
@@ -434,15 +443,22 @@ plx.Slice.prototype.load_local = function () {
         slice.dataset.onLoadSlice(slice);
     }
     else {
-
-        var reader    = new FileReader();
-        reader.onload = function (e) {
-            slice.image.src = reader.result;
+        if (this.file_object instanceof File) {
+            var reader    = new FileReader();
+            reader.onload = function (e) {
+                slice.image.src = reader.result;
+                if (slice.dataset != undefined) {
+                    slice.dataset.onLoadSlice(slice);
+                }
+            };
+            reader.readAsDataURL(this.file_object);
+        }
+        else if (this.file_object instanceof Image){
+            slice.image = this.file_object;
             if (slice.dataset != undefined) {
                 slice.dataset.onLoadSlice(slice);
             }
-        };
-        reader.readAsDataURL(this.file_object);
+        }
     }
 
 
@@ -773,8 +789,9 @@ plx.Dataset.prototype._populateLocal = function(){
     this.num_items = files.length;
     this.num_loaded = 0;
 
-    for (var i= 0, f; f = files[i]; i++){
-        this.addSlice(f.name, i+1, f); // Loads a slice with the HTML5 File object, one-based indexes rememeber
+    for (var i= 0, f; file = files[i]; i++){
+        this.addSlice(file.name, i+1, file); // Loads a slice with the HTML5 File object, one-based indexes rememeber
+                                             // file can also be a HTML5 Image
     }
 };
 
