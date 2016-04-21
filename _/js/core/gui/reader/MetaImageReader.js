@@ -52,6 +52,7 @@ gui.reader.MetaImageReader.prototype.read = function(file_object, callback_funct
 
 
     freader.onloadend = function(){
+        gui.f.mouseWait(false);
         var result = freader.result;
         console.debug('mha file has been loaded');
 
@@ -138,6 +139,8 @@ gui.reader.MetaImageReader.prototype.read = function(file_object, callback_funct
         console.timeEnd('Processing RAW');
         callback_function(image_list);
     };
+
+    gui.f.mouseWait(true);
     freader.readAsText(file_object);
 };
 

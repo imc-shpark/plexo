@@ -1715,6 +1715,9 @@ gui.Viewer3D.prototype._setup_webgl = function(){
  */
 
 
+/*-----------------------------------------------------------------------------------------------
+ SECTION 1 - HOSTED DATASETS
+ ------------------------------------------------------------------------------------------------*/
 var DATASETS = [
     {
         'title':'Spine Phantom #1',
@@ -1781,20 +1784,8 @@ var DATASETS = [
 
 ];
 
-
-function load_labels(url){
-    $.getJSON(url, function(data){
-        plx.LABELS = new plx.LabelSet(undefined, data);
-        var labels = plx.LABELS.getLabels();
-        BRUSH.setLabelID(labels[0].id);
-    });
-
-
-
-};
-
 /*-----------------------------------------------------------------------------------------------
- SETUP FUNCTIONS
+ SECTION 2 - GUI SETUP FUNCTIONS
  ------------------------------------------------------------------------------------------------*/
 
 function show_dataset_selection_layout() {
@@ -1971,7 +1962,7 @@ function setup_file_uploader() {
 };
 
 /*-----------------------------------------------------------------------------------------------
- LOAD DATASET
+ SECTION 3 - LOAD DATASETS/LABELS
  ------------------------------------------------------------------------------------------------*/
 /**
  * The ds object is a json object that describes the dataset to be loaded. See the
@@ -2026,8 +2017,18 @@ function ld_dataset_callback(dataset) {
         });
     }
 }
+
+function load_labels(url){
+    $.getJSON(url, function(data){
+        plx.LABELS = new plx.LabelSet(undefined, data);
+        var labels = plx.LABELS.getLabels();
+        BRUSH.setLabelID(labels[0].id);
+    });
+};
+
+
 /*-----------------------------------------------------------------------------------------------
- MAIN
+ SECTION 4 - ENTRY POINT
  ------------------------------------------------------------------------------------------------*/
 function initPlexo() {
 
@@ -2055,8 +2056,27 @@ function initPlexo() {
 };
 
 /*-----------------------------------------------------------------------------------------------
- - UGLY (BUT CONVENIENT) GUI HACKS - LETS KEEP IT TO A MINIMUM HERE
+ SECTION 5 - GLOBAL GUI FUNCTIONS - this is where refactored hacks come to live happily ever after
  ------------------------------------------------------------------------------------------------*/
+gui.f = {}; // namespace
+
+gui.f.mouseWait = function(flag){
+    if (flag == true) {
+        $('body').css('cursor', 'wait');
+    }
+    else {
+        $('body').css('cursor','default');
+    }
+};
+
+
+
+
+
+/*-----------------------------------------------------------------------------------------------
+  SECTION 6 - UGLY BUT CONVENIENT GUI HACKS - LETS KEEP IT TO A MINIMUM HERE
+ ------------------------------------------------------------------------------------------------*/
+
 /*-----------------------------------------------------------------------------------------------
  * AUTOMATICALLY RESIZE CANVAS SIZE TO WINDOW SIZE (OR IPAD ORIENTATION).
  *
@@ -2165,7 +2185,6 @@ function update_canvas_size() {
 
     view.render();
 }
-
 
 /*-----------------------------------------------------------------------------------------------
  * INSERT DELAY TO RESIZE CANVAS
@@ -2349,6 +2368,7 @@ gui.reader.MetaImageReader.prototype.read = function(file_object, callback_funct
 
 
     freader.onloadend = function(){
+        gui.f.mouseWait(false);
         var result = freader.result;
         console.debug('mha file has been loaded');
 
@@ -2435,6 +2455,8 @@ gui.reader.MetaImageReader.prototype.read = function(file_object, callback_funct
         console.timeEnd('Processing RAW');
         callback_function(image_list);
     };
+
+    gui.f.mouseWait(true);
     freader.readAsText(file_object);
 };
 
