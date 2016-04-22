@@ -30,6 +30,7 @@ gui.reader.MetaImageReader = function(){
     this.numSlices       = 0;
     this.headerProcessed = false;
     this.validationError = false;
+    this.loaded          = 0;
     gui.reader.ReaderManager.getInstance().register('mha', this);
 };
 
@@ -42,6 +43,7 @@ gui.reader.MetaImageReader.prototype.resetFlags = function(){
     this.headerSize      = 0;
     this.sliceSize      = 0;
     this.numSlices       = 0;
+    this.loaded          = 0;
     this.headerProcessed = false;
     this.validationError = false;
 };

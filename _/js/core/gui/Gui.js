@@ -210,7 +210,6 @@ function setup_file_uploader() {
     });
 
     function handleFiles(ev) {
-
         var files = ev.target.files;
         var N = files.length;
 
@@ -261,6 +260,9 @@ function setup_file_uploader() {
     }
 
     fileSelector.addEventListener('change', handleFiles, false);
+    fileSelector.onclick = function(){
+        this.value = null;
+    };
 };
 
 /*-----------------------------------------------------------------------------------------------
