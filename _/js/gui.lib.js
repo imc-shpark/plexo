@@ -2342,9 +2342,10 @@ gui.reader.ReaderManager = (
  * @constructor
  */
 gui.reader.MetaImageReader = function(){
+    this.header          = {};
     this.images          = [];
     this.headerSize      = 0;
-    this.sliceSize      = 0;
+    this.sliceSize       = 0;
     this.numSlices       = 0;
     this.headerProcessed = false;
     this.validationError = false;
@@ -2357,9 +2358,10 @@ gui.reader.MetaImageReader = function(){
  * Useful every time we have to read
  */
 gui.reader.MetaImageReader.prototype.resetFlags = function(){
+    this.header          = {};
     this.images          = [];
     this.headerSize      = 0;
-    this.sliceSize      = 0;
+    this.sliceSize       = 0;
     this.numSlices       = 0;
     this.loaded          = 0;
     this.headerProcessed = false;
@@ -2467,8 +2469,11 @@ gui.reader.MetaImageReader.prototype.validateHeader = function(header){
 
     if (this.validationError){ //any check can change this flag
         console.error('There have been validation errors in the header. stopping');
+        gui.f.mouseWait(false);
         throw 'There have been validation errors in the header. stopping';
     }
+
+    this.header = header; //keep a copy after validation
 };
 
 /**
@@ -2486,9 +2491,9 @@ gui.reader.MetaImageReader.prototype.readData = function(file_object,init, end){
     var num_slices = chunk_size / this.sliceSize;
     var num_slices_error = (num_slices !== parseInt(num_slices, 10)); //the chunk must have an integer number of slices
 
-
-
     if (num_slices_error){
+        gui.f.mouseWait(false);
+        console.error('MetaImageReader error reading data. chunk contains incomplete slices');
         throw 'MetaImageReader error reading data. chunk contains incomplete slices';
     }
 
@@ -2497,6 +2502,7 @@ gui.reader.MetaImageReader.prototype.readData = function(file_object,init, end){
     var index_end = ((end-this.headerSize)/ this.sliceSize)-1;
 
     console.debug('Reading [',init,',',end,'] = ', num_slices, ' slices,  from ',index_init, ' to ', index_end);
+
 
     var slice = file_object.slice(init,end);
 
@@ -2510,7 +2516,7 @@ gui.reader.MetaImageReader.prototype.readData = function(file_object,init, end){
         }
         self.loaded = self.loaded + N;
     };
-    freader.readAsText(slice);
+    freader.readAsBinaryString(slice);
 };
 
 /**
@@ -2571,6 +2577,7 @@ gui.reader.MetaImageReader.prototype.createImages = function(data){
 gui.reader.MetaImageReader.prototype.read = function(file_object, callback_function) {
 
     this.resetFlags(); // start a new reading
+    gui.f.mouseWait(true);
 
     var image_list = [];
     var header     = {};
@@ -2596,7 +2603,7 @@ gui.reader.MetaImageReader.prototype.read = function(file_object, callback_funct
 
         self.validateHeader(h);
 
-        var dims  = h['DimSize'].split(' ');
+        var dims  = h['DimSize'].replace(/ +/g,' ').split(' '); //the regexp takes care of extra spaces
 
         self.dim1 = parseInt(dims[0]);
         self.dim2 = parseInt(dims[1]);
@@ -2624,6 +2631,7 @@ gui.reader.MetaImageReader.prototype.read = function(file_object, callback_funct
         console.debug('Slices per chunk = ', slices_per_chunk);
         console.debug('Number of chunks = ', num_chunks);
         console.debug('Leftover         = ', (residual>0));
+        console.debug('---------------------------------------------------------')
 
 
         for (var k = 0; k < num_chunks; k+=1){
@@ -2643,9 +2651,12 @@ gui.reader.MetaImageReader.prototype.read = function(file_object, callback_funct
         function waitforit(){
             var checker = setInterval(function(){
                 console.debug('Images loaded ' , self.loaded, ' from ', self.numSlices);
+
                 if (self.loaded == self.numSlices){
                     clearInterval(checker);
-                    console.debug('DONE');
+                    gui.f.mouseWait(false);
+                    console.debug('MetaImage file '+file_object.name, ' DONE');
+
                     callback_function(self.images);
                 }
             },1000);
