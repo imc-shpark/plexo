@@ -409,12 +409,12 @@ plx.Slice = function (dataset, filename, index, file_object) {
 
     if (filename.trim().length == 0){
         this.filename = 'slice_'+index;
+        this.name = this.filename;
     }
     else{
         this.filename = filename;
+        this.name     = filename.replace(/\.[^/.]+$/,"");
     }
-
-    this.name     = filename.replace(/\.[^/.]+$/,"");
 
     this.index    = index;
     this.file_object = file_object;
@@ -988,8 +988,11 @@ plx.AnnotationLayer.prototype.getFilename = function() {
     var url = this.slice.url;
     url = 'A_' + url.substr(url.lastIndexOf('/')+1);
     ext = url.split('.').pop();
-    if (ext != 'png'){
+    if (ext != 'png' && url.lastIndexOf('.') != -1){
         url = url.substr(0, url.lastIndexOf('.')) + '.png';
+    }
+    else{
+        url = url + '.png';
     }
     return url;
 

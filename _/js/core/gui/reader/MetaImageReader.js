@@ -339,7 +339,7 @@ gui.reader.MetaImageReader.prototype.read = function(file_object, callback_funct
                     gui.f.mouseWait(false);
                     console.debug('MetaImage file '+file_object.name, ' DONE');
 
-                    callback_function(self.images);
+                    callback_function(self.images, file_object.name);
                 }
             },1000);
         };

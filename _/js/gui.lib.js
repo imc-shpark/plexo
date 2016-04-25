@@ -1723,7 +1723,6 @@ var DATASETS = [
         'title':'Spine Phantom #1',
         'name':'spinal-phantom',
         'data':'data/ds_us_1',
-        'type': plx.Dataset.STORAGE_REMOTE,
         'start':1,
         'end':400,
         'step':1,
@@ -1735,7 +1734,6 @@ var DATASETS = [
         'title':'Spine G',
         'name':'spine-g',
         'data':'data/ds_us_goli',
-        'type':plx.Dataset.STORAGE_REMOTE,
         'start':1,
         'end':660,
         'step':10,
@@ -1748,7 +1746,6 @@ var DATASETS = [
         'title':'Spine J',
         'name':'spine-j',
         'data':'data/ds_us_jay',
-        'type':plx.Dataset.STORAGE_REMOTE,
         'start':1,
         'end':920,
         'step':15,
@@ -1761,7 +1758,6 @@ var DATASETS = [
         'title':'Brain Tumour Example',
         'name':'brain-example',
         'data':'data/mri_brain_tumour',
-        'type': plx.Dataset.STORAGE_REMOTE,
         'start':1,
         'end':1,
         'step':1,
@@ -1772,13 +1768,11 @@ var DATASETS = [
         'title':'Liver Metastases Example',
         'name':'liver-example',
         'data':'data/liver_metastases',
-        'type':plx.Dataset.STORAGE_REMOTE,
         'start':1,
         'end':1,
         'step':1,
         'date':'Dec 7, 2015',
         'thumbnail':'data/liver_metastases/liver_metastases_1.png'
-
     }
 
 
@@ -1823,7 +1817,7 @@ function show_tutorials_layout(){
     $('#plexo-layout-tutorials-id').fadeIn('slow');
 }
 
-function populate_selection_layout(){
+function setup_selection_layout(){ //used to load remote datasets
 
 
     var ds_panel = $('#dataset-selection-panel-id');
@@ -1845,8 +1839,8 @@ function populate_selection_layout(){
         ds_panel.append(st);
 
         var link = $('#'+link_name);
-        link.click({ds:ds}, function(e){ //binding the appropriate object to the click action
-            load_dataset(e.data.ds);
+        link.click({options:ds}, function(e){ //binding the appropriate object to the click action
+            load_dataset(undefined, plx.Dataset.STORAGE_REMOTE, e.data.options);
         })
     }
 
@@ -1917,7 +1911,7 @@ function setup_file_uploader() {
         //handle special cases:
         //-----------------------------------------------------------------------------------
         if (N == 1 && (ext == 'mp4' || ext == 'png')){
-            load_dataset('local', files);
+            load_dataset(files, plx.Dataset.STORAGE_LOCAL);
             return;
         }
         else if (N > 1 && ext == 'png'){
@@ -1928,7 +1922,7 @@ function setup_file_uploader() {
                 all_png = (ext == this_ext);
             }
             if (all_png){
-                load_dataset('local', files)
+                load_dataset(files, plx.Dataset.STORAGE_LOCAL);
             }
             else{
                 alert('Please select only one type of file to load at once');
@@ -1942,8 +1936,8 @@ function setup_file_uploader() {
         // This should be the standard case. At some point we need to get rid of special cases and use
         //this mechanism.
         //-----------------------------------------------------------------------------------
-        var reader_callback = function(image_list){
-            load_dataset('local',image_list);
+        var reader_callback = function(image_list, name){
+            load_dataset(image_list, plx.Dataset.STORAGE_LOCAL,{name:name});
         };
 
 
@@ -1952,6 +1946,7 @@ function setup_file_uploader() {
             var ext = file.name.substr(file.name.lastIndexOf('.')+1);
             var reader = gui.reader.ReaderManager.getInstance().getReader(ext);
             if (reader) {
+                console.debug('Reading ',file.name);
                 reader.read(file,reader_callback);
             }
         }
@@ -1971,33 +1966,43 @@ function setup_file_uploader() {
  * global variable DATASETS
  *
  */
-function load_dataset(ds, files) {
+function load_dataset(files, storage, options) {
+
     VIEW.reset();
     VIEW.render();
 
-    //console.debug(ds);
     show_annotation_layout();
 
     var dataset = undefined;
 
-    if (ds == 'local') {
-        dataset = new plx.Dataset('local', plx.Dataset.STORAGE_LOCAL, {files: files});
-        setup_standard_labels();
+    if (storage == plx.Dataset.STORAGE_LOCAL) {
+        var url = undefined;
+        if (files.length == 1){
+            url = files[0].name;
+        }
+        else if (options.name){
+            url = options.name;
+        }
+        else {
+            url = 'local_dataset';
+        }
+        dataset = new plx.Dataset(url, plx.Dataset.STORAGE_LOCAL, {files: files});
+    }
+    else {
+        dataset = new plx.Dataset(options.data, options.type, {
+            'start': options.start,
+            'end'  : options.end,
+            'step' : options.step
+        });
+    }
+
+    if (options && options.labels){
+        load_labels(options.labels);
     }
     else{
-        dataset = new plx.Dataset(ds.data, ds.type,{
-            'start':ds.start,
-            'end':ds.end,
-            'step':ds.step
-        });
-
-        if (ds.labels){
-            load_labels(ds.labels);
-        }
-        else{
-            setup_standard_labels();
-        }
+        setup_standard_labels();
     }
+
 
     gui.progressbar.clear().show();
 
@@ -2034,7 +2039,7 @@ function load_labels(url){
  ------------------------------------------------------------------------------------------------*/
 function initPlexo() {
 
-    populate_selection_layout();
+    setup_selection_layout();
     show_dataset_selection_layout();
     setup_file_uploader();
     setup_top_menu();
@@ -2657,7 +2662,7 @@ gui.reader.MetaImageReader.prototype.read = function(file_object, callback_funct
                     gui.f.mouseWait(false);
                     console.debug('MetaImage file '+file_object.name, ' DONE');
 
-                    callback_function(self.images);
+                    callback_function(self.images, file_object.name);
                 }
             },1000);
         };
