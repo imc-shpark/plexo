@@ -291,11 +291,12 @@ function load_dataset(files, storage, options) {
         dataset = new plx.Dataset(url, plx.Dataset.STORAGE_LOCAL, {files: files});
     }
     else {
-        dataset = new plx.Dataset(options.data, options.type, {
+        dataset = new plx.Dataset(options.data, plx.Dataset.STORAGE_REMOTE,
+            {
             'start': options.start,
             'end'  : options.end,
             'step' : options.step
-        });
+            });
     }
 
     if (options && options.labels){
