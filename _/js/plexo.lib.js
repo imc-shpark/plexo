@@ -1885,19 +1885,19 @@ plx.AnnotationSet.prototype._createAnnotationLayers = function(labels, annotatio
         var slice_name = f.substr(2, f.length);
         slice_name = slice_name.replace(/\.[^/.]+$/,"");
         var slice = this.view.dataset.getSliceByName(slice_name);
-        if (slice == null){
+        if (slice == null &&
+            this.view.dataset.slices.length > 1) /* only check if there are multiple slices otherwise allow*/
+        {
             this.messages.push('No slice was found for annotation '+f);
         }
         else{
+            slice = this.view.dataset.slices[0];
             console.debug('Annotation ',f,' loaded for ', slice.name);
-
             var imageURL = annotations[f];
             var an_layer = this.getAnnotation(slice);
             an_layer.loadFromImageURL(imageURL);
             this.view.showSlice(slice);
-
         }
-
     }
 
 };
