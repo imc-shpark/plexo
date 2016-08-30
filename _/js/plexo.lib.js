@@ -986,14 +986,22 @@ plx.AnnotationLayer.UNDO_SIZE = 3; //number of operations to remember
 
 plx.AnnotationLayer.prototype.getFilename = function() {
     var url = this.slice.url;
-    url = 'A_' + url.substr(url.lastIndexOf('/')+1);
+    url = url.substr(url.lastIndexOf('/')+1);
     ext = url.split('.').pop();
-    if (ext != 'png' && url.lastIndexOf('.') != -1){
-        url = url.substr(0, url.lastIndexOf('.')) + '.png';
+
+    if (ext != 'png'){
+        if (url.lastIndexOf('.') != -1) {
+            url = 'A_[' + url.substr(0, url.lastIndexOf('.')) + '].png';
+        }
+        else{
+            url = 'A_[' + url + '].png';
+        }
     }
     else{
-        url = url + '.png';
+        url = 'A_[' + url.substr(0, url.lastIndexOf('.')) + '].png';
+
     }
+
     return url;
 
 };

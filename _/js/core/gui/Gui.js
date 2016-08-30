@@ -198,6 +198,7 @@ function setup_file_uploader() {
     var fileSelector = document.createElement('input');
     fileSelector.id  = 'file-uploader-dialog-id';
     fileSelector.setAttribute('type', 'file');
+    fileSelector.multiple = true;
     selectDialogLink.click(function () {
         fileSelector.click();
         return false;
@@ -217,14 +218,22 @@ function setup_file_uploader() {
             return;
         }
         else if (N > 1 && ext == 'png'){
-            var all_png = false;
+            var all_png = true;
             //check that all the files are png
             for (var i; i<N;i+=1){
                 var this_ext = files[i].name.substr(files[i].name.lastIndexOf('.')+1);
-                all_png = (ext == this_ext);
+                if (this_ext != 'png'){
+                    all_png = false;
+                    break;
+                }
             }
             if (all_png){
-                load_dataset(files, plx.Dataset.STORAGE_LOCAL);
+                var name = prompt('Please enter a name for this dataset','local_dataset');
+                if (name == null || name == undefined){
+                    return; //Operation cancelled by the user
+                }
+                name = name.split(' ').join('_');
+                load_dataset(files, plx.Dataset.STORAGE_LOCAL, {name:name});
             }
             else{
                 alert('Please select only one type of file to load at once');
