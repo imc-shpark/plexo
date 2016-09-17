@@ -1006,9 +1006,11 @@ gui.LoadAnnotationsDialog.prototype.uploadZipFile = function(){
 
             // if there are any error messages we show them
             var messages = self.view.annotation_set.getMessages();
+            var loaded   = self.view.annotation_set.loaded;
+            gui.f.message(loaded+ ' annotations loaded');
             if (messages.length>0) {
                 for (var i = 0; i < messages.length; i++) {
-                    self.error_message.append(messages[i] + '\n');
+                    self.error_message.append(messages[i] + "<br/>");
                 }
             }
             // otherwise the dialog is closed
@@ -1019,6 +1021,7 @@ gui.LoadAnnotationsDialog.prototype.uploadZipFile = function(){
         catch(ex){
             self.error_message.html('Error reading file ' + self.file.name+ ' : '+ ex.message);
         }
+        self.view.render()
     };
 
     reader.readAsArrayBuffer(self.file);
@@ -1084,7 +1087,6 @@ function setup_keyboard() {
         }
 
         if (slice){
-            message('slice: ' + slice);
             VIEW.render();
             VIEW.interactor.notify(plx.EV_SLICE_CHANGED, {'slice': slice}); //updates slider
         }
@@ -1284,14 +1286,17 @@ gui.SliceController.prototype._setup_slider = function(){
 
     this.slider.noUiSlider.on('slide', function(values, handle){
         var index = parseInt(values[handle]);
-        message('slice: ' +index);
         VIEW.showSliceByIndex(index);
+        gui.f.update_slice_info(index);
     });
 };
 
 gui.SliceController.prototype.processNotification = function (kind, data) {
     if (kind == plx.EV_SLICE_CHANGED) {
-        this.slider.noUiSlider.set(data.slice);
+
+        idx = data.slice; //this should be data.slice_index or simply index. TODO: change the name of the parameter in the ViewInteractor
+        this.slider.noUiSlider.set(idx);
+        gui.f.update_slice_info(idx);
     }
     else if (kind == plx.EV_DATASET_LOADED){
         this._setup_slider();
@@ -1323,6 +1328,7 @@ gui.SliceController.prototype.processNotification = function (kind, data) {
 gui.ToolbarController = function (view) {
     this.view = view;
     view.interactor.addObserver(this, plx.EV_OPERATION_CHANGED);
+    view.interactor.addObserver(this, plx.EV_SLICE_CHANGED);
     this._setup();
 };
 
@@ -1557,8 +1563,15 @@ gui.ToolbarController.prototype.update_selected_tool = function (last_used) {
 };
 
 gui.ToolbarController.prototype.processNotification = function (kind,data) {
-    var op = data.operation;
-    this.update_selected_tool(op);
+
+    if (kind == plx.EV_OPERATION_CHANGED) {
+        var op = data.operation;
+        this.update_selected_tool(op);
+    }
+    else if (kind == plx.EV_SLICE_CHANGED){
+        var slice = data.slice;
+        this.update_slice_name(slice)
+    }
 };
 
 gui.ToolbarController.prototype.update_brush = function () {
@@ -1571,6 +1584,11 @@ gui.ToolbarController.prototype.update_brush = function () {
 
 gui.ToolbarController.prototype.update_eraser = function () {
     $('#status-current-label-id').html('Eraser [' + ERASER.size + ']');
+
+};
+
+gui.ToolbarController.prototype.update_slice_name = function(idx){
+    gui.f.update_slice_info(idx);
 
 };
 
@@ -2021,6 +2039,10 @@ function load_dataset(files, storage, options) {
                                              //This allows the gui to update the progress bar.
 }
 
+/***
+ * Invoked after a dataset is loaded
+ * @param dataset
+ */
 function ld_dataset_callback(dataset) {
     var percentage = (dataset.num_loaded / dataset.num_items) * 100;
     gui.progressbar.update(percentage);
@@ -2028,6 +2050,7 @@ function ld_dataset_callback(dataset) {
     if (percentage == 100) {
         gui.progressbar.container.fadeOut(1000, function () {
             var sliceIdx = VIEW.showMiddleSlice();
+            gui.f.update_slice_info(sliceIdx);
             gui.slice.slider.noUiSlider.set(sliceIdx);
             VIEW.interactor.connectView();
             update_canvas_size();
@@ -2058,6 +2081,12 @@ function initPlexo() {
 
     VIEW = new plx.View('plexo-canvas-id');
 
+    /*
+    The global VIEW object is the main interaction point for the gui objects with the plexo module. Ideally
+    plexo should not be aware of the gui but rather commmunicate with it through by firing events that
+    can be captured by the GUI objects. This is the phillosophy behind the ViewInteractor object.
+     */
+
     gui.ctracker         = new gui.CoordinatesTracker(VIEW);
     gui.alert            = new gui.AlertController(VIEW);
     gui.slice            = new gui.SliceController(VIEW);
@@ -2086,8 +2115,17 @@ gui.f.mouseWait = function(flag){
     }
 };
 
+gui.f.update_slice_info = function(index) {
+    slice = VIEW.dataset.getSliceByIndex(index);
+    hasAnnotation = VIEW.getCurrentAnnotationLayer().empty?'[]':'[A]';
+    $('#status-current-slice-index-id').html('index: ' + index);
+    $('#status-current-slice-name-id').html(slice.name);
+    $('#status-current-annotation-id').html(hasAnnotation);
+};
 
-
+gui.f.message = function(text) {
+    document.getElementById('status-message-id').innerHTML = text;
+};
 
 
 /*-----------------------------------------------------------------------------------------------

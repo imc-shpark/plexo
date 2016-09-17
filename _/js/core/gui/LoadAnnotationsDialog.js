@@ -118,9 +118,11 @@ gui.LoadAnnotationsDialog.prototype.uploadZipFile = function(){
 
             // if there are any error messages we show them
             var messages = self.view.annotation_set.getMessages();
+            var loaded   = self.view.annotation_set.loaded;
+            gui.f.message(loaded+ ' annotations loaded');
             if (messages.length>0) {
                 for (var i = 0; i < messages.length; i++) {
-                    self.error_message.append(messages[i] + '\n');
+                    self.error_message.append(messages[i] + "<br/>");
                 }
             }
             // otherwise the dialog is closed
@@ -131,6 +133,7 @@ gui.LoadAnnotationsDialog.prototype.uploadZipFile = function(){
         catch(ex){
             self.error_message.html('Error reading file ' + self.file.name+ ' : '+ ex.message);
         }
+        self.view.render()
     };
 
     reader.readAsArrayBuffer(self.file);

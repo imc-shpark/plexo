@@ -35,8 +35,7 @@ plx.AnnotationLayer = function (slice) {
     this.undo_history = [];
     this.redo_history = [];
     this.view         = undefined;
-
-
+    this.empty        = true; //set to true the first time we start annotating here
 };
 
 
@@ -96,7 +95,8 @@ plx.AnnotationLayer.prototype.isEmpty = function () {
         if (data[i + 1] > maxG) {maxG = data[i + 1];}
         if (data[i + 2] > maxB) {maxB = data[i + 2];}
     }
-    return (maxR == maxG && maxG == maxB & maxR == 0); //nothing ?
+    this.empty = (maxR == maxG && maxG == maxB & maxR == 0); //nothing ?
+    return this.empty;
 };
 
 /**
@@ -111,6 +111,7 @@ plx.AnnotationLayer.prototype.clearAnnotations = function () {
     this.imageData    = undefined;
     this.undo_history = [];
     this.redo_history = [];
+    this.empty = true;
 };
 
 /**
@@ -141,6 +142,7 @@ plx.AnnotationLayer.prototype.loadFromImageURL = function(imageURL){
         self.ctx.drawImage(image,0,0);
         self.imageData = self.ctx.getImageData(0, 0, width, height);
         self.view.render();
+        self.empty = false;
     };
 
     image.src = imageURL; // This is necessary because loading images is asynchronous
@@ -365,6 +367,7 @@ plx.AnnotationLayer.prototype.saveAnnotation = function () {
     this.removeInterpolation();
     this.saveUndoStep();
     this.view.render();
+    this.empty = false;
 };
 
 plx.AnnotationLayer.prototype.updateLayer = function (view) {
@@ -569,6 +572,7 @@ plx.AnnotationLayer.prototype.addAnnotationsFromCanvas = function(canvas){
     this.ctx.drawImage(canvas, 0,0,width,height);
 
     this.imageData = this.ctx.getImageData(0,0, width,height);
+    this.empty = false;
 
 
     this.saveUndoStep();

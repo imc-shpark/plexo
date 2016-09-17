@@ -21,6 +21,7 @@
 gui.ToolbarController = function (view) {
     this.view = view;
     view.interactor.addObserver(this, plx.EV_OPERATION_CHANGED);
+    view.interactor.addObserver(this, plx.EV_SLICE_CHANGED);
     this._setup();
 };
 
@@ -255,8 +256,15 @@ gui.ToolbarController.prototype.update_selected_tool = function (last_used) {
 };
 
 gui.ToolbarController.prototype.processNotification = function (kind,data) {
-    var op = data.operation;
-    this.update_selected_tool(op);
+
+    if (kind == plx.EV_OPERATION_CHANGED) {
+        var op = data.operation;
+        this.update_selected_tool(op);
+    }
+    else if (kind == plx.EV_SLICE_CHANGED){
+        var slice = data.slice;
+        this.update_slice_name(slice)
+    }
 };
 
 gui.ToolbarController.prototype.update_brush = function () {
@@ -269,5 +277,10 @@ gui.ToolbarController.prototype.update_brush = function () {
 
 gui.ToolbarController.prototype.update_eraser = function () {
     $('#status-current-label-id').html('Eraser [' + ERASER.size + ']');
+
+};
+
+gui.ToolbarController.prototype.update_slice_name = function(idx){
+    gui.f.update_slice_info(idx);
 
 };

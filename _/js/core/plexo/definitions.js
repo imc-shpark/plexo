@@ -23,6 +23,7 @@ plx.GUI_TOUCH   = false;
 plx.BRUSH       = undefined;
 plx.ERASER      = undefined;
 plx.LABELS      = undefined;
+plx.CURRENT_SLICE  = undefined;
 
 /*-----------------------------------------------------------------------------------------------
  Operations
@@ -87,9 +88,16 @@ plx.smoothingEnabled = function (ctx, flag) {
     ctx.msImageSmoothingEnabled     = flag;
 };
 
+/***
+ * @private
+ * Hack into the GUI. Probably not the best design since the plexo module should not be tied to the gui directly
+ * However not a big issue. In a future versio we could have a GUI object and delegate the responsability to it.
+ * @param text
+ */
 function message(text) {
     document.getElementById('status-message-id').innerHTML = text;
 }
+
 /**
  * Detects if the device is touch-enabled
  */

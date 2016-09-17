@@ -64,6 +64,7 @@ plx.GUI_TOUCH   = false;
 plx.BRUSH       = undefined;
 plx.ERASER      = undefined;
 plx.LABELS      = undefined;
+plx.CURRENT_SLICE  = undefined;
 
 /*-----------------------------------------------------------------------------------------------
  Operations
@@ -128,9 +129,16 @@ plx.smoothingEnabled = function (ctx, flag) {
     ctx.msImageSmoothingEnabled     = flag;
 };
 
+/***
+ * @private
+ * Hack into the GUI. Probably not the best design since the plexo module should not be tied to the gui directly
+ * However not a big issue. In a future versio we could have a GUI object and delegate the responsability to it.
+ * @param text
+ */
 function message(text) {
     document.getElementById('status-message-id').innerHTML = text;
 }
+
 /**
  * Detects if the device is touch-enabled
  */
@@ -974,8 +982,7 @@ plx.AnnotationLayer = function (slice) {
     this.undo_history = [];
     this.redo_history = [];
     this.view         = undefined;
-
-
+    this.empty        = true; //set to true the first time we start annotating here
 };
 
 
@@ -1035,7 +1042,8 @@ plx.AnnotationLayer.prototype.isEmpty = function () {
         if (data[i + 1] > maxG) {maxG = data[i + 1];}
         if (data[i + 2] > maxB) {maxB = data[i + 2];}
     }
-    return (maxR == maxG && maxG == maxB & maxR == 0); //nothing ?
+    this.empty = (maxR == maxG && maxG == maxB & maxR == 0); //nothing ?
+    return this.empty;
 };
 
 /**
@@ -1050,6 +1058,7 @@ plx.AnnotationLayer.prototype.clearAnnotations = function () {
     this.imageData    = undefined;
     this.undo_history = [];
     this.redo_history = [];
+    this.empty = true;
 };
 
 /**
@@ -1080,6 +1089,7 @@ plx.AnnotationLayer.prototype.loadFromImageURL = function(imageURL){
         self.ctx.drawImage(image,0,0);
         self.imageData = self.ctx.getImageData(0, 0, width, height);
         self.view.render();
+        self.empty = false;
     };
 
     image.src = imageURL; // This is necessary because loading images is asynchronous
@@ -1304,6 +1314,7 @@ plx.AnnotationLayer.prototype.saveAnnotation = function () {
     this.removeInterpolation();
     this.saveUndoStep();
     this.view.render();
+    this.empty = false;
 };
 
 plx.AnnotationLayer.prototype.updateLayer = function (view) {
@@ -1508,6 +1519,7 @@ plx.AnnotationLayer.prototype.addAnnotationsFromCanvas = function(canvas){
     this.ctx.drawImage(canvas, 0,0,width,height);
 
     this.imageData = this.ctx.getImageData(0,0, width,height);
+    this.empty = false;
 
 
     this.saveUndoStep();
@@ -1837,17 +1849,16 @@ plx.Zoom.prototype.apply = function (ctx) {
  Annotation Set
  ------------------------------------------------------------------------------------------------*/
 plx.AnnotationSet = function (view) {
-    this.view = view;
+    this.view        = view;
     this.annotations = {}; //dictionary containing the slice-uri, annotation slice object pairing.
     this.messages = []; //save error messages for display if the AnnotationSet had issues loading.
 };
 
 //Static constants
-plx.AnnotationSet.SAVE_PREVIEW = 'PREVIEW';
+plx.AnnotationSet.SAVE_PREVIEW  = 'PREVIEW';
 plx.AnnotationSet.SAVE_DOWNLOAD = 'DOWLOAD';
-plx.AnnotationSet.SAVE_DROPBOX = 'DROPBOX';
-plx.AnnotationSet.LOAD_LOCAL = 'LOAD_LOCAL';
-
+plx.AnnotationSet.SAVE_DROPBOX  = 'DROPBOX';
+plx.AnnotationSet.LOAD_LOCAL    = 'LOAD_LOCAL';
 
 /**
  * Returns the set of annotation layers as a list. Useful for set operations
@@ -1858,72 +1869,64 @@ plx.AnnotationSet.prototype.getKeys = function () {
 };
 
 /**
-* Loads an annotation set
-*/
-plx.AnnotationSet.prototype.load = function (payload,_type) {
+ * Loads an annotation set
+ */
+plx.AnnotationSet.prototype.load = function (payload, _type) {
 
     this.messages = []; //clear messages
 
-    switch(_type){
-        case plx.AnnotationSet.LOAD_LOCAL: this.loadLocal(payload); break;
-        default: this.loadLocal(payload);
+    switch (_type) {
+        case plx.AnnotationSet.LOAD_LOCAL:
+            this.loadLocal(payload);
+            break;
+        default:
+            this.loadLocal(payload);
     }
 
 };
 
-plx.AnnotationSet.prototype.loadLocal = function(payload){
+plx.AnnotationSet.prototype.loadLocal = function (payload) {
 
     this.messages = [];
+    this.loaded = 0;
 
-    var labels = payload.labels;
+    var labels      = payload.labels;
     var annotations = payload.annotations;
-    this._createAnnotationLayers(labels,annotations);
 
-};
+    for (f in annotations) {
 
-/**
- * Creates the annotation layers. Used in AnnotationSet.loadLocal
- *
- * @param annotations
- * @private
- */
-plx.AnnotationSet.prototype._createAnnotationLayers = function(labels, annotations){
-
-    for(f in annotations){
         var slice_name = f.substr(2, f.length);
-        slice_name = slice_name.replace(/\.[^/.]+$/,"");
-        var slice = this.view.dataset.getSliceByName(slice_name);
-        if (slice == null &&
-            this.view.dataset.slices.length > 1) /* only check if there are multiple slices otherwise allow*/
+        slice_name     = slice_name.replace(/\.[^/.]+$/, "");
+        var slice      = this.view.dataset.getSliceByName(slice_name);
+
+        if (slice == null && this.view.dataset.slices.length > 1) /* only check if there are multiple slices otherwise allow*/
         {
-            this.messages.push('No slice was found for annotation '+f);
+            this.messages.push('No slice was found for annotation ' + f);
         }
-        else{
-            slice = this.view.dataset.slices[0];
-            console.debug('Annotation ',f,' loaded for ', slice.name);
+        else {
+            //console.debug('Annotation ', f, ' loaded for ', slice.name);
             var imageURL = annotations[f];
             var an_layer = this.getAnnotation(slice);
             an_layer.loadFromImageURL(imageURL);
-            this.view.showSlice(slice);
+            this.loaded++;
         }
     }
-
 };
 
-plx.AnnotationSet.prototype.getMessages = function(){
+plx.AnnotationSet.prototype.getMessages = function () {
     return this.messages;
 };
 
 plx.AnnotationSet.prototype.save = function (type, options) {
 
-    if (JSZip === undefined){
+    if (JSZip === undefined) {
         throw "ERROR plx.AnnotationSet.save: JSZip.js not found";
     }
 
     var annotations = this.annotations;
     var keys        = this.getKeys();
 
-    var bundle      = {};
+    var bundle = {};
 
     switch (type) {
         case plx.AnnotationSet.SAVE_DOWNLOAD:
@@ -1952,10 +1955,8 @@ plx.AnnotationSet.prototype.save = function (type, options) {
             break;
     }
 
-    bundle.files = files;
+    bundle.files  = files;
     bundle.labels = plx.LABELS;
-
-
 
     if (type == plx.AnnotationSet.SAVE_DOWNLOAD) {
 
@@ -1968,7 +1969,7 @@ plx.AnnotationSet.prototype.save = function (type, options) {
         }
 
         var content = zip.generate({type: 'blob'});
-        saveAs(content,this.view.dataset.name+'.zip');
+        saveAs(content, this.view.dataset.name + '.zip');
     }
 
     return bundle;
@@ -1981,7 +1982,7 @@ plx.AnnotationSet.prototype.getAnnotation = function (slice) {
     var key    = slice.url; //uses the url as the key in this dictionary
 
     if (!(key in this.annotations)) {
-        aslice                = new plx.AnnotationLayer(slice);
+        aslice = new plx.AnnotationLayer(slice);
         aslice.setView(this.view); //fixes bug on loading annotations dialog
 
         this.annotations[key] = aslice;
@@ -1993,10 +1994,10 @@ plx.AnnotationSet.prototype.getAnnotation = function (slice) {
     return aslice;
 };
 
-plx.AnnotationSet.prototype.hasAnnotation = function (slice) {
-    var key = slice.url; //uses the url as the key in this dictionary
-    return (key in this.annotations);
-};
+//plx.AnnotationSet.prototype.hasAnnotation = function (slice) {
+//    var key = slice.url; //uses the url as the key in this dictionary
+//    return (key in this.annotations);
+//};
 
 plx.AnnotationSet.prototype.getUsedLabels = function () {
 

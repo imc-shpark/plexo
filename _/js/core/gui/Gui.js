@@ -323,6 +323,10 @@ function load_dataset(files, storage, options) {
                                              //This allows the gui to update the progress bar.
 }
 
+/***
+ * Invoked after a dataset is loaded
+ * @param dataset
+ */
 function ld_dataset_callback(dataset) {
     var percentage = (dataset.num_loaded / dataset.num_items) * 100;
     gui.progressbar.update(percentage);
@@ -330,6 +334,7 @@ function ld_dataset_callback(dataset) {
     if (percentage == 100) {
         gui.progressbar.container.fadeOut(1000, function () {
             var sliceIdx = VIEW.showMiddleSlice();
+            gui.f.update_slice_info(sliceIdx);
             gui.slice.slider.noUiSlider.set(sliceIdx);
             VIEW.interactor.connectView();
             update_canvas_size();
@@ -360,6 +365,12 @@ function initPlexo() {
 
     VIEW = new plx.View('plexo-canvas-id');
 
+    /*
+    The global VIEW object is the main interaction point for the gui objects with the plexo module. Ideally
+    plexo should not be aware of the gui but rather commmunicate with it through by firing events that
+    can be captured by the GUI objects. This is the phillosophy behind the ViewInteractor object.
+     */
+
     gui.ctracker         = new gui.CoordinatesTracker(VIEW);
     gui.alert            = new gui.AlertController(VIEW);
     gui.slice            = new gui.SliceController(VIEW);
@@ -388,8 +399,17 @@ gui.f.mouseWait = function(flag){
     }
 };
 
+gui.f.update_slice_info = function(index) {
+    slice = VIEW.dataset.getSliceByIndex(index);
+    hasAnnotation = VIEW.getCurrentAnnotationLayer().empty?'[]':'[A]';
+    $('#status-current-slice-index-id').html('index: ' + index);
+    $('#status-current-slice-name-id').html(slice.name);
+    $('#status-current-annotation-id').html(hasAnnotation);
+};
 
-
+gui.f.message = function(text) {
+    document.getElementById('status-message-id').innerHTML = text;
+};
 
 
 /*-----------------------------------------------------------------------------------------------

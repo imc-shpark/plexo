@@ -52,14 +52,17 @@ gui.SliceController.prototype._setup_slider = function(){
 
     this.slider.noUiSlider.on('slide', function(values, handle){
         var index = parseInt(values[handle]);
-        message('slice: ' +index);
         VIEW.showSliceByIndex(index);
+        gui.f.update_slice_info(index);
     });
 };
 
 gui.SliceController.prototype.processNotification = function (kind, data) {
     if (kind == plx.EV_SLICE_CHANGED) {
-        this.slider.noUiSlider.set(data.slice);
+
+        idx = data.slice; //this should be data.slice_index or simply index. TODO: change the name of the parameter in the ViewInteractor
+        this.slider.noUiSlider.set(idx);
+        gui.f.update_slice_info(idx);
     }
     else if (kind == plx.EV_DATASET_LOADED){
         this._setup_slider();

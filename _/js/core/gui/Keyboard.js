@@ -52,7 +52,6 @@ function setup_keyboard() {
         }
 
         if (slice){
-            message('slice: ' + slice);
             VIEW.render();
             VIEW.interactor.notify(plx.EV_SLICE_CHANGED, {'slice': slice}); //updates slider
         }
