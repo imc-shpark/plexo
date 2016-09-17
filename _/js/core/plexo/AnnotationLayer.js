@@ -52,14 +52,14 @@ plx.AnnotationLayer.prototype.getFilename = function() {
 
     if (ext != 'png'){
         if (url.lastIndexOf('.') != -1) {
-            url = 'A_[' + url.substr(0, url.lastIndexOf('.')) + '].png';
+            url = 'A_' + url.substr(0, url.lastIndexOf('.')) + '.png';
         }
         else{
-            url = 'A_[' + url + '].png';
+            url = 'A_' + url + '.png';
         }
     }
     else{
-        url = 'A_[' + url.substr(0, url.lastIndexOf('.')) + '].png';
+        url = 'A_' + url.substr(0, url.lastIndexOf('.')) + '.png';
 
     }
 
